@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Transacciones PWA - Firefly III</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- CDN de jQuery (Necesario para la manipulación DOM y AJAX) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        /* Estilo base para el body para asegurar que el layout sea limpio */
+        body {
+            background-color: #f7f9fb; /* Fondo claro, moderno */
+        }
+        /* Estilo para los contenedores, para que puedan ocultarse/mostrarse fácilmente */
+        #setup-container, #dashboard-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+        /* Clase de utilidad que se usará en JS para ocultar contenedores */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="setup-container" class="container max-w-xl w-full p-6 bg-white shadow-2xl rounded-lg mt-20">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Configuración de Firefly III</h1>
+        <p class="text-gray-600 mb-8 text-center">
+            Por favor, introduce la URL de tu instancia y el Token de Acceso Personal para empezar a usar la PWA.
+        </p>
+
+        <form id="config-form" class="space-y-6">
+            <!-- URL de Firefly III -->
+            <div>
+                <label for="firefly-url" class="block text-sm font-medium text-gray-700">URL de la Instancia de Firefly III</label>
+                <input type="url" id="firefly-url" required 
+                       placeholder="ej. https://miapp.firefly-iii.org" 
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <!-- Token de Acceso Personal -->
+            <div>
+                <label for="personal-token" class="block text-sm font-medium text-gray-700">Token de Acceso Personal (PAT)</label>
+                <input type="password" id="personal-token" required 
+                       placeholder="xxxxxxxxxxxxxxxxxxxxxxx" 
+                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700 transition duration-150">
+                Conectar y Continuar
+            </button>
+            
+            <p id="config-message" class="text-center mt-4 text-sm"></p>
+        </form>
+    </div>
+
+    <div id="dashboard-container" class="w-full max-w-4xl pt-8">
+        <header class="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
+            <h1 class="text-3xl font-bold text-gray-800">🚀 Registro Rápido</h1>
+            <div class="flex items-center space-x-4">
+                <!-- Botón para volver a la configuración (Placeholder) -->
+                <button id="config-btn" class="text-sm text-indigo-600 hover:text-indigo-800 transition">
+                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.72.355 1.464-.243 2.002-1.11-.538.867-1.22 1.493-1.22 2.22 0 1.01.82 1.82 1.82 1.82z"/></svg>
+                    Config
+                </button>
+                <!-- Indicador de estado de conexión -->
+                <span id="online-status" class="px-3 py-1 rounded-full text-xs font-semibold transition-colors bg-green-100 text-green-800">
+                    Online
+                </span>
+            </div>
+        </header>
+
+        <!-- Área principal del formulario de transacción -->
+        <main class="bg-white p-8 rounded-lg shadow-xl w-full">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Registrar Transacción</h2>
+
+            <!-- Contenedor de notificaciones de estado -->
+            <div id="status-message" class="p-3 rounded-md mb-4 text-sm hidden"></div>
+            
+            <form id="transaction-form" class="space-y-6">
+                
+                <!-- FILA 1: Fuente / Origen -->
+                <div>
+                    <label for="source-account" class="block text-sm font-medium text-gray-700">Cuenta Origen</label>
+                    <div class="relative">
+                        <input type="text" id="source-account" required placeholder="Selecciona o escribe la cuenta origen..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer">
+                        <div id="source-autocomplete" class="autocomplete-dropdown absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden"></div>
+                    </div>
+                    <input type="hidden" id="source-account-id" name="source-account-id">
+                    <input type="hidden" id="source-account-name" name="source-account-name">
+                </div>
+
+                <!-- FILA 2: Destino -->
+                <div>
+                    <label for="destination-account" class="block text-sm font-medium text-gray-700">Cuenta Destino</label>
+                    <div class="relative">
+                        <input type="text" id="destination-account" required placeholder="Selecciona o escribe la cuenta destino..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer">
+                        <div id="destination-autocomplete" class="autocomplete-dropdown absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden"></div>
+                    </div>
+                    <input type="hidden" id="destination-account-id" name="destination-account-id">
+                    <input type="hidden" id="destination-account-name" name="destination-account-name">
+                </div>
+
+                <!-- FILA 3: Concepto y Monto (Disposición en colunas para mobile-first) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Concepto / Descripción -->
+                    <div class="col-span-1 md:col-span-2">
+                        <label for="description" class="block text-sm font-medium text-gray-700">Concepto / Descripción</label>
+                        <input type="text" id="description" required placeholder="Ej: Compra en supermercado" 
+                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    
+                    <!-- Importe -->
+                    <div class="col-span-1">
+                        <label for="amount" class="block text-sm font-medium text-gray-700">Importe</label>
+                        <input type="number" step="0.01" id="amount" required placeholder="100.00" 
+                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Botón de Acción -->
+                <button type="submit" id="submit-transaction-btn" 
+                        class="w-full py-3 px-4 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 transition duration-150 disabled:opacity-50">
+                    Registrar Transacción
+                </button>
+            </form>
+        </main>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/accounts.js"></script>
+    <script src="js/transactions.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
