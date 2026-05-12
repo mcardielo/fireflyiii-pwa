@@ -1,0 +1,8 @@
+# Archivos de variables de entorno
+.env
+.env.local
+
+# Archivos de IDE/OS
+.vscode/
+.idea/
+.DS_Store
