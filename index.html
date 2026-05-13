@@ -8,7 +8,8 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
 
-    <!-- iOS PWA Meta Tags -->
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Firefly Ledger">
@@ -17,10 +18,8 @@
     <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
-    <!-- Tailwind CSS CDN (con SRI hash para integridad) -->
-    <script src="https://cdn.tailwindcss.com"
-            integrity="sha384-igm5BeiBt36UU4gqwWS7imYmelpTsZlQ45FZf+XBn9MuJbn4nQr7yx1yFydocC/K"
-            crossorigin="anonymous"></script>
+    <!-- Tailwind CSS CDN (Play CDN - redirige a versión, no aplica SRI) -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- jQuery CDN (con SRI hash) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"

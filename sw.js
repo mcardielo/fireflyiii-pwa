@@ -1,6 +1,6 @@
 const CACHE_NAME = 'firefly-pwa-v2.0';
 const ASSETS_TO_CACHE = [
-    '/',
+    './',
     'index.html',
     'js/config.js',
     'js/accounts.js',
@@ -78,8 +78,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // HTML: Network First (siempre ver red antes, cache como fallback)
-    if (requestUrl.pathname === '/' || requestUrl.pathname.endsWith('.html')) {
+    // HTML: Network First (funciona en cualquier subpath, incluyendo GitHub Pages)
+    if (requestUrl.pathname.endsWith('/') || requestUrl.pathname.endsWith('.html')) {
         event.respondWith(networkFirstWithCache(event.request));
         return;
     }
