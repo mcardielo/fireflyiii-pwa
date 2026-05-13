@@ -79,13 +79,17 @@
      * Selecciona una cuenta existente y actualiza los campos del formulario.
      */
     function selectExistingAccount(account, field) {
+        // Validar que el ID sea numérico válido
+         const id = (account.id !== undefined && account.id !== null && !isNaN(account.id))
+             ? account.id : '';
+             
         if (field === 'source') {
             $('#source-account').val(account.name);
-            $('#source-account-id').val(account.id);
+            $('#source-account-id').val(id);
             $('#source-account-name').val(account.name);
         } else {
             $('#destination-account').val(account.name);
-            $('#destination-account-id').val(account.id);
+            $('#destination-account-id').val(id);
             $('#destination-account-name').val(account.name);
         }
 
@@ -183,7 +187,7 @@
 
             const id = $clickedItem.data('account-id');
             const name = $clickedItem.data('account-name');
-            const isNew = $clickedItem.data('is-new') === 'true';
+            const isNew = $clickedItem.data('is-new') === true;
 
             const context = $clickedItem.closest('.autocomplete-dropdown').attr('id') === 'source-autocomplete' ? 'source' : 'destination';
 
