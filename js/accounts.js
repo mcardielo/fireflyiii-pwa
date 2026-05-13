@@ -43,7 +43,8 @@
                     const cleanAccounts = accounts.map(account => ({
                         id: account.id,
                         name: account.attributes.name,
-                        type: account.attributes.type
+                        type: account.attributes.type,
+                        active: account.attributes.active !== undefined ? account.attributes.active : true
                     }));
 
                     console.log(`✅ [API]: Cuentas cargadas exitosamente: ${cleanAccounts.length}`);
@@ -128,9 +129,9 @@
         let accountsToFilter = [];
 
         if (fieldContext === 'source') {
-            accountsToFilter = cache.filter(account => account.type === 'asset');
+            accountsToFilter = cache.filter(account => account.type === 'asset' && account.active !== false);
         } else {
-            accountsToFilter = cache.filter(account => account.type === 'expense');
+            accountsToFilter = cache.filter(account => account.type === 'expense' && account.active !== false);
         }
 
         const filteredAccounts = accountsToFilter.filter(account =>
@@ -169,10 +170,13 @@
     }
 
     /**
-     * Configura el manejador de clics usando Event Delegation.
+     * Configura el manejador de selección con mousedown (se dispara
+     * antes del blur/change del input, evitando el doble clic).
      */
     function setupDropdownClickHandler(dropdownEl) {
-        $(dropdownEl).off('click').on('click', '.autocomplete-item', function() {
+        $(dropdownEl).off('mousedown').on('mousedown', '.autocomplete-item', function(e) {
+            e.preventDefault(); // Evita que el input pierda foco antes de seleccionar
+
             const $clickedItem = $(this);
 
             const id = $clickedItem.data('account-id');
@@ -222,6 +226,23 @@
     }
 
     /**
+     * Pre-fill del campo origen con la cuenta default registrada.
+     */
+    function prefillDefaultSource(accountsCache) {
+        const defaultAccount = window.FFPWA.config.defaultSourceAccount;
+        if (!defaultAccount || !defaultAccount.id) return;
+
+        // Verificar que la cuenta default existe en el caché
+        const match = accountsCache.find(a => String(a.id) === String(defaultAccount.id));
+        if (match) {
+            $('#source-account').val(match.name);
+            $('#source-account-id').val(match.id);
+            $('#source-account-name').val(match.name);
+            console.log(`[DEFAULT] Source pre-fill: ${match.name}`);
+        }
+    }
+
+    /**
      * Inicializa el sistema de cuentas.
      */
     function setupAccountSystem(accountsCache) {
@@ -236,6 +257,8 @@
             'destination-account', 'destination-autocomplete',
             accountsCache
         );
+
+        prefillDefaultSource(accountsCache);
 
         window.FFPWA.showStatusMessage(`✅ Sistema de cuentas activo. Cuentas cargadas: ${accountsCache.length}.`, 'success');
     }

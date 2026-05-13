@@ -51,11 +51,38 @@
     }
 
     /**
+     * Si el usuario no ingresó cuenta origen, usar la default registrada.
+     */
+    function resolveSourceAccount() {
+        let sourceId = $('#source-account-id').val();
+        let sourceName = $('#source-account-name').val();
+
+        // Si el usuario ya escribió algo, respetarlo
+        if (sourceName && sourceName.trim()) {
+            return { id: sourceId, name: sourceName };
+        }
+
+        // Fallback: usar la cuenta default
+        const defaultAccount = window.FFPWA.config.defaultSourceAccount;
+        if (defaultAccount && defaultAccount.id) {
+            // Pre-fill visual
+            const defaultName = defaultAccount.name;
+            $('#source-account').val(defaultName);
+            $('#source-account-id').val(defaultAccount.id);
+            $('#source-account-name').val(defaultName);
+            return { id: String(defaultAccount.id), name: defaultName };
+        }
+
+        return { id: null, name: null };
+    }
+
+    /**
      * Recopila y transforma los datos del formulario en el formato JSON requerido por Firefly III.
      */
     function buildTransactionPayload() {
-        const sourceId = $('#source-account-id').val();
-        const sourceName = $('#source-account-name').val();
+        const source = resolveSourceAccount();
+        const sourceId = source.id;
+        const sourceName = source.name;
         const destId = $('#destination-account-id').val();
         const destName = $('#destination-account-name').val();
 
@@ -82,7 +109,7 @@
     }
 
     /**
-     * Limpia todos los campos del formulario incluyendo hidden fields.
+     * Limpia el formulario y re-prefill source con la cuenta default.
      */
     function resetTransactionForm() {
         $('#transaction-form')[0].reset();
@@ -90,6 +117,14 @@
         $('#source-account-name').val('');
         $('#destination-account-id').val('');
         $('#destination-account-name').val('');
+
+        // Restaurar cuenta origen default si existe
+        const defaultAccount = window.FFPWA.config.defaultSourceAccount;
+        if (defaultAccount && defaultAccount.id) {
+            $('#source-account').val(defaultAccount.name);
+            $('#source-account-id').val(defaultAccount.id);
+            $('#source-account-name').val(defaultAccount.name);
+        }
     }
 
     /**
@@ -236,6 +271,7 @@
                 });
         } else {
             queueTransaction(transactionPayload);
+            resetTransactionForm();
             $btn.prop('disabled', false).text('Registrar Transacción');
         }
     }
