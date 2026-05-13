@@ -1,4 +1,4 @@
-const CACHE_NAME = 'firefly-pwa-v1.3';
+const CACHE_NAME = 'firefly-pwa-v2.0';
 const ASSETS_TO_CACHE = [
     '/',
     'index.html',
@@ -9,11 +9,32 @@ const ASSETS_TO_CACHE = [
     'manifest.json'
 ];
 
+/**
+ * Estrategia Network First para HTML: intenta red primero, 
+ * fallback a caché si está offline. Así el usuario siempre ve
+ * la última versión cuando tiene conexión.
+ */
+async function networkFirstWithCache(request) {
+    try {
+        const networkResponse = await fetch(request);
+        if (networkResponse && networkResponse.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
+        }
+        throw new Error('Respuesta de red no ok');
+    } catch (err) {
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) {
+            return cachedResponse;
+        }
+        return new Response('Recurso no disponible offline', { status: 503 });
+    }
+}
 
 self.addEventListener('install', (event) => {
     console.log('[Service Worker] Instalando: Cacheando assets estáticos.');
-    
-    // Almacena todos los recursos esenciales para que la app funcione offline
+
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
@@ -24,11 +45,9 @@ self.addEventListener('install', (event) => {
                 console.error('Fallo al cachear assets:', error);
             })
     );
-    
-    // Hace que el Service Worker se active inmediatamente, evitando la instalación en segundo plano.
-    self.skipWaiting(); 
-});
 
+    self.skipWaiting();
+});
 
 self.addEventListener('activate', (event) => {
     console.log('[Service Worker] Activando: Limpiando cachés antiguas.');
@@ -46,51 +65,80 @@ self.addEventListener('activate', (event) => {
                     })
                 );
             })
-            .then(() => self.clients.claim()) // Asegura que el SW tome el control de la página actual
+            .then(() => self.clients.claim())
     );
 });
-
 
 self.addEventListener('fetch', (event) => {
     const requestUrl = new URL(event.request.url);
 
-    // Las peticiones a la API de Firefly III (cualquier cosa que contenga /api/v1) 
-    // deben pasar por la red para obtener los datos más recientes.
+    // Las peticiones a la API de Firefly III siempre van por red (sin cachear)
     if (requestUrl.pathname.startsWith('/api/v1')) {
-        console.log(`[Service Worker] Interceptado API: ${requestUrl.pathname}. PERMITIDO EN RED.`);
+        event.respondWith(fetch(event.request));
         return;
     }
 
+    // HTML: Network First (siempre ver red antes, cache como fallback)
+    if (requestUrl.pathname === '/' || requestUrl.pathname.endsWith('.html')) {
+        event.respondWith(networkFirstWithCache(event.request));
+        return;
+    }
+
+    // Assets estáticos (JS, CSS, etc): Cache First
     event.respondWith(
-        // Intenta obtener el recurso desde la caché primero (CACHE-FIRST)
         caches.match(event.request)
             .then((cachedResponse) => {
-                // Si se encuentra en la caché, lo devuelve.
                 if (cachedResponse) {
-                    console.log(`[Service Worker] Sirviendo ${event.request.url} desde la caché.`);
                     return cachedResponse;
                 }
-                // Si no se encuentra en la caché, intenta cargarlo desde la red.
-                console.log(`[Service Worker] Recursos estáticos no encontrados en caché. Cargando desde red.`);
                 return fetch(event.request);
             })
-            // Si falla el cache y falla la red (ej. está completamente offline)
             .catch((error) => {
-                console.error('[Service Worker] Fallo total al cargar el recurso:', error);
-                // Aquí podrías devolver una respuesta de error HTML genérica si fuese necesario
+                console.error('[Service Worker] Fallo al cargar recurso:', error);
+                return new Response('Error al cargar recurso', { status: 502 });
             })
     );
 });
 
+/**
+ * Background Sync: cuando el SW recibe un evento sync, 
+ * notifica a todas las páginas cliente para que ejecuten syncQueue().
+ * La página se encarga de leer la cola desde localStorage.
+ */
+self.addEventListener('sync', (event) => {
+    console.log(`[Service Worker] Sync event recibido: "${event.tag}"`);
 
-self.addEventListener('sync', (event) => {    
-    console.log(`[Service Worker] === DETECTADO SINCRONIZACIÓN EN SEGUNDO PLANO ===`);    
-    console.log('[Service Worker] Ejecutando lógica de sincronización de cola...');
-    
-    // Dejar el mensaje de confirmación para el usuario en la web.
-    self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
-        clients.forEach(client => {
-            client.postMessage({ type: 'SYNC_SUCCESS', message: 'La sincronización de datos en segundo plano fue exitosa.' });
-        });
-    });
+    if (event.tag === 'sync-transactions') {
+        event.waitUntil(
+            self.clients.matchAll({ includeUncontrolled: true })
+                .then((clients) => {
+                    if (clients.length === 0) {
+                        console.log('[Service Worker] No hay clientes para notificar.');
+                        return;
+                    }
+                    const promises = clients.map(client => {
+                        return client.postMessage({
+                            type: 'BACKGROUND_SYNC',
+                            tag: event.tag
+                        });
+                    });
+                    return Promise.all(promises);
+                })
+                .then(() => {
+                    console.log('[Service Worker] Notificación de sync enviada a todos los clientes.');
+                })
+                .catch((err) => {
+                    console.error('[Service Worker] Error notificando a clientes:', err);
+                })
+        );
+    }
+});
+
+/**
+ * Mensajes desde la página (cliente)
+ */
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
