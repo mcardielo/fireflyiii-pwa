@@ -97,19 +97,34 @@
 
         const amount = validateAndFormatAmount();
 
+        // Construir la transacción dinámicamente:
+        // - Si hay ID, enviarlo (cuenta existente seleccionada)
+        // - Si no hay ID, NO incluirlo (Firefly creará la cuenta por el nombre)
+        const transaction = {
+            "type": "withdrawal",
+            "description": $('#description').val().trim() || "Transacción sin descripción",
+            "date": new Date().toISOString(),
+            "amount": amount,
+            "source_name": sourceName
+        };
+
+        // Solo incluir source_id si existe (cuenta existente)
+        if (sourceId && sourceId !== "") {
+            transaction.source_id = sourceId;
+        }
+
+        // Solo incluir destination_id si existe (cuenta existente)
+        if (destId && destId !== "") {
+            transaction.destination_id = destId;
+        }
+
+        // destination_name siempre se incluye
+        transaction.destination_name = destName;
+
         return {
             "error_if_duplicate_hash": true,
             "apply_rules": true,
-            "transactions": [{
-                "type": "withdrawal",
-                "description": $('#description').val().trim() || "Transacción sin descripción",
-                "date": new Date().toISOString(),
-                "amount": amount,
-                "source_id": (sourceId && sourceId !== "") ? sourceId : null,
-                "source_name": (sourceName && sourceName !== "") ? sourceName : null,
-                "destination_id": (destId && destId !== "") ? destId : null,
-                "destination_name": (destName && destName !== "") ? destName : null
-            }]
+            "transactions": [transaction]
         };
     }
 

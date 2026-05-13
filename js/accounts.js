@@ -119,7 +119,8 @@
      * Filtra la lista de cuentas y muestra el dropdown de sugerencias.
      */
     function filterAndDisplayAccounts(e, inputElement, dropdownElement, fieldContext, cache) {
-        const query = $(inputElement).val().trim().toLowerCase();
+        const rawValue = $(inputElement).val().trim();
+        const query = rawValue.toLowerCase();
 
         if (query.length < 2) {
             hideDropdown(dropdownElement);
@@ -138,8 +139,9 @@
             account.name.toLowerCase().includes(query)
         );
 
+        // Usar rawValue para preservar la capitalización que escribió el usuario
         const results = filteredAccounts.concat([{
-            name: query,
+            name: rawValue,
             id: undefined,
             isNew: true
         }]);
