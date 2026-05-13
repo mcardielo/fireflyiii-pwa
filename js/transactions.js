@@ -2,8 +2,13 @@
     'use strict';
 
     const QUEUE_STORAGE_KEY = 'firefly_transaction_queue';
+    const HEALTH_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutos
 
     window.FFPWA = window.FFPWA || {};
+
+    // Estado del servidor Firefly
+    let fireflyServerAvailable = true;
+    let healthCheckIntervalId = null;
 
     /**
      * Muestra un mensaje temporal en la interfaz.
@@ -51,26 +56,26 @@
     }
 
     /**
-     * Si el usuario no ingresó cuenta origen, usar la default registrada.
+     * Resuelve la cuenta origen:
+     * - Si el usuario escribió algo en el campo visible, usa ese valor.
+     * - Si el campo está vacío, usa la cuenta default registrada.
+     * El campo visible se deja vacío con placeholder = nombre default.
      */
     function resolveSourceAccount() {
-        let sourceId = $('#source-account-id').val();
-        let sourceName = $('#source-account-name').val();
+        const visibleSource = $('#source-account').val().trim();
+        const defaultAccount = window.FFPWA.config.defaultSourceAccount;
 
-        // Si el usuario ya escribió algo, respetarlo
-        if (sourceName && sourceName.trim()) {
-            return { id: sourceId, name: sourceName };
+        // El usuario escribió o seleccionó algo → usar eso
+        if (visibleSource) {
+            return {
+                id: $('#source-account-id').val() || null,
+                name: $('#source-account-name').val() || visibleSource
+            };
         }
 
-        // Fallback: usar la cuenta default
-        const defaultAccount = window.FFPWA.config.defaultSourceAccount;
+        // Campo vacío → usar cuenta default
         if (defaultAccount && defaultAccount.id) {
-            // Pre-fill visual
-            const defaultName = defaultAccount.name;
-            $('#source-account').val(defaultName);
-            $('#source-account-id').val(defaultAccount.id);
-            $('#source-account-name').val(defaultName);
-            return { id: String(defaultAccount.id), name: defaultName };
+            return { id: String(defaultAccount.id), name: defaultAccount.name };
         }
 
         return { id: null, name: null };
@@ -109,7 +114,7 @@
     }
 
     /**
-     * Limpia el formulario y re-prefill source con la cuenta default.
+     * Limpia el formulario y restaura el placeholder con la cuenta default.
      */
     function resetTransactionForm() {
         $('#transaction-form')[0].reset();
@@ -118,10 +123,10 @@
         $('#destination-account-id').val('');
         $('#destination-account-name').val('');
 
-        // Restaurar cuenta origen default si existe
+        // Restaurar cuenta origen default en placeholder y hidden fields
         const defaultAccount = window.FFPWA.config.defaultSourceAccount;
         if (defaultAccount && defaultAccount.id) {
-            $('#source-account').val(defaultAccount.name);
+            $('#source-account').val('').attr('placeholder', defaultAccount.name + ' (default)');
             $('#source-account-id').val(defaultAccount.id);
             $('#source-account-name').val(defaultAccount.name);
         }
@@ -129,6 +134,8 @@
 
     /**
      * Envía la transacción al API.
+     * Rechaza con un objeto { message, status } para que el caller
+     * pueda distinguir entre errores de auth y errores temporales.
      */
     function sendTransaction(payload) {
         const token = window.FFPWA.config.token;
@@ -155,8 +162,9 @@
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMsg += ` Detalles: ${xhr.responseJSON.message}`;
                     }
-                    console.error("❌ Error de envío:", errorMsg);
-                    reject(new Error(errorMsg));
+                    const status = xhr.status || 0;
+                    console.error("❌ Error de envío:", errorMsg, `(HTTP ${status})`);
+                    reject({ message: errorMsg, status: status });
                 }
             });
         });
@@ -237,11 +245,88 @@
             message = message || '🔄 Sincronización completada.';
             showStatusMessage(message, 'success');
         }
+
+        // Si la cola quedó vacía, detener health check
+        if (remaining.length === 0 && healthCheckIntervalId) {
+            stopFireflyHealthCheck();
+        }
     }
     window.FFPWA.syncQueue = syncQueue;
 
     /**
+     * Health check al servidor Firefly (endpoint /health).
+     * Si responde exitosamente y el servidor estaba marcado como no disponible,
+     * actualiza el estado e intenta sincronizar la cola.
+     * @returns {Promise<boolean>} true si el servidor responde, false si no
+     */
+    function checkFireflyHealth() {
+        const url = window.FFPWA.config.url;
+        if (!url) return Promise.resolve(false);
+
+        console.log('[HEALTH] Verificando disponibilidad del servidor Firefly...');
+
+        return new Promise((resolve) => {
+            $.ajax({
+                url: `${url}/health`,
+                method: 'GET',
+                timeout: 10000, // 10s de timeout
+                success: function() {
+                    if (!fireflyServerAvailable) {
+                        console.log('[HEALTH] ✅ Servidor Firefly disponible de nuevo.');
+                        window.FFPWA.updateStatus('🟢 Online');
+                        fireflyServerAvailable = true;
+                        // Reintentar cola pendiente
+                        syncQueue();
+                    }
+                    resolve(true);
+                },
+                error: function(xhr) {
+                    if (fireflyServerAvailable) {
+                        console.warn('[HEALTH] ❌ Servidor Firefly no disponible.');
+                        window.FFPWA.updateStatus('🔶 Servidor no disponible');
+                        fireflyServerAvailable = false;
+                    }
+                    resolve(false);
+                }
+            });
+        });
+    }
+    window.FFPWA.checkFireflyHealth = checkFireflyHealth;
+
+    /**
+     * Inicia el health check periódico (cada 5 minutos).
+     * No crea intervalos duplicados si ya está corriendo.
+     */
+    function startFireflyHealthCheck() {
+        if (healthCheckIntervalId) {
+            console.log('[HEALTH] Health check ya estaba corriendo.');
+            return;
+        }
+        console.log('[HEALTH] Iniciando health check cada 5 minutos.');
+        // Hacer una verificación inmediata primero
+        checkFireflyHealth();
+        healthCheckIntervalId = setInterval(checkFireflyHealth, HEALTH_CHECK_INTERVAL);
+    }
+    window.FFPWA.startFireflyHealthCheck = startFireflyHealthCheck;
+
+    /**
+     * Detiene el health check periódico.
+     */
+    function stopFireflyHealthCheck() {
+        if (healthCheckIntervalId) {
+            clearInterval(healthCheckIntervalId);
+            healthCheckIntervalId = null;
+            console.log('[HEALTH] Health check detenido.');
+        }
+    }
+    window.FFPWA.stopFireflyHealthCheck = stopFireflyHealthCheck;
+
+    /**
      * Maneja el envío del formulario de transacción.
+     * - Online + servidor responde → envía directo ✅
+     * - Online + servidor caído → encola + inicia health check 🟡
+     * - Offline → encola 💾
+     * - Auth errors (401/403) → muestra error, no encola 🔴
      */
     function handleTransactionSubmit(e) {
         e.preventDefault();
@@ -262,9 +347,32 @@
                 .then(() => {
                     showStatusMessage('✅ Transacción registrada exitosamente.', 'success');
                     resetTransactionForm();
+                    // Si el servidor estaba marcado como caído, restaurar estado
+                    if (!fireflyServerAvailable) {
+                        fireflyServerAvailable = true;
+                        window.FFPWA.updateStatus('🟢 Online');
+                        stopFireflyHealthCheck();
+                    }
                 })
                 .catch(error => {
-                    showStatusMessage(`🛑 Falló el envío: ${error.message}`, 'error');
+                    const status = error.status || 0;
+
+                    // Errores de autenticación o autorización: no son recuperables
+                    if (status === 401 || status === 403) {
+                        showStatusMessage(`🛑 ${error.message}`, 'error');
+                        window.FFPWA.updateStatus('🔶 Servidor no disponible');
+                        fireflyServerAvailable = false;
+                        startFireflyHealthCheck();
+                    }
+                    // Errores temporales: servidor caído, timeout, 5xx
+                    else {
+                        showStatusMessage('🟡 Servidor Firefly no disponible. Transacción encolada para reintento.', 'warning');
+                        queueTransaction(transactionPayload);
+                        resetTransactionForm();
+                        window.FFPWA.updateStatus('🔶 Servidor no disponible');
+                        fireflyServerAvailable = false;
+                        startFireflyHealthCheck();
+                    }
                 })
                 .finally(() => {
                     $btn.prop('disabled', false).text('Registrar Transacción');
@@ -279,10 +387,16 @@
     $(document).ready(function() {
         $('#transaction-form').on('submit', handleTransactionSubmit);
 
+        // Al recuperar conexión de red, verificar salud del servidor antes de sincronizar
         window.addEventListener('online', () => {
-            window.FFPWA.updateStatus('🟢 Online');
-            console.log('[NETWORK]: Online. Sincronizando cola...');
-            syncQueue();
+            console.log('[NETWORK]: Online. Verificando servidor...');
+            if (fireflyServerAvailable) {
+                window.FFPWA.updateStatus('🟢 Online');
+                syncQueue();
+            } else {
+                window.FFPWA.updateStatus('🔶 Servidor no disponible (verificando...)');
+                checkFireflyHealth();
+            }
         });
 
         window.addEventListener('offline', () => {
@@ -295,9 +409,23 @@
             navigator.serviceWorker.addEventListener('message', (event) => {
                 if (event.data && event.data.type === 'BACKGROUND_SYNC') {
                     console.log(`[CLIENT] Recibido BACKGROUND_SYNC del SW (tag: ${event.data.tag}). Ejecutando syncQueue...`);
-                    syncQueue();
+                    // Primero verificar que el servidor esté disponible
+                    if (fireflyServerAvailable) {
+                        syncQueue();
+                    } else {
+                        checkFireflyHealth();
+                    }
                 }
             });
+        }
+
+        // Si hay transacciones pendientes al cargar la página, iniciar health check
+        const pendingQueue = getQueue();
+        if (pendingQueue.length > 0) {
+            console.log(`[INIT] ${pendingQueue.length} transacción(es) pendiente(s) en la cola. Iniciando health check...`);
+            fireflyServerAvailable = false;
+            window.FFPWA.updateStatus('🔶 Servidor no disponible');
+            startFireflyHealthCheck();
         }
     });
 

@@ -226,7 +226,7 @@
     }
 
     /**
-     * Pre-fill del campo origen con la cuenta default registrada.
+     * Configura el placeholder del campo origen con la cuenta default.
      */
     function prefillDefaultSource(accountsCache) {
         const defaultAccount = window.FFPWA.config.defaultSourceAccount;
@@ -235,10 +235,10 @@
         // Verificar que la cuenta default existe en el caché
         const match = accountsCache.find(a => String(a.id) === String(defaultAccount.id));
         if (match) {
-            $('#source-account').val(match.name);
+            $('#source-account').val('').attr('placeholder', match.name + ' (default)');
             $('#source-account-id').val(match.id);
             $('#source-account-name').val(match.name);
-            console.log(`[DEFAULT] Source pre-fill: ${match.name}`);
+            console.log(`[DEFAULT] Source placeholder: ${match.name}`);
         }
     }
 
