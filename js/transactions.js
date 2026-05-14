@@ -96,6 +96,8 @@
         }
 
         const amount = validateAndFormatAmount();
+        const selectedCurrency = $('#currency-select').val();
+        const primaryCurrency = window.FFPWA.currencies && window.FFPWA.currencies.primary;
 
         // Construir la transacción dinámicamente:
         // - Si hay ID, enviarlo (cuenta existente seleccionada)
@@ -104,9 +106,27 @@
             "type": "withdrawal",
             "description": $('#description').val().trim() || "Transacción sin descripción",
             "date": new Date().toISOString(),
-            "amount": amount,
             "source_name": sourceName
         };
+
+        // Si hay datos de monedas y la seleccionada no es la primaria, convertir
+        if (primaryCurrency && selectedCurrency && selectedCurrency !== primaryCurrency.code) {
+            const rateInfo = window.FFPWA.getCachedRate(selectedCurrency, primaryCurrency.code);
+            if (!rateInfo) {
+                throw new Error(
+                    `Tipo de cambio ${selectedCurrency} → ${primaryCurrency.code} no disponible. ` +
+                    'Espera a que se cargue o usa la moneda predeterminada.'
+                );
+            }
+            const converted = (parseFloat(amount) * rateInfo.rate).toFixed(primaryCurrency.decimal_places || 2);
+            transaction.amount = converted;
+            transaction.foreign_amount = amount;
+            transaction.foreign_currency_code = selectedCurrency;
+            console.log(`💱 Conversión: ${amount} ${selectedCurrency} → ${converted} ${primaryCurrency.code} (tasa: ${rateInfo.rate})`);
+        } else {
+            // Moneda primaria o sin datos de monedas — flujo normal
+            transaction.amount = amount;
+        }
 
         // Solo incluir source_id si existe (cuenta existente)
         if (sourceId && sourceId !== "") {
