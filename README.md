@@ -1,29 +1,43 @@
 # Firefly Ledger PWA
-## Aplicación Web Progresiva para Registro de Transacciones Offline
 
-Una herramienta web progresiva (PWA) diseñada para resolver la dependencia de conexión a internet al registrar transacciones financieras en Firefly III. Ofrece una experiencia de usuario fluida y robusta, garantizando que los datos se capturen y se sincronicen automáticamente en el momento adecuado.
+Aplicación Web Progresiva para el registro de transacciones en Firefly III, con soporte offline y multi-moneda.
 
-## 🎯 Objetivo del Proyecto
+## Características
 
-El objetivo principal es eliminar la fricción del usuario causada por la inestabilidad de la conexión a internet. Al implementar un sistema de cola de sincronización y la persistencia local, la aplicación garantiza que cada transacción quede guardada en el dispositivo, sin importar el estado de la red.
+- **Registro de transacciones** — Soporta los tres tipos de transacciones de Firefly III: retiros (withdrawal), depósitos (deposit) y transferencias (transfer).
+- **Offline primero** — Las transacciones se almacenan localmente y se sincronizan automáticamente al recuperar la conexión. Utiliza Background Sync cuando el navegador lo soporta.
+- **Selección contextual de cuentas** — Autocompletado inteligente que filtra cuentas según el tipo de transacción: Asset para retiros y transferencias, Revenue para depósitos, Expense para retiros.
+- **Multi-moneda** — Conversión automática de divisas usando la API de Frankfurter. En transferencias entre cuentas con distinta moneda, calcula automáticamente el monto en la moneda de destino.
+- **Cuenta origen por defecto** — Configuración inicial de una cuenta Asset predeterminada que se usa automáticamente en el campo correspondiente según el tipo de transacción.
+- **Health check** — Monitoreo periódico de disponibilidad del servidor Firefly III. Reintenta la sincronización automáticamente cuando el servidor se recupera.
 
-## ✨ Características Clave
+## Requisitos
 
-*   **Offline:** Permite registrar, editar y gestionar todas las transacciones en modo sin conexión, utilizando la caché local del navegador.
-*   **Sincronización:** Cuando la conexión se restablece, la aplicación detecta automáticamente el evento `online` y procesa la cola de transacciones pendientes en segundo plano.
-*   **Filtrado por Contexto:** El autocompletado es contextual. Al seleccionar la Cuenta Origen, solo se mostrarán cuentas tipo `Asset`. Al seleccionar la Cuenta Destino, solo se mostrarán cuentas tipo `Expense`.
-*   **Experiencia de Usuario (UX):** Interfaz minimalista y optimizada para dispositivos móviles, con un autocompletado de alta precisión que maneja la creación de cuentas nuevas.
+- Instancia de Firefly III con acceso a la API REST.
+- Token de Acceso Personal (PAT) generado desde el perfil de usuario en Firefly III.
 
-## 🛠️ Cómo Ejecutar la Aplicación
+## Instalación
 
-Dado que es una PWA, debe ser servida a través de un servidor web local (ej: `http-server` o Live Server).
+1. Clona el repositorio o descarga los archivos.
+2. Sirve el directorio raíz con cualquier servidor web estático:
 
-**Pasos de Ejecución:**
+```bash
+npx http-server -o
+```
 
-1.  Asegúrate de que todos los archivos (`.html`, `.js`, `.json`) estén en la raíz del proyecto.
-2.  Ejecuta el servidor web local. (Si usas VS Code, haz clic derecho y selecciona "Open with Live Server").
-3.  Accede a la URL `http://localhost:[puerto]`.
+O desde VS Code, abre el proyecto y usa "Open with Live Server".
 
-## 📄 Licencia
+3. Abre la URL en tu navegador. La primera vez solicitará la URL de tu instancia de Firefly III y el PAT.
+4. Selecciona la cuenta Asset que se usará por defecto.
 
-Este proyecto está bajo la Licencia MIT.
+## Uso
+
+1. Selecciona el tipo de transacción: Retiro, Depósito o Transferencia.
+2. Completa los campos de cuenta. El autocompletado filtra las cuentas disponibles según el tipo seleccionado.
+3. Si el tipo de cuenta lo permite, puedes escribir un nombre nuevo para crear una cuenta sobre la marcha (no aplica para cuentas tipo Asset).
+4. Ingresa el concepto y el monto. Si seleccionas una moneda distinta a la predeterminada, el sistema muestra la conversión en tiempo real.
+5. Envía la transacción. Si no hay conexión o el servidor no responde, la transacción se encola y se sincroniza automáticamente cuando sea posible.
+
+## Licencia
+
+MIT
