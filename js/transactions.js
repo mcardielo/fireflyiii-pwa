@@ -314,8 +314,11 @@
                         console.log('[HEALTH] ✅ Servidor Firefly disponible de nuevo.');
                         window.FFPWA.updateStatus('🟢 Online');
                         fireflyServerAvailable = true;
-                        // Reintentar cola pendiente
                         syncQueue();
+                    }
+                    // Si la cola está vacía, no necesitamos seguir monitoreando
+                    if (getQueue().length === 0 && healthCheckIntervalId) {
+                        stopFireflyHealthCheck();
                     }
                     resolve(true);
                 },
@@ -458,14 +461,17 @@
             });
         }
 
-        // Si hay transacciones pendientes al cargar la página, iniciar health check
+        // Iniciar health check para monitorear disponibilidad del servidor
         const pendingQueue = getQueue();
         if (pendingQueue.length > 0) {
-            console.log(`[INIT] ${pendingQueue.length} transacción(es) pendiente(s) en la cola. Iniciando health check...`);
+            console.log(`[INIT] ${pendingQueue.length} transacción(es) pendiente(s) en la cola.`);
             fireflyServerAvailable = false;
             window.FFPWA.updateStatus('🔶 Servidor no disponible');
-            startFireflyHealthCheck();
         }
+        // Siempre iniciar health check para monitoreo continuo;
+        // si no hay items pendientes, se detendrá automáticamente
+        // al detectar que el servidor responde y la cola está vacía.
+        startFireflyHealthCheck();
     });
 
 })();
