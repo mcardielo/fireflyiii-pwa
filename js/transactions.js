@@ -289,22 +289,26 @@
     window.FFPWA.syncQueue = syncQueue;
 
     /**
-     * Health check al servidor Firefly (endpoint /health).
+     * Health check al servidor Firefly via /api/v1/about.
      * Si responde exitosamente y el servidor estaba marcado como no disponible,
      * actualiza el estado e intenta sincronizar la cola.
      * @returns {Promise<boolean>} true si el servidor responde, false si no
      */
     function checkFireflyHealth() {
         const url = window.FFPWA.config.url;
+        const token = window.FFPWA.config.token;
         if (!url) return Promise.resolve(false);
 
         console.log('[HEALTH] Verificando disponibilidad del servidor Firefly...');
 
         return new Promise((resolve) => {
             $.ajax({
-                url: `${url}/health`,
+                url: `${url}/api/v1/about`,
                 method: 'GET',
-                timeout: 10000, // 10s de timeout
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                timeout: 10000,
                 success: function() {
                     if (!fireflyServerAvailable) {
                         console.log('[HEALTH] ✅ Servidor Firefly disponible de nuevo.');

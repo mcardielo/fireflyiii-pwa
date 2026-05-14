@@ -168,13 +168,13 @@
     function fetchExchangeRateFromFrankfurter(from, to) {
         return new Promise((resolve, reject) => {
             $.ajax({
-                url: `https://api.frankfurter.app/latest?from=${from}&to=${to}`,
+                url: `https://api.frankfurter.dev/v2/rate/${from}/${to}`,
                 method: 'GET',
                 dataType: 'json',
                 timeout: 10000,
                 success: function(data) {
-                    if (data.rates && data.rates[to]) {
-                        resolve({ rate: data.rates[to], date: data.date });
+                    if (data.rate) {
+                        resolve({ rate: data.rate, date: data.date });
                     } else {
                         reject(new Error(`Sin tasa ${from}→${to} en Frankfurter`));
                     }
