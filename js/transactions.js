@@ -93,9 +93,26 @@
     }
 
     /**
+     * Busca la moneda de una cuenta en el caché global.
+     */
+    function getAccountCurrency(accountId) {
+        const cache = window.FFPWA.accountsCache;
+        if (!cache || !accountId) return null;
+        const account = cache.find(a => String(a.id) === String(accountId));
+        return account ? (account.currency_code || null) : null;
+    }
+
+    function getAccountDecimalPlaces(accountId) {
+        const cache = window.FFPWA.accountsCache;
+        if (!cache || !accountId) return null;
+        const account = cache.find(a => String(a.id) === String(accountId));
+        return account ? (account.currency_decimal_places || 2) : null;
+    }
+
+    /**
      * Recopila y transforma los datos del formulario en el formato JSON requerido por Firefly III.
      */
-    function buildTransactionPayload() {
+    async function buildTransactionPayload() {
         const transactionType = $('#transaction-type').val() || 'withdrawal';
         const source = resolveField('source');
         const dest = resolveField('destination');
@@ -134,8 +151,35 @@
             "source_name": source.name
         };
 
-        // Si hay datos de monedas y la seleccionada no es la primaria, convertir
-        if (primaryCurrency && selectedCurrency && selectedCurrency !== primaryCurrency.code) {
+        // ── Transferencias: detección automática de monedas entre cuentas ──
+        if (transactionType === 'transfer') {
+            const sourceCurrency = getAccountCurrency(source.id);
+            const destCurrency = getAccountCurrency(dest.id);
+
+            if (sourceCurrency && destCurrency && sourceCurrency !== destCurrency) {
+                // Monedas diferentes: amount en moneda origen, foreign en moneda destino
+                console.log(`💱 Transfer: ${sourceCurrency} → ${destCurrency}`);
+                try {
+                    const rateInfo = await window.FFPWA.getExchangeRate(sourceCurrency, destCurrency);
+                    const destPlaces = getAccountDecimalPlaces(dest.id) || 2;
+                    const converted = (parseFloat(amount) * rateInfo.rate).toFixed(destPlaces);
+                    transaction.amount = amount;
+                    transaction.foreign_amount = converted;
+                    transaction.foreign_currency_code = destCurrency;
+                    console.log(`💱 Transfer: ${amount} ${sourceCurrency} → ${converted} ${destCurrency} (tasa: ${rateInfo.rate})`);
+                } catch (e) {
+                    throw new Error(
+                        `Tipo de cambio ${sourceCurrency} → ${destCurrency} no disponible. ` +
+                        'Intenta de nuevo en unos segundos.'
+                    );
+                }
+            } else {
+                // Misma moneda o no disponible — flujo normal
+                transaction.amount = amount;
+            }
+        }
+        // ── Withdrawal / Deposit: usar lógica del dropdown ──
+        else if (primaryCurrency && selectedCurrency && selectedCurrency !== primaryCurrency.code) {
             const rateInfo = window.FFPWA.getCachedRate(selectedCurrency, primaryCurrency.code);
             if (!rateInfo) {
                 throw new Error(
@@ -398,12 +442,12 @@
      * - Offline → encola 💾
      * - Auth errors (401/403) → muestra error, no encola 🔴
      */
-    function handleTransactionSubmit(e) {
+    async function handleTransactionSubmit(e) {
         e.preventDefault();
 
         let transactionPayload = null;
         try {
-            transactionPayload = buildTransactionPayload();
+            transactionPayload = await buildTransactionPayload();
         } catch (error) {
             showStatusMessage(`❌ ${error.message}`, 'error');
             return;

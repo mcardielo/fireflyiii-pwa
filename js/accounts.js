@@ -59,7 +59,9 @@
                         id: account.id,
                         name: account.attributes.name,
                         type: account.attributes.type,
-                        active: account.attributes.active !== undefined ? account.attributes.active : true
+                        active: account.attributes.active !== undefined ? account.attributes.active : true,
+                        currency_code: account.attributes.currency_code || null,
+                        currency_decimal_places: account.attributes.currency_decimal_places || 2
                     }));
 
                     console.log(`✅ [API]: Cuentas cargadas exitosamente: ${cleanAccounts.length}`);
@@ -362,6 +364,9 @@
         setupTransactionTypeSelector(accountsCache);
         updateTypeHints(currentType);
         prefillDefaultSource(accountsCache, currentType);
+
+        // Exponer cache globalmente para otros módulos (transactions.js)
+        window.FFPWA.accountsCache = accountsCache;
 
         window.FFPWA.showStatusMessage(`✅ Sistema de cuentas activo. Cuentas cargadas: ${accountsCache.length}.`, 'success');
     }
