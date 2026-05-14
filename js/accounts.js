@@ -9,6 +9,21 @@
         $(element).addClass('hidden');
     }
 
+    /**
+     * Devuelve el tipo de cuenta filtrado para un campo según el tipo de transacción.
+     */
+    function getAccountTypeForField(transactionType, fieldContext) {
+        if (transactionType === 'deposit') {
+            return fieldContext === 'source' ? 'revenue' : 'asset';
+        }
+        if (transactionType === 'transfer') {
+            return 'asset'; // ambos campos
+        }
+        // withdrawal (default)
+        return fieldContext === 'source' ? 'asset' : 'expense';
+    }
+    window.FFPWA.getAccountTypeForField = getAccountTypeForField;
+
     function updateStatus(statusText) {
         const statusEl = $('#online-status');
         statusEl.removeClass('bg-green-100 text-green-800 bg-red-100 text-red-800 bg-yellow-100 text-yellow-800');
@@ -131,24 +146,26 @@
             return;
         }
 
-        let accountsToFilter = [];
+        const transactionType = $('#transaction-type').val();
+        const targetType = getAccountTypeForField(transactionType, fieldContext);
 
-        if (fieldContext === 'source') {
-            accountsToFilter = cache.filter(account => account.type === 'asset' && account.active !== false);
-        } else {
-            accountsToFilter = cache.filter(account => account.type === 'expense' && account.active !== false);
-        }
+        let accountsToFilter = cache.filter(account =>
+            account.type === targetType && account.active !== false
+        );
 
         const filteredAccounts = accountsToFilter.filter(account =>
             account.name.toLowerCase().includes(query)
         );
 
-        // Usar rawValue para preservar la capitalización que escribió el usuario
-        const results = filteredAccounts.concat([{
-            name: rawValue,
-            id: undefined,
-            isNew: true
-        }]);
+        // Crear nueva cuenta: solo permitido si NO es tipo asset
+        const results = filteredAccounts.slice();
+        if (targetType !== 'asset') {
+            results.push({
+                name: rawValue,
+                id: undefined,
+                isNew: true
+            });
+        }
 
         renderAutocomplete(dropdownElement, results);
         $(dropdownElement).removeClass('hidden');
@@ -232,20 +249,96 @@
     }
 
     /**
-     * Configura el placeholder del campo origen con la cuenta default.
+     * Coloca la cuenta default en el campo correspondiente según el tipo de transacción.
+     * - withdrawal/transfer: default va en origen
+     * - deposit: default va en destino
      */
-    function prefillDefaultSource(accountsCache) {
+    function prefillDefaultSource(accountsCache, transactionType) {
         const defaultAccount = window.FFPWA.config.defaultSourceAccount;
         if (!defaultAccount || !defaultAccount.id) return;
 
-        // Verificar que la cuenta default existe en el caché
         const match = accountsCache.find(a => String(a.id) === String(defaultAccount.id));
-        if (match) {
-            $('#source-account').val('').attr('placeholder', match.name + ' (default)');
-            $('#source-account-id').val(match.id);
-            $('#source-account-name').val(match.name);
-            console.log(`[DEFAULT] Source placeholder: ${match.name}`);
+        if (!match) return;
+
+        const isDeposit = transactionType === 'deposit';
+        const targetField = isDeposit ? 'destination' : 'source';
+        const otherField = isDeposit ? 'source' : 'destination';
+
+        // Limpiar el otro campo
+        $(`#${otherField}-account`).val('').attr('placeholder', `Selecciona o escribe la cuenta ${otherField}...`);
+        $(`#${otherField}-account-id`).val('');
+        $(`#${otherField}-account-name`).val('');
+
+        // Poner default en targetField
+        $(`#${targetField}-account`).val('').attr('placeholder', match.name + ' (default)');
+        $(`#${targetField}-account-id`).val(match.id);
+        $(`#${targetField}-account-name`).val(match.name);
+
+        console.log(`[DEFAULT] ${targetField} placeholder: ${match.name}`);
+    }
+
+    /**
+     * Actualiza las etiquetas de tipo de cuenta según la transacción seleccionada.
+     */
+    function updateTypeHints(transactionType) {
+        const sourceHint = $('#source-type-hint');
+        const destHint = $('#dest-type-hint');
+
+        if (transactionType === 'deposit') {
+            sourceHint.text('(Revenue)');
+            destHint.text('(Asset)');
+        } else if (transactionType === 'transfer') {
+            sourceHint.text('(Asset)');
+            destHint.text('(Asset)');
+        } else {
+            sourceHint.text('(Asset)');
+            destHint.text('(Expense)');
         }
+    }
+
+    /**
+     * Maneja el cambio de tipo de transacción.
+     */
+    function onTransactionTypeChanged(newType, accountsCache) {
+        const hiddenInput = $('#transaction-type');
+        hiddenInput.val(newType);
+
+        // Actualizar hints
+        updateTypeHints(newType);
+
+        // Actualizar placeholder de cuenta default
+        prefillDefaultSource(accountsCache, newType);
+
+        // Cerrar dropdowns abiertos
+        hideDropdown('#source-autocomplete');
+        hideDropdown('#destination-autocomplete');
+    }
+
+    /**
+     * Configura el selector visual de tipo de transacción.
+     */
+    function setupTransactionTypeSelector(accountsCache) {
+        const $selector = $('#type-selector');
+        const $buttons = $selector.find('.type-btn');
+
+        $selector.on('click', '.type-btn', function() {
+            const $btn = $(this);
+            const newType = $btn.data('type');
+            const currentType = $('#transaction-type').val();
+
+            if (newType === currentType) return;
+
+            // Actualizar estilos de los botones
+            $buttons.removeClass('bg-indigo-600 text-white shadow-sm')
+                    .addClass('text-gray-600 hover:text-gray-800');
+            $btn.removeClass('text-gray-600 hover:text-gray-800')
+                .addClass('bg-indigo-600 text-white shadow-sm');
+
+            $buttons.attr('aria-checked', 'false');
+            $btn.attr('aria-checked', 'true');
+
+            onTransactionTypeChanged(newType, accountsCache);
+        });
     }
 
     /**
@@ -258,13 +351,17 @@
             return;
         }
 
+        const currentType = $('#transaction-type').val() || 'withdrawal';
+
         initAutocomplete(
             'source-account', 'source-autocomplete',
             'destination-account', 'destination-autocomplete',
             accountsCache
         );
 
-        prefillDefaultSource(accountsCache);
+        setupTransactionTypeSelector(accountsCache);
+        updateTypeHints(currentType);
+        prefillDefaultSource(accountsCache, currentType);
 
         window.FFPWA.showStatusMessage(`✅ Sistema de cuentas activo. Cuentas cargadas: ${accountsCache.length}.`, 'success');
     }

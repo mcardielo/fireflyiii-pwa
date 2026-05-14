@@ -147,7 +147,7 @@
     <!-- ========== DASHBOARD ========== -->
     <div id="dashboard-container" class="w-full max-w-4xl pt-8 hidden">
         <header class="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
-            <h1 class="text-3xl font-bold text-gray-800">🚀 Registro Rápido</h1>
+            <h1 class="text-3xl font-bold text-gray-800">Registro</h1>
             <div class="flex items-center space-x-4">
                 <button id="config-btn" class="text-sm text-indigo-600 hover:text-indigo-800 transition">
                     <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.72.355 1.464-.243 2.002-1.11-.538.867-1.22 1.493-1.22 2.22 0 1.01.82 1.82 1.82 1.82z"/></svg>
@@ -163,13 +163,35 @@
         <main class="bg-white p-8 rounded-lg shadow-xl w-full">
             <h2 class="text-2xl font-semibold text-gray-700 mb-6">Registrar Transacción</h2>
 
+            <!-- Tipo de Transacción -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Transacción</label>
+                <div class="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-lg" role="radiogroup" id="type-selector">
+                    <button type="button" role="radio" aria-checked="true" data-type="withdrawal"
+                            class="type-btn px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white shadow-sm transition-all">
+                        💸 Gasto
+                    </button>
+                    <button type="button" role="radio" aria-checked="false" data-type="deposit"
+                            class="type-btn px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-800 transition-all">
+                        💰 Depósito
+                    </button>
+                    <button type="button" role="radio" aria-checked="false" data-type="transfer"
+                            class="type-btn px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-800 transition-all">
+                        🔄 Transferencia
+                    </button>
+                </div>
+                <input type="hidden" id="transaction-type" value="withdrawal">
+            </div>
+
             <div id="status-message" class="p-3 rounded-md mb-4 text-sm hidden"></div>
 
             <form id="transaction-form" class="space-y-6">
 
                 <!-- Cuenta Origen -->
                 <div>
-                    <label for="source-account" class="block text-sm font-medium text-gray-700">Cuenta Origen</label>
+                    <label for="source-account" class="block text-sm font-medium text-gray-700">
+                        Cuenta Origen <span id="source-type-hint" class="text-xs text-gray-400 font-normal">(Asset)</span>
+                    </label>
                     <div class="relative">
                         <input type="text" id="source-account" placeholder="Selecciona o escribe la cuenta origen..."
                                autocomplete="off"
@@ -182,7 +204,9 @@
 
                 <!-- Cuenta Destino -->
                 <div>
-                    <label for="destination-account" class="block text-sm font-medium text-gray-700">Cuenta Destino</label>
+                    <label for="destination-account" class="block text-sm font-medium text-gray-700">
+                        Cuenta Destino <span id="dest-type-hint" class="text-xs text-gray-400 font-normal">(Expense)</span>
+                    </label>
                     <div class="relative">
                         <input type="text" id="destination-account" required placeholder="Selecciona o escribe la cuenta destino..."
                                autocomplete="off"

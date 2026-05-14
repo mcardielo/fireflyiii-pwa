@@ -56,26 +56,37 @@
     }
 
     /**
-     * Resuelve la cuenta origen:
+     * Resuelve una cuenta (origen o destino):
      * - Si el usuario escribió algo en el campo visible, usa ese valor.
-     * - Si el campo está vacío, usa la cuenta default registrada.
-     * El campo visible se deja vacío con placeholder = nombre default.
+     * - Si el campo está vacío y aplica, usa la cuenta default registrada.
+     * - Para depósitos: default va en destino.
+     * - Para retiros/transferencias: default va en origen.
      */
-    function resolveSourceAccount() {
-        const visibleSource = $('#source-account').val().trim();
+    function resolveField(field) {
+        const transactionType = $('#transaction-type').val() || 'withdrawal';
+        const prefix = field === 'source' ? 'source' : 'destination';
+        const visibleValue = $(`#${prefix}-account`).val().trim();
         const defaultAccount = window.FFPWA.config.defaultSourceAccount;
 
-        // El usuario escribió o seleccionó algo → usar eso
-        if (visibleSource) {
+        if (visibleValue) {
             return {
-                id: $('#source-account-id').val() || null,
-                name: $('#source-account-name').val() || visibleSource
+                id: $(`#${prefix}-account-id`).val() || null,
+                name: $(`#${prefix}-account-name`).val() || visibleValue
             };
         }
 
-        // Campo vacío → usar cuenta default
-        if (defaultAccount && defaultAccount.id) {
-            return { id: String(defaultAccount.id), name: defaultAccount.name };
+        // Para depósitos: la cuenta default (asset) va en destino
+        if (transactionType === 'deposit' && field === 'destination') {
+            if (defaultAccount && defaultAccount.id) {
+                return { id: String(defaultAccount.id), name: defaultAccount.name };
+            }
+        }
+
+        // Para retiros y transferencias: la cuenta default va en origen
+        if (transactionType !== 'deposit' && field === 'source') {
+            if (defaultAccount && defaultAccount.id) {
+                return { id: String(defaultAccount.id), name: defaultAccount.name };
+            }
         }
 
         return { id: null, name: null };
@@ -85,14 +96,28 @@
      * Recopila y transforma los datos del formulario en el formato JSON requerido por Firefly III.
      */
     function buildTransactionPayload() {
-        const source = resolveSourceAccount();
-        const sourceId = source.id;
-        const sourceName = source.name;
-        const destId = $('#destination-account-id').val();
-        const destName = $('#destination-account-name').val();
+        const transactionType = $('#transaction-type').val() || 'withdrawal';
+        const source = resolveField('source');
+        const dest = resolveField('destination');
 
-        if (!sourceName || !destName) {
-            throw new Error('Por favor, selecciona o ingresa nombres de cuenta válidos para ambas fuentes.');
+        if (!source.name || !dest.name) {
+            throw new Error('Por favor, selecciona o ingresa nombres de cuenta válidos para ambos campos.');
+        }
+
+        // Validaciones según tipo
+        if (transactionType === 'deposit') {
+            // En depósitos, destino es asset — no se puede crear cuenta nueva
+            if (!dest.id) {
+                throw new Error('La cuenta destino (Asset) debe existir. Selecciona una cuenta existente.');
+            }
+        } else if (transactionType === 'transfer') {
+            // Transferencias: ambas cuentas son asset — no se pueden crear nuevas
+            if (!source.id) {
+                throw new Error('La cuenta origen (Asset) debe existir. Selecciona una cuenta existente.');
+            }
+            if (!dest.id) {
+                throw new Error('La cuenta destino (Asset) debe existir. Selecciona una cuenta existente.');
+            }
         }
 
         const amount = validateAndFormatAmount();
@@ -103,10 +128,10 @@
         // - Si hay ID, enviarlo (cuenta existente seleccionada)
         // - Si no hay ID, NO incluirlo (Firefly creará la cuenta por el nombre)
         const transaction = {
-            "type": "withdrawal",
+            "type": transactionType,
             "description": $('#description').val().trim() || "Transacción sin descripción",
             "date": new Date().toISOString(),
-            "source_name": sourceName
+            "source_name": source.name
         };
 
         // Si hay datos de monedas y la seleccionada no es la primaria, convertir
@@ -129,17 +154,17 @@
         }
 
         // Solo incluir source_id si existe (cuenta existente)
-        if (sourceId && sourceId !== "") {
-            transaction.source_id = sourceId;
+        if (source.id && source.id !== "") {
+            transaction.source_id = source.id;
         }
 
         // Solo incluir destination_id si existe (cuenta existente)
-        if (destId && destId !== "") {
-            transaction.destination_id = destId;
+        if (dest.id && dest.id !== "") {
+            transaction.destination_id = dest.id;
         }
 
         // destination_name siempre se incluye
-        transaction.destination_name = destName;
+        transaction.destination_name = dest.name;
 
         return {
             "error_if_duplicate_hash": true,
@@ -152,18 +177,21 @@
      * Limpia el formulario y restaura el placeholder con la cuenta default.
      */
     function resetTransactionForm() {
+        const transactionType = $('#transaction-type').val() || 'withdrawal';
         $('#transaction-form')[0].reset();
         $('#source-account-id').val('');
         $('#source-account-name').val('');
         $('#destination-account-id').val('');
         $('#destination-account-name').val('');
 
-        // Restaurar cuenta origen default en placeholder y hidden fields
+        // Restaurar placeholder default según tipo
         const defaultAccount = window.FFPWA.config.defaultSourceAccount;
         if (defaultAccount && defaultAccount.id) {
-            $('#source-account').val('').attr('placeholder', defaultAccount.name + ' (default)');
-            $('#source-account-id').val(defaultAccount.id);
-            $('#source-account-name').val(defaultAccount.name);
+            const isDeposit = transactionType === 'deposit';
+            const targetField = isDeposit ? 'destination' : 'source';
+            $(`#${targetField}-account`).val('').attr('placeholder', defaultAccount.name + ' (default)');
+            $(`#${targetField}-account-id`).val(defaultAccount.id);
+            $(`#${targetField}-account-name`).val(defaultAccount.name);
         }
     }
 
