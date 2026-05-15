@@ -140,7 +140,6 @@
         .field-card {
             background: #ffffff;
             border-radius: 10px;
-            overflow: hidden;
         }
         .field-row {
             display: flex;
@@ -378,11 +377,13 @@
                     <div class="field-card">
                         <div class="field-row">
                             <span class="field-label">Origen <span id="source-type-hint" class="field-hint">(Asset)</span></span>
-                            <div class="field-value relative" style="justify-content:flex-end">
-                                <input type="text" id="source-account" placeholder="Selecciona..."
-                                       autocomplete="off"
-                                       class="ios-input">
-                                <div id="source-autocomplete" class="autocomplete-dropdown hidden"></div>
+                            <div class="field-value">
+                                <div class="relative" style="flex:1; display:flex; align-items:center; justify-content:flex-end">
+                                    <input type="text" id="source-account" placeholder="Selecciona..."
+                                           autocomplete="off"
+                                           class="ios-input">
+                                    <div id="source-autocomplete" class="autocomplete-dropdown hidden"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -396,11 +397,13 @@
                     <div class="field-card">
                         <div class="field-row">
                             <span class="field-label">Destino <span id="dest-type-hint" class="field-hint">(Expense)</span></span>
-                            <div class="field-value relative" style="justify-content:flex-end">
-                                <input type="text" id="destination-account" required placeholder="Buscar cuenta..."
-                                       autocomplete="off"
-                                       class="ios-input">
-                                <div id="destination-autocomplete" class="autocomplete-dropdown hidden"></div>
+                            <div class="field-value">
+                                <div class="relative" style="flex:1; display:flex; align-items:center; justify-content:flex-end">
+                                    <input type="text" id="destination-account" required placeholder="Buscar cuenta..."
+                                           autocomplete="off"
+                                           class="ios-input">
+                                    <div id="destination-autocomplete" class="autocomplete-dropdown hidden"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
