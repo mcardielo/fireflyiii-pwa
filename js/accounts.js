@@ -10,6 +10,13 @@
     }
 
     /**
+     * Muestra el dropdown de autocomplete.
+     */
+    function showDropdown(element) {
+        $(element).removeClass('hidden');
+    }
+
+    /**
      * Devuelve el tipo de cuenta filtrado para un campo según el tipo de transacción.
      */
     function getAccountTypeForField(transactionType, fieldContext) {
@@ -170,7 +177,7 @@
         }
 
         renderAutocomplete(dropdownElement, results);
-        $(dropdownElement).removeClass('hidden');
+        showDropdown(dropdownElement);
     }
 
     /**
@@ -185,9 +192,9 @@
             const isNew = item.isNew || false;
             const dataAttributes = `data-account-id="${item.id !== undefined ? item.id : ''}" data-account-name="${item.name}" data-is-new="${isNew}"`;
 
-            htmlContent += `<li ${dataAttributes} class="autocomplete-item p-2 cursor-pointer hover:bg-indigo-50">
-                <span class="text-gray-800">${item.name}</span>
-                ${isNew ? '<span class="text-xs text-indigo-500 ml-2">+ Crear nueva</span>' : ''}
+            htmlContent += `<li ${dataAttributes} class="autocomplete-item">
+                <span>${item.name}</span>
+                ${isNew ? '<span class="new-badge">+ Crear nueva</span>' : ''}
             </li>`;
         });
 
@@ -317,24 +324,22 @@
     }
 
     /**
-     * Configura el selector visual de tipo de transacción.
+     * Configura el selector visual de tipo de transacción (segmented control iOS).
      */
     function setupTransactionTypeSelector(accountsCache) {
         const $selector = $('#type-selector');
-        const $buttons = $selector.find('.type-btn');
+        const $buttons = $selector.find('.segmented-btn');
 
-        $selector.on('click', '.type-btn', function() {
+        $selector.on('click', '.segmented-btn', function() {
             const $btn = $(this);
             const newType = $btn.data('type');
             const currentType = $('#transaction-type').val();
 
             if (newType === currentType) return;
 
-            // Actualizar estilos de los botones
-            $buttons.removeClass('bg-indigo-600 text-white shadow-sm')
-                    .addClass('text-gray-600 hover:text-gray-800');
-            $btn.removeClass('text-gray-600 hover:text-gray-800')
-                .addClass('bg-indigo-600 text-white shadow-sm');
+            // Toggle active class para segmented control iOS-style
+            $buttons.removeClass('active');
+            $btn.addClass('active');
 
             $buttons.attr('aria-checked', 'false');
             $btn.attr('aria-checked', 'true');

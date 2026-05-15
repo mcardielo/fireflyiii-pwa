@@ -17,15 +17,15 @@
      */
     function showStatusMessage(message, type) {
         const $status = $('#status-message');
-        $status.removeClass('hidden bg-green-100 text-green-800 bg-red-100 text-red-800 bg-yellow-100 text-yellow-800')
-               .addClass('p-3 rounded-md mb-4 text-sm transition-all');
+        // Limpiar todas las clases de estado y mostrar
+        $status.removeClass('hidden success warning error');
 
         if (type === 'success') {
-            $status.addClass('bg-green-100 text-green-800');
+            $status.addClass('success');
         } else if (type === 'warning') {
-            $status.addClass('bg-yellow-100 text-yellow-800');
+            $status.addClass('warning');
         } else {
-            $status.addClass('bg-red-100 text-red-800');
+            $status.addClass('error');
         }
         $status.text(message);
 

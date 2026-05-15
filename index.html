@@ -38,7 +38,7 @@
             touch-action: manipulation;
         }
         body {
-            background-color: #f7f9fb;
+            background: #f2f3f7;
         }
         #setup-container,
         #default-account-container,
@@ -57,8 +57,6 @@
         #dashboard-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 2rem 1rem;
         }
         .hidden {
             display: none !important;
@@ -66,7 +64,7 @@
         /* Spinner de carga */
         .spinner {
             border: 3px solid #e5e7eb;
-            border-top: 3px solid #4f46e5;
+            border-top: 3px solid #5856D6;
             border-radius: 50%;
             width: 24px;
             height: 24px;
@@ -83,8 +81,205 @@
         }
         .autocomplete-item .new-badge {
             font-size: 0.7rem;
-            color: #6366f1;
+            color: #5856D6;
             margin-left: 0.5rem;
+        }
+
+        /* === iOS-Styled Components === */
+        /* Nav bar blur */
+        .nav-bar {
+            padding-top: max(env(safe-area-inset-top, 0px), 4px);
+            padding-bottom: 8px;
+            padding-left: 16px;
+            padding-right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(242, 243, 247, 0.88);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+        }
+        /* Segmented control */
+        .segmented-control {
+            background: #e5e5ea;
+            border-radius: 9px;
+            padding: 2px;
+            display: flex;
+        }
+        .segmented-btn {
+            flex: 1;
+            padding: 8px 6px;
+            border-radius: 7px;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #8e8e93;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .segmented-btn.active {
+            background: #ffffff;
+            color: #1c1c1e;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        /* Section label */
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #8e8e93;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-left: 4px;
+            margin-bottom: 8px;
+        }
+        /* Field rows (iOS settings-style) */
+        .field-group {}
+        .field-card {
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .field-row {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            min-height: 44px;
+        }
+        .field-row + .field-row {
+            border-top: 0.5px solid #e5e5ea;
+        }
+        .field-label {
+            font-size: 15px;
+            color: #1c1c1e;
+            min-width: 80px;
+            flex-shrink: 0;
+            padding: 12px 0;
+        }
+        .field-label .field-hint {
+            font-size: 12px;
+            color: #8e8e93;
+            font-weight: 400;
+        }
+        .field-value {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 12px 0;
+        }
+        .ios-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            color: #1c1c1e;
+            text-align: right;
+            padding: 0;
+            outline: none;
+            min-width: 0;
+        }
+        .ios-input::placeholder {
+            color: #c7c7cc;
+        }
+        .currency-badge {
+            font-size: 13px;
+            font-weight: 500;
+            color: #5856D6;
+            background: #e8e7ff;
+            padding: 2px 10px;
+            border-radius: 12px;
+            margin-left: 8px;
+            border: none;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            white-space: nowrap;
+        }
+        /* Sticky footer */
+        .sticky-footer {
+            padding: 8px 16px;
+            padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+            background: #f2f3f7;
+        }
+        .ios-btn-primary {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-size: 17px;
+            font-weight: 600;
+            color: #ffffff;
+            background: #5856D6;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 12px rgba(88, 86, 214, 0.3);
+        }
+        .ios-btn-primary:active {
+            opacity: 0.7;
+        }
+        .ios-btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        /* Status message iOS-style */
+        .ios-status {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            border-left: 4px solid transparent;
+        }
+        .ios-status.success {
+            border-left-color: #34c759;
+            color: #1c1c1e;
+        }
+        .ios-status.warning {
+            border-left-color: #ff9500;
+            color: #1c1c1e;
+        }
+        .ios-status.error {
+            border-left-color: #ff3b30;
+            color: #1c1c1e;
+        }
+        /* Autocomplete styles */
+        .autocomplete-dropdown {
+            position: absolute;
+            z-index: 10;
+            width: 100%;
+            margin-top: 4px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .autocomplete-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-size: 15px;
+            color: #1c1c1e;
+        }
+        .autocomplete-item:hover {
+            background: #f2f3f7;
+        }
+        .autocomplete-item + .autocomplete-item {
+            border-top: 0.5px solid #e5e5ea;
+        }
+        .autocomplete-item .new-badge {
+            font-size: 0.7rem;
+            color: #5856D6;
+            margin-left: 0.5rem;
+        }
+        /* Exchange rate info */
+        #exchange-rate-info {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-top: 8px;
         }
     </style>
 </head>
@@ -145,108 +340,110 @@
     </div>
 
     <!-- ========== DASHBOARD ========== -->
-    <div id="dashboard-container" class="w-full max-w-4xl pt-8 hidden">
-        <header class="flex justify-between items-center mb-8 pb-4 border-b border-gray-200">
-            <h1 class="text-3xl font-bold text-gray-800">Registro</h1>
-            <div class="flex items-center space-x-4">
-                <button id="config-btn" class="text-sm text-indigo-600 hover:text-indigo-800 transition">
-                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.72.355 1.464-.243 2.002-1.11-.538.867-1.22 1.493-1.22 2.22 0 1.01.82 1.82 1.82 1.82z"/></svg>
-                    Config
-                </button>
-                <span id="online-status" class="px-3 py-1 rounded-full text-xs font-semibold transition-colors bg-green-100 text-green-800">
-                    Online
+    <div id="dashboard-container" class="w-full flex flex-col hidden">
+
+        <!-- NAV BAR -->
+        <header class="nav-bar">
+            <h1 class="text-[22px] font-bold text-[#1c1c1e] tracking-[-0.5px]">Registro</h1>
+            <div class="flex items-center gap-4">
+                <button id="config-btn" class="text-sm font-semibold text-[#5856D6]">Config</button>
+                <span id="online-status" class="text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full">
+                    ● Online
                 </span>
             </div>
         </header>
 
-        <!-- Formulario de transacción -->
-        <main class="bg-white p-8 rounded-lg shadow-xl w-full">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Registrar Transacción</h2>
+        <!-- SCROLLABLE CONTENT -->
+        <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4" style="-webkit-overflow-scrolling: touch">
 
-            <!-- Tipo de Transacción -->
+            <!-- Tipo de Transacción (Segmented Control) -->
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Transacción</label>
-                <div class="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-lg" role="radiogroup" id="type-selector">
-                    <button type="button" role="radio" aria-checked="true" data-type="withdrawal"
-                            class="type-btn px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white shadow-sm transition-all">
-                        💸 Gasto
-                    </button>
-                    <button type="button" role="radio" aria-checked="false" data-type="deposit"
-                            class="type-btn px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-800 transition-all">
-                        💰 Depósito
-                    </button>
-                    <button type="button" role="radio" aria-checked="false" data-type="transfer"
-                            class="type-btn px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-800 transition-all">
-                        🔄 Transferencia
-                    </button>
+                <p class="section-label">Tipo de Transacción</p>
+                <div class="segmented-control" role="radiogroup" id="type-selector">
+                    <button type="button" role="radio" aria-checked="true" data-type="withdrawal" class="segmented-btn active">💸 Gasto</button>
+                    <button type="button" role="radio" aria-checked="false" data-type="deposit" class="segmented-btn">💰 Depósito</button>
+                    <button type="button" role="radio" aria-checked="false" data-type="transfer" class="segmented-btn">🔄 Transferencia</button>
                 </div>
                 <input type="hidden" id="transaction-type" value="withdrawal">
             </div>
 
-            <div id="status-message" class="p-3 rounded-md mb-4 text-sm hidden"></div>
+            <!-- Status Message -->
+            <div id="status-message" class="ios-status hidden"></div>
 
-            <form id="transaction-form" class="space-y-6">
+            <form id="transaction-form">
 
                 <!-- Cuenta Origen -->
-                <div>
-                    <label for="source-account" class="block text-sm font-medium text-gray-700">
-                        Cuenta Origen <span id="source-type-hint" class="text-xs text-gray-400 font-normal">(Asset)</span>
-                    </label>
-                    <div class="relative">
-                        <input type="text" id="source-account" placeholder="Selecciona o escribe la cuenta origen..."
-                               autocomplete="off"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <div id="source-autocomplete" class="autocomplete-dropdown absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden"></div>
+                <div class="mb-6 field-group">
+                    <p class="section-label">Cuenta Origen</p>
+                    <div class="field-card">
+                        <div class="field-row">
+                            <span class="field-label">Origen <span id="source-type-hint" class="field-hint">(Asset)</span></span>
+                            <div class="field-value relative" style="justify-content:flex-end">
+                                <input type="text" id="source-account" placeholder="Selecciona..."
+                                       autocomplete="off"
+                                       class="ios-input">
+                                <div id="source-autocomplete" class="autocomplete-dropdown hidden"></div>
+                            </div>
+                        </div>
                     </div>
                     <input type="hidden" id="source-account-id" name="source-account-id">
                     <input type="hidden" id="source-account-name" name="source-account-name">
                 </div>
 
                 <!-- Cuenta Destino -->
-                <div>
-                    <label for="destination-account" class="block text-sm font-medium text-gray-700">
-                        Cuenta Destino <span id="dest-type-hint" class="text-xs text-gray-400 font-normal">(Expense)</span>
-                    </label>
-                    <div class="relative">
-                        <input type="text" id="destination-account" required placeholder="Selecciona o escribe la cuenta destino..."
-                               autocomplete="off"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <div id="destination-autocomplete" class="autocomplete-dropdown absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden"></div>
+                <div class="mb-6 field-group">
+                    <p class="section-label">Cuenta Destino</p>
+                    <div class="field-card">
+                        <div class="field-row">
+                            <span class="field-label">Destino <span id="dest-type-hint" class="field-hint">(Expense)</span></span>
+                            <div class="field-value relative" style="justify-content:flex-end">
+                                <input type="text" id="destination-account" required placeholder="Buscar cuenta..."
+                                       autocomplete="off"
+                                       class="ios-input">
+                                <div id="destination-autocomplete" class="autocomplete-dropdown hidden"></div>
+                            </div>
+                        </div>
                     </div>
                     <input type="hidden" id="destination-account-id" name="destination-account-id">
                     <input type="hidden" id="destination-account-name" name="destination-account-name">
                 </div>
 
-                <!-- Concepto y Monto -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="col-span-1 md:col-span-2">
-                        <label for="description" class="block text-sm font-medium text-gray-700">Concepto / Descripción</label>
-                        <input type="text" id="description" required placeholder="Ej: Compra en supermercado"
-                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                <!-- Detalles (Concepto + Importe) -->
+                <div class="mb-6 field-group">
+                    <p class="section-label">Detalles</p>
+                    <div class="field-card">
+                        <div class="field-row">
+                            <span class="field-label">Concepto</span>
+                            <div class="field-value">
+                                <input type="text" id="description" required placeholder="Ej: Compra en supermercado"
+                                       class="ios-input">
+                            </div>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Importe</span>
+                            <div class="field-value">
+                                <input type="number" step="0.01" min="0" id="amount" required placeholder="0.00"
+                                       class="ios-input">
+                                <select id="currency-select" class="currency-badge"></select>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="col-span-1">
-                        <label for="amount" class="block text-sm font-medium text-gray-700">Importe</label>
-                        <div class="mt-1 flex gap-2">
-                            <input type="number" step="0.01" min="0" id="amount" required placeholder="100.00"
-                                   class="flex-1 min-w-0 px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <select id="currency-select"
-                                    class="w-28 px-2 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white text-sm">
-                            </select>
-                        </div>
-                        <div id="exchange-rate-info" class="mt-1 hidden">
-                            <p id="exchange-rate-display" class="text-xs text-gray-500"></p>
-                            <p id="amount-converted" class="text-sm font-medium text-indigo-600 hidden"></p>
-                        </div>
+                    <div id="exchange-rate-info" class="hidden" style="margin-top:8px">
+                        <p id="exchange-rate-display" class="text-xs text-[#8e8e93]"></p>
+                        <p id="amount-converted" class="text-sm font-medium text-[#5856D6] hidden"></p>
                     </div>
                 </div>
 
-                <button type="submit" id="submit-transaction-btn"
-                        class="w-full py-3 px-4 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 transition duration-150 disabled:opacity-50">
-                    Registrar Transacción
-                </button>
             </form>
         </main>
+
+        <!-- STICKY FOOTER -->
+        <footer class="sticky-footer">
+            <button type="submit" id="submit-transaction-btn" class="ios-btn-primary" form="transaction-form">
+                Registrar Transacción
+            </button>
+        </footer>
+
     </div>
 
     <script src="js/config.js"></script>
