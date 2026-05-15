@@ -21,7 +21,7 @@
         const $msg = $('#default-account-message');
 
         $select.html('<option value="">Cargando cuentas...</option>');
-        $msg.removeClass('text-green-600 text-red-600').addClass('text-indigo-600').text('Obteniendo cuentas...');
+        $msg.removeClass('hidden success error').addClass('warning').text('🔄 Obteniendo cuentas...');
 
         $.ajax({
             url: `${url}/api/v1/accounts?type=asset&limit=10000`,
@@ -37,7 +37,7 @@
                 accounts = accounts.filter(acc => acc.attributes.active !== false);
 
                 if (accounts.length === 0) {
-                    $msg.removeClass('text-indigo-600').addClass('text-red-600');
+                    $msg.removeClass('hidden success warning').addClass('error');
                     $msg.text('❌ No se encontraron cuentas Asset activas. Activa una en Firefly III.');
                     $select.html('<option value="">Sin cuentas activas disponibles</option>');
                     return;
@@ -48,14 +48,14 @@
                     html += `<option value="${acc.id}" data-name="${acc.attributes.name}">${acc.attributes.name}</option>`;
                 });
                 $select.html(html);
-                $msg.removeClass('text-indigo-600').addClass('text-green-600');
+                $msg.removeClass('hidden warning error').addClass('success');
                 $msg.text(`✅ ${accounts.length} cuenta(s) Asset encontrada(s). Selecciona la default.`);
             },
             error: function(xhr) {
                 let errorMsg = '❌ Error al cargar cuentas.';
                 if (xhr.status === 401) errorMsg += ' Token inválido.';
                 else if (xhr.status === 0) errorMsg += ' Sin conexión.';
-                $msg.removeClass('text-indigo-600').addClass('text-red-600').text(errorMsg);
+                $msg.removeClass('hidden success warning').addClass('error').text(errorMsg);
                 $select.html('<option value="">Error al cargar</option>');
             }
         });
@@ -71,7 +71,7 @@
         const selectedText = $select.find('option:selected').text();
 
         if (!selectedId) {
-            $msg.removeClass('text-green-600').addClass('text-red-600');
+            $msg.removeClass('hidden success warning').addClass('error');
             $msg.text('❌ Por favor, selecciona una cuenta.');
             return;
         }
@@ -123,7 +123,7 @@
         const messageArea = $('#config-message');
 
         if (!url || !token) {
-            messageArea.removeClass('text-green-600 text-red-600').addClass('text-red-600');
+            messageArea.removeClass('hidden success warning').addClass('error');
             messageArea.text('Por favor, rellena ambos campos.');
             return;
         }
@@ -131,12 +131,12 @@
         try {
             new URL(url);
         } catch (_) {
-            messageArea.removeClass('text-green-600 text-red-600').addClass('text-red-600');
+            messageArea.removeClass('hidden success warning').addClass('error');
             messageArea.text('❌ La URL no es válida. Debe incluir https://');
             return;
         }
 
-        messageArea.removeClass('text-green-600 text-red-600').addClass('text-indigo-600').text('Validando credenciales...');
+        messageArea.removeClass('hidden success error').addClass('warning').text('🔄 Validando credenciales...');
         $('#config-form button').prop('disabled', true);
 
         $.ajax({
@@ -172,7 +172,7 @@
                     errorMessage = `❌ Error en la API (Status: ${xhr.status}). Revisa URL o token.`;
                 }
 
-                messageArea.removeClass('text-indigo-600').addClass('text-red-600');
+                messageArea.removeClass('hidden success warning').addClass('error');
                 messageArea.text(errorMessage);
             },
             complete: function() {

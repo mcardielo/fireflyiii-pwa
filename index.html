@@ -51,8 +51,7 @@
         #setup-container, #default-account-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 2rem;
+            padding: 0;
         }
         #dashboard-container {
             display: flex;
@@ -287,57 +286,91 @@
 <body>
 
     <!-- ========== PANTALLA DE CONFIGURACIÓN ========== -->
-    <div id="setup-container" class="container max-w-xl w-full p-6 bg-white shadow-2xl rounded-lg mt-20">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Configuración de Firefly III</h1>
-        <p class="text-gray-600 mb-8 text-center">
-            Por favor, introduce la URL de tu instancia y el Token de Acceso Personal para empezar a usar la PWA.
-        </p>
-
-        <form id="config-form" class="space-y-6">
-            <div>
-                <label for="firefly-url" class="block text-sm font-medium text-gray-700">URL de la Instancia de Firefly III</label>
-                <input type="url" id="firefly-url" required
-                       placeholder="ej. https://miapp.firefly-iii.org"
-                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+    <div id="setup-container" class="w-full hidden">
+        <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4" style="-webkit-overflow-scrolling: touch">
+            <!-- Header -->
+            <div class="text-center mb-10">
+                <div class="w-16 h-16 bg-[#e8e7ff] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                </div>
+                <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]">Configuración</h1>
+                <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5">
+                    Conecta tu instancia de Firefly III con tu Token de Acceso Personal para empezar.
+                </p>
             </div>
 
-            <div>
-                <label for="personal-token" class="block text-sm font-medium text-gray-700">Token de Acceso Personal (PAT)</label>
-                <input type="password" id="personal-token" required
-                       placeholder="xxxxxxxxxxxxxxxxxxxxxxx"
-                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-            </div>
+            <form id="config-form">
+                <p class="section-label">Conexión</p>
+                <div class="field-card mb-6">
+                    <div class="field-row">
+                        <span class="field-label" style="min-width:0; white-space:nowrap">URL</span>
+                        <div class="field-value">
+                            <input type="url" id="firefly-url" required
+                                   placeholder="https://miapp.firefly-iii.org"
+                                   class="ios-input" style="width:100%; text-align:right">
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label" style="min-width:0; white-space:nowrap">Token</span>
+                        <div class="field-value">
+                            <input type="password" id="personal-token" required
+                                   placeholder="xxxxxxxxxxxxxxxxxxxxxxx"
+                                   class="ios-input" style="width:100%; text-align:right">
+                        </div>
+                    </div>
+                </div>
 
-            <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700 transition duration-150">
+                <div id="config-message" class="ios-status hidden"></div>
+            </form>
+        </div>
+
+        <footer class="sticky-footer">
+            <button type="submit" id="setup-submit-btn" class="ios-btn-primary" form="config-form">
                 Conectar y Continuar
             </button>
-
-            <p id="config-message" class="text-center mt-4 text-sm"></p>
-        </form>
+        </footer>
     </div>
 
     <!-- ========== SELECCIONAR CUENTA DEFAULT ========== -->
-    <div id="default-account-container" class="container max-w-xl w-full p-6 bg-white shadow-2xl rounded-lg mt-20 hidden">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Cuenta Origen por Default</h1>
-        <p class="text-gray-600 mb-4 text-center">
-            Selecciona la cuenta que se usará por defecto como origen en tus transacciones.
-            <br>Si no escribes una cuenta origen al registrar, se usará esta.
-        </p>
-
-        <div class="space-y-6">
-            <div>
-                <label for="default-account-select" class="block text-sm font-medium text-gray-700 mb-2">Cuenta Origen Default</label>
-                <select id="default-account-select" class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">Cargando cuentas...</option>
-                </select>
+    <div id="default-account-container" class="w-full hidden">
+        <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4" style="-webkit-overflow-scrolling: touch">
+            <!-- Header -->
+            <div class="text-center mb-10">
+                <div class="w-16 h-16 bg-[#e8e7ff] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="5" width="20" height="14" rx="2"/>
+                        <line x1="2" y1="10" x2="22" y2="10"/>
+                    </svg>
+                </div>
+                <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]">Cuenta Default</h1>
+                <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5">
+                    Selecciona la cuenta que se usará por defecto como origen al registrar tus transacciones.
+                </p>
             </div>
 
-            <button id="save-default-account-btn"
-                    class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700 transition duration-150 disabled:opacity-50">
+            <p class="section-label">Cuenta Origen</p>
+            <div class="field-card mb-6">
+                <div class="field-row">
+                    <span class="field-label" style="min-width:0">Cuenta</span>
+                    <div class="field-value">
+                        <select id="default-account-select" style="-webkit-appearance:none; appearance:none; border:none; background:transparent; font-size:15px; color:#1c1c1e; text-align:right; direction:rtl; padding:0; outline:none; cursor:pointer; flex:1">
+                            <option value="">Cargando cuentas...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="default-account-message" class="ios-status hidden"></div>
+        </div>
+
+        <footer class="sticky-footer">
+            <button id="save-default-account-btn" class="ios-btn-primary">
                 Guardar y Continuar
             </button>
-            <p id="default-account-message" class="text-center text-sm"></p>
-        </div>
+        </footer>
     </div>
 
     <!-- ========== DASHBOARD ========== -->
