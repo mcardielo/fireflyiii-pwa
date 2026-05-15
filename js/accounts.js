@@ -6,14 +6,24 @@
     window.FFPWA = window.FFPWA || {};
 
     function hideDropdown(element) {
-        $(element).addClass('hidden');
+        $(element).removeClass('visible').addClass('hidden');
     }
 
     /**
-     * Muestra el dropdown de autocomplete.
+     * Muestra el dropdown de autocomplete con posición fixed.
      */
     function showDropdown(element) {
-        $(element).removeClass('hidden');
+        const $dropdown = $(element);
+        const $input = $dropdown.closest('.relative').find('input');
+        const rect = $input[0].getBoundingClientRect();
+
+        $dropdown.css({
+            top: (rect.bottom + 4) + 'px',
+            left: rect.left + 'px',
+            width: rect.width + 'px'
+        });
+
+        $dropdown.removeClass('hidden').addClass('visible');
     }
 
     /**
@@ -248,9 +258,10 @@
         setupDropdownClickHandler(sourceDropdown);
         setupDropdownClickHandler(destDropdown);
 
-        // Clic fuera del dropdown lo cierra
+        // Clic fuera del dropdown o al seleccionar un item, lo cierra
         $(document).on('click', function(e) {
-            if (!$(e.target).closest('.autocomplete-dropdown').length) {
+            if (!$(e.target).closest('.autocomplete-dropdown').length &&
+                !$(e.target).closest('#source-account, #destination-account').length) {
                 hideDropdown(sourceDropdown);
                 hideDropdown(destDropdown);
             }
