@@ -1,4 +1,4 @@
-const CACHE_NAME = 'firefly-pwa-v2.0';
+const CACHE_NAME = 'firefly-pwa-v2.1';
 const ASSETS_TO_CACHE = [
     './',
     'index.html',
@@ -11,26 +11,29 @@ const ASSETS_TO_CACHE = [
 ];
 
 /**
- * Estrategia Network First para HTML: intenta red primero, 
- * fallback a caché si está offline. Así el usuario siempre ve
- * la última versión cuando tiene conexión.
+ * Estrategia Cache First para HTML: sirve desde caché al instante,
+ * y actualiza en background cuando la red responde.
+ * Así la PWA nunca espera por la red al abrirse o reanudarse.
  */
-async function networkFirstWithCache(request) {
-    try {
-        const networkResponse = await fetch(request);
+async function cacheFirstWithNetworkUpdate(request) {
+    const cache = await caches.open(CACHE_NAME);
+    const cachedResponse = await cache.match(request);
+
+    // Actualizar caché en background (sin bloquear)
+    const updateCache = fetch(request).then(networkResponse => {
         if (networkResponse && networkResponse.ok) {
-            const cache = await caches.open(CACHE_NAME);
             cache.put(request, networkResponse.clone());
-            return networkResponse;
         }
-        throw new Error('Respuesta de red no ok');
-    } catch (err) {
-        const cachedResponse = await caches.match(request);
-        if (cachedResponse) {
-            return cachedResponse;
-        }
-        return new Response('Recurso no disponible offline', { status: 503 });
+        return networkResponse;
+    }).catch(() => null);
+
+    if (cachedResponse) {
+        // Servir caché inmediato, actualizar en background
+        return cachedResponse;
     }
+
+    // Sin caché: esperar la red
+    return updateCache;
 }
 
 self.addEventListener('install', (event) => {
@@ -79,9 +82,9 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // HTML: Network First (funciona en cualquier subpath, incluyendo GitHub Pages)
+    // HTML: Cache First — sirve al instante desde caché, actualiza en background
     if (requestUrl.pathname.endsWith('/') || requestUrl.pathname.endsWith('.html')) {
-        event.respondWith(networkFirstWithCache(event.request));
+        event.respondWith(cacheFirstWithNetworkUpdate(event.request));
         return;
     }
 
