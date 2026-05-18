@@ -20,8 +20,8 @@
         const $select = $('#default-account-select');
         const $msg = $('#default-account-message');
 
-        $select.html('<option value="">Cargando cuentas...</option>');
-        $msg.removeClass('hidden success error').addClass('warning').text('🔄 Obteniendo cuentas...');
+        $select.html('<option value="">' + __('account.loading') + '</option>');
+        $msg.removeClass('hidden success error').addClass('warning').text('🔄 ' + __('setup.loading_accounts'));
 
         $.ajax({
             url: `${url}/api/v1/accounts?type=asset&limit=10000`,
@@ -38,25 +38,25 @@
 
                 if (accounts.length === 0) {
                     $msg.removeClass('hidden success warning').addClass('error');
-                    $msg.text('❌ No se encontraron cuentas Asset activas. Activa una en Firefly III.');
-                    $select.html('<option value="">Sin cuentas activas disponibles</option>');
+                    $msg.text('❌ ' + __('account.no_assets'));
+                    $select.html('<option value="">' + __('account.no_active') + '</option>');
                     return;
                 }
 
-                let html = '<option value="">-- Selecciona una cuenta --</option>';
+                let html = '<option value="">' + __('account.select_hint') + '</option>';
                 accounts.forEach(acc => {
                     html += `<option value="${acc.id}" data-name="${acc.attributes.name}">${acc.attributes.name}</option>`;
                 });
                 $select.html(html);
                 $msg.removeClass('hidden warning error').addClass('success');
-                $msg.text(`✅ ${accounts.length} cuenta(s) Asset encontrada(s). Selecciona la default.`);
+                $msg.text('✅ ' + __('account.found', { count: accounts.length }));
             },
             error: function(xhr) {
-                let errorMsg = '❌ Error al cargar cuentas.';
-                if (xhr.status === 401) errorMsg += ' Token inválido.';
-                else if (xhr.status === 0) errorMsg += ' Sin conexión.';
+                let errorMsg = '❌ ' + __('account.error');
+                if (xhr.status === 401) errorMsg += ' ' + __('setup.token_401');
+                else if (xhr.status === 0) errorMsg += ' ' + __('setup.no_connection');
                 $msg.removeClass('hidden success warning').addClass('error').text(errorMsg);
-                $select.html('<option value="">Error al cargar</option>');
+                $select.html('<option value="">' + __('account.error') + '</option>');
             }
         });
     }
@@ -72,7 +72,7 @@
 
         if (!selectedId) {
             $msg.removeClass('hidden success warning').addClass('error');
-            $msg.text('❌ Por favor, selecciona una cuenta.');
+            $msg.text('❌ ' + __('account.not_selected'));
             return;
         }
 
@@ -124,7 +124,7 @@
 
         if (!url || !token) {
             messageArea.removeClass('hidden success warning').addClass('error');
-            messageArea.text('Por favor, rellena ambos campos.');
+            messageArea.text('❌ ' + __('setup.required_fields'));
             return;
         }
 
@@ -132,11 +132,11 @@
             new URL(url);
         } catch (_) {
             messageArea.removeClass('hidden success warning').addClass('error');
-            messageArea.text('❌ La URL no es válida. Debe incluir https://');
+            messageArea.text('❌ ' + __('setup.invalid_url'));
             return;
         }
 
-        messageArea.removeClass('hidden success error').addClass('warning').text('🔄 Validando credenciales...');
+        messageArea.removeClass('hidden success error').addClass('warning').text('🔄 ' + __('setup.validating'));
         $('#config-form button').prop('disabled', true);
 
         $.ajax({
@@ -163,13 +163,13 @@
             error: function(xhr) {
                 let errorMessage = '';
                 if (xhr.status === 401) {
-                    errorMessage = '❌ Token inválido. Verifica tu Token de Acceso Personal.';
+                    errorMessage = '❌ ' + __('setup.auth_invalid');
                 } else if (xhr.status === 403) {
-                    errorMessage = '❌ Permiso denegado. El token necesita permisos de lectura y escritura.';
+                    errorMessage = '❌ ' + __('setup.auth_forbidden');
                 } else if (xhr.status === 0) {
-                    errorMessage = '❌ Fallo de conexión. Revisa la URL y tu conexión a internet.';
+                    errorMessage = '❌ ' + __('setup.connection_failed');
                 } else {
-                    errorMessage = `❌ Error en la API (Status: ${xhr.status}). Revisa URL o token.`;
+                    errorMessage = '❌ ' + __('setup.api_error', { status: xhr.status });
                 }
 
                 messageArea.removeClass('hidden success warning').addClass('error');

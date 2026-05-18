@@ -44,9 +44,9 @@
     function updateStatus(statusText) {
         const statusEl = $('#online-status');
         statusEl.removeClass('bg-green-100 text-green-800 bg-red-100 text-red-800 bg-yellow-100 text-yellow-800');
-        if (statusText.includes('Online')) {
+        if (statusText.includes('Online') || statusText === __('nav.online')) {
             statusEl.addClass('bg-green-100 text-green-800');
-        } else if (statusText.includes('Offline')) {
+        } else if (statusText.includes('Offline') || statusText === __('nav.offline')) {
             statusEl.addClass('bg-red-100 text-red-800');
         } else {
             statusEl.addClass('bg-yellow-100 text-yellow-800');
@@ -81,18 +81,18 @@
                         currency_decimal_places: account.attributes.currency_decimal_places || 2
                     }));
 
-                    console.log(`✅ [API]: Cuentas cargadas exitosamente: ${cleanAccounts.length}`);
+                    console.log('✅ [API]: ' + __('resource.accounts_loaded', { count: cleanAccounts.length }));
                     resolve(cleanAccounts);
                 },
                 error: function(xhr) {
                     console.error('❌ [API]: Error al cargar cuentas:', xhr.statusText);
                     let message = '';
                     if (xhr.status === 401) {
-                        message = 'Error de token. Por favor, verifica tus credenciales.';
+                        message = __('resource.accounts_token_error');
                     } else if (xhr.status !== 0) {
-                        message = `Error de conexión al cargar cuentas: ${xhr.statusText}.`;
+                        message = __('resource.accounts_connection_error', { detail: xhr.statusText });
                     } else {
-                        message = 'Error de conexión. Por favor, revisa la URL o tu conexión a internet.';
+                        message = __('resource.accounts_no_connection');
                     }
                     reject(new Error(message));
                 }
@@ -103,9 +103,9 @@
     function cacheAccounts(accounts) {
         try {
             localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(accounts));
-            console.log('✅ [CACHE]: Cuentas cacheadas exitosamente en localStorage.');
+            console.log('✅ [CACHE]: ' + __('resource.accounts_cached'));
         } catch (e) {
-            console.error('❌ [CACHE]: Error al cachear cuentas en localStorage:', e);
+            console.error('❌ [CACHE]: ' + __('resource.accounts_cache_error'), e);
         }
     }
 
@@ -147,7 +147,7 @@
             $('#destination-account-id').val('');
         }
 
-        window.FFPWA.showStatusMessage(`⚠️ Atención: Se ha seleccionado la opción de crear una nueva cuenta (${field}).`, 'warning');
+        window.FFPWA.showStatusMessage(__('status.new_account_warning', { field: field }), 'warning');
 
         hideDropdown('#source-autocomplete');
         hideDropdown('#destination-autocomplete');
@@ -204,7 +204,7 @@
 
             htmlContent += `<li ${dataAttributes} class="autocomplete-item">
                 <span>${item.name}</span>
-                ${isNew ? '<span class="new-badge">+ Crear nueva</span>' : ''}
+                ${isNew ? '<span class="new-badge">' + __('resource.create_new') + '</span>' : ''}
             </li>`;
         });
 
@@ -285,12 +285,12 @@
         const otherField = isDeposit ? 'source' : 'destination';
 
         // Limpiar el otro campo
-        $(`#${otherField}-account`).val('').attr('placeholder', `Selecciona o escribe la cuenta ${otherField}...`);
+        $(`#${otherField}-account`).val('').attr('placeholder', __('accounts.placeholder_search', { field: otherField }));
         $(`#${otherField}-account-id`).val('');
         $(`#${otherField}-account-name`).val('');
 
         // Poner default en targetField
-        $(`#${targetField}-account`).val('').attr('placeholder', match.name + ' (default)');
+        $(`#${targetField}-account`).val('').attr('placeholder', __('accounts.placeholder_default', { name: match.name }));
         $(`#${targetField}-account-id`).val(match.id);
         $(`#${targetField}-account-name`).val(match.name);
 
@@ -305,14 +305,14 @@
         const destHint = $('#dest-type-hint');
 
         if (transactionType === 'deposit') {
-            sourceHint.text('(Revenue)');
-            destHint.text('(Asset)');
+            sourceHint.text(__('transaction.hint_revenue'));
+            destHint.text(__('transaction.hint_asset'));
         } else if (transactionType === 'transfer') {
-            sourceHint.text('(Asset)');
-            destHint.text('(Asset)');
+            sourceHint.text(__('transaction.hint_asset'));
+            destHint.text(__('transaction.hint_asset'));
         } else {
-            sourceHint.text('(Asset)');
-            destHint.text('(Expense)');
+            sourceHint.text(__('transaction.hint_asset'));
+            destHint.text(__('transaction.hint_expense'));
         }
     }
 
@@ -364,7 +364,7 @@
      */
     function setupAccountSystem(accountsCache) {
         if (!accountsCache || accountsCache.length === 0) {
-            window.FFPWA.showStatusMessage('🔴 No se encontraron cuentas. El autocompletado está inactivo. Conéctate a internet para sincronizar.', 'error');
+            window.FFPWA.showStatusMessage(__('status.accounts_system_fail'), 'error');
             console.warn('SETUP FAILED: No hay cuentas disponibles. Autocompletado inactivo.');
             return;
         }
@@ -384,12 +384,20 @@
         // Exponer cache globalmente para otros módulos (transactions.js)
         window.FFPWA.accountsCache = accountsCache;
 
-        window.FFPWA.showStatusMessage(`✅ Sistema de cuentas activo. Cuentas cargadas: ${accountsCache.length}.`, 'success');
+        window.FFPWA.showStatusMessage(__('status.accounts_system_ok', { count: accountsCache.length }), 'success');
     }
 
     /**
      * Punto de entrada: evento disparado por config.js
      */
+    // Re-translate dynamic content when locale changes
+    $(window).on('localeChanged', function() {
+        const currentType = $('#transaction-type').val() || 'withdrawal';
+        updateTypeHints(currentType);
+        const cache = window.FFPWA.accountsCache;
+        if (cache) prefillDefaultSource(cache, currentType);
+    });
+
     $(window).on('configLoaded', function() {
         console.log('================================================');
         console.log('✅ Iniciando Dashboard.');
@@ -398,7 +406,7 @@
         let accounts = getCachedAccounts();
 
         if (accounts) {
-            console.log('[INIT]: Usando cuentas de la caché local.');
+            console.log('[INIT]: ' + __('resource.currencies_cache'));
             setupAccountSystem(accounts);
         } else {
             fetchAccounts(window.FFPWA.config.url, window.FFPWA.config.token)

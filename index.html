@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Registro de Transacciones PWA - Firefly III</title>
+    <title data-i18n="app.title_full">Registro de Transacciones PWA — Firefly III</title>
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -12,7 +12,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Firefly Ledger">
+    <meta name="apple-mobile-web-app-title" content="Firefly Ledger" data-i18n="apple.title">
     <meta name="format-detection" content="telephone=no">
 
     <!-- Apple Touch Icon -->
@@ -281,6 +281,21 @@
             padding: 12px 16px;
             margin-top: 8px;
         }
+        /* Language switcher */
+        #lang-btn {
+            background: #e5e5ea;
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+        #lang-btn:active {
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
@@ -296,29 +311,31 @@
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                     </svg>
                 </div>
-                <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]">Configuración</h1>
-                <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5">
+                <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="setup.title">Configuración</h1>
+                <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="setup.subtitle">
                     Conecta tu instancia de Firefly III con tu Token de Acceso Personal para empezar.
                 </p>
             </div>
 
             <form id="config-form">
-                <p class="section-label">Conexión</p>
+                <p class="section-label" data-i18n="setup.section_connection">Conexión</p>
                 <div class="field-card mb-6">
                     <div class="field-row">
-                        <span class="field-label" style="min-width:0; white-space:nowrap">URL</span>
+                        <span class="field-label" style="min-width:0; white-space:nowrap" data-i18n="setup.url_label">URL</span>
                         <div class="field-value">
                             <input type="url" id="firefly-url" required
                                    placeholder="https://miapp.firefly-iii.org"
-                                   class="ios-input" style="width:100%; text-align:right">
+                                   class="ios-input" style="width:100%; text-align:right"
+                                   data-i18n-placeholder="setup.url_placeholder">
                         </div>
                     </div>
                     <div class="field-row">
-                        <span class="field-label" style="min-width:0; white-space:nowrap">Token</span>
+                        <span class="field-label" style="min-width:0; white-space:nowrap" data-i18n="setup.token_label">Token</span>
                         <div class="field-value">
                             <input type="password" id="personal-token" required
                                    placeholder="xxxxxxxxxxxxxxxxxxxxxxx"
-                                   class="ios-input" style="width:100%; text-align:right">
+                                   class="ios-input" style="width:100%; text-align:right"
+                                   data-i18n-placeholder="setup.token_placeholder">
                         </div>
                     </div>
                 </div>
@@ -329,7 +346,7 @@
 
         <footer class="sticky-footer">
             <button type="submit" id="setup-submit-btn" class="ios-btn-primary" form="config-form">
-                Conectar y Continuar
+                <span data-i18n="setup.submit_btn">Conectar y Continuar</span>
             </button>
         </footer>
     </div>
@@ -345,19 +362,19 @@
                         <line x1="2" y1="10" x2="22" y2="10"/>
                     </svg>
                 </div>
-                <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]">Cuenta Default</h1>
-                <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5">
+                <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="account.title">Cuenta Default</h1>
+                <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="account.subtitle">
                     Selecciona la cuenta que se usará por defecto como origen al registrar tus transacciones.
                 </p>
             </div>
 
-            <p class="section-label">Cuenta Origen</p>
+            <p class="section-label" data-i18n="account.section">Cuenta Origen</p>
             <div class="field-card mb-6">
                 <div class="field-row">
-                    <span class="field-label" style="min-width:0">Cuenta</span>
+                    <span class="field-label" style="min-width:0" data-i18n="account.select_label">Cuenta</span>
                     <div class="field-value">
                         <select id="default-account-select" style="-webkit-appearance:none; appearance:none; border:none; background:transparent; font-size:15px; color:#1c1c1e; text-align:right; direction:rtl; padding:0; outline:none; cursor:pointer; flex:1">
-                            <option value="">Cargando cuentas...</option>
+                            <option value="" data-i18n="account.loading">Cargando cuentas...</option>
                         </select>
                     </div>
                 </div>
@@ -368,7 +385,7 @@
 
         <footer class="sticky-footer">
             <button id="save-default-account-btn" class="ios-btn-primary">
-                Guardar y Continuar
+                <span data-i18n="account.save_btn">Guardar y Continuar</span>
             </button>
         </footer>
     </div>
@@ -378,10 +395,11 @@
 
         <!-- NAV BAR -->
         <header class="nav-bar">
-            <h1 class="text-[22px] font-bold text-[#1c1c1e] tracking-[-0.5px]">Registro</h1>
+            <h1 class="text-[22px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="app.title">Registro</h1>
             <div class="flex items-center gap-4">
-                <button id="config-btn" class="text-sm font-semibold text-[#5856D6]">Config</button>
-                <span id="online-status" class="text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full">
+                <button id="lang-btn" class="text-sm font-semibold text-[#5856D6]">EN</button>
+                <button id="config-btn" class="text-sm font-semibold text-[#5856D6]" data-i18n="nav.config">Config</button>
+                <span id="online-status" class="text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full" data-i18n="nav.online">
                     ● Online
                 </span>
             </div>
@@ -392,11 +410,11 @@
 
             <!-- Tipo de Transacción (Segmented Control) -->
             <div class="mb-6">
-                <p class="section-label">Tipo de Transacción</p>
+                <p class="section-label" data-i18n="transaction.type">Tipo de Transacción</p>
                 <div class="segmented-control" role="radiogroup" id="type-selector">
-                    <button type="button" role="radio" aria-checked="true" data-type="withdrawal" class="segmented-btn active">💸 Gasto</button>
-                    <button type="button" role="radio" aria-checked="false" data-type="deposit" class="segmented-btn">💰 Depósito</button>
-                    <button type="button" role="radio" aria-checked="false" data-type="transfer" class="segmented-btn">🔄 Transferencia</button>
+                    <button type="button" role="radio" aria-checked="true" data-type="withdrawal" class="segmented-btn active">💸 <span data-i18n="transaction.withdrawal">Gasto</span></button>
+                    <button type="button" role="radio" aria-checked="false" data-type="deposit" class="segmented-btn">💰 <span data-i18n="transaction.deposit">Depósito</span></button>
+                    <button type="button" role="radio" aria-checked="false" data-type="transfer" class="segmented-btn">🔄 <span data-i18n="transaction.transfer">Transferencia</span></button>
                 </div>
                 <input type="hidden" id="transaction-type" value="withdrawal">
             </div>
@@ -408,15 +426,16 @@
 
                 <!-- Cuenta Origen -->
                 <div class="mb-6 field-group">
-                    <p class="section-label">Cuenta Origen</p>
+                    <p class="section-label" data-i18n="transaction.source_section">Cuenta Origen</p>
                     <div class="field-card">
                         <div class="field-row">
-                            <span class="field-label">Origen <span id="source-type-hint" class="field-hint">(Asset)</span></span>
+                            <span class="field-label"><span data-i18n="transaction.source_label">Origen</span> <span id="source-type-hint" class="field-hint" data-i18n="transaction.source_hint_asset">(Asset)</span></span>
                             <div class="field-value">
                                 <div class="relative" style="flex:1">
                                     <input type="text" id="source-account" placeholder="Selecciona..."
                                            autocomplete="off"
-                                           class="ios-input" style="width:100%; text-align:right">
+                                           class="ios-input" style="width:100%; text-align:right"
+                                           data-i18n-placeholder="transaction.source_placeholder">
                                     <div id="source-autocomplete" class="autocomplete-dropdown hidden"></div>
                                 </div>
                             </div>
@@ -428,15 +447,16 @@
 
                 <!-- Cuenta Destino -->
                 <div class="mb-6 field-group">
-                    <p class="section-label">Cuenta Destino</p>
+                    <p class="section-label" data-i18n="transaction.dest_section">Cuenta Destino</p>
                     <div class="field-card">
                         <div class="field-row">
-                            <span class="field-label">Destino <span id="dest-type-hint" class="field-hint">(Expense)</span></span>
+                            <span class="field-label"><span data-i18n="transaction.dest_label">Destino</span> <span id="dest-type-hint" class="field-hint" data-i18n="transaction.dest_hint_expense">(Expense)</span></span>
                             <div class="field-value">
                                 <div class="relative" style="flex:1">
                                     <input type="text" id="destination-account" required placeholder="Buscar cuenta..."
                                            autocomplete="off"
-                                           class="ios-input" style="width:100%; text-align:right">
+                                           class="ios-input" style="width:100%; text-align:right"
+                                           data-i18n-placeholder="transaction.dest_placeholder">
                                     <div id="destination-autocomplete" class="autocomplete-dropdown hidden"></div>
                                 </div>
                             </div>
@@ -448,20 +468,20 @@
 
                 <!-- Detalles (Concepto + Importe) -->
                 <div class="mb-6 field-group">
-                    <p class="section-label">Detalles</p>
+                    <p class="section-label" data-i18n="transaction.details_section">Detalles</p>
                     <div class="field-card">
                         <div class="field-row">
-                            <span class="field-label">Concepto</span>
+                            <span class="field-label" data-i18n="transaction.description_label">Concepto</span>
                             <div class="field-value">
                                 <input type="text" id="description" required placeholder="Ej: Compra en supermercado"
-                                       class="ios-input">
+                                       class="ios-input" data-i18n-placeholder="transaction.description_placeholder">
                             </div>
                         </div>
                         <div class="field-row">
-                            <span class="field-label">Importe</span>
+                            <span class="field-label" data-i18n="transaction.amount_label">Importe</span>
                             <div class="field-value">
                                 <input type="number" step="0.01" min="0" id="amount" required placeholder="0.00"
-                                       class="ios-input">
+                                       class="ios-input" data-i18n-placeholder="transaction.amount_placeholder">
                                 <select id="currency-select" class="currency-badge"></select>
                             </div>
                         </div>
@@ -478,17 +498,51 @@
         <!-- STICKY FOOTER -->
         <footer class="sticky-footer">
             <button type="submit" id="submit-transaction-btn" class="ios-btn-primary" form="transaction-form">
-                Registrar Transacción
+                <span data-i18n="transaction.submit_btn">Registrar Transacción</span>
             </button>
         </footer>
 
     </div>
 
+    <script src="js/i18n.js"></script>
     <script src="js/config.js"></script>
     <script src="js/accounts.js"></script>
     <script src="js/currencies.js"></script>
     <script src="js/transactions.js"></script>
     <script src="js/app.js"></script>
+
+    <!-- Language switcher logic + i18n init -->
+    <script>
+        (function() {
+            'use strict';
+
+            // Init i18n before anything else
+            $(document).ready(function() {
+                window.initI18n(function(locale) {
+                    // Update <html lang>
+                    $('html').attr('lang', locale);
+                    // Update lang-btn text
+                    updateLangBtn(locale);
+                });
+            });
+
+            // Language toggle button
+            $(document).on('click', '#lang-btn', function() {
+                var current = window.getLocale();
+                var next = current === 'es' ? 'en' : 'es';
+                window.setLocale(next).then(function() {
+                    $('html').attr('lang', next);
+                    updateLangBtn(next);
+                });
+            });
+
+            function updateLangBtn(locale) {
+                var text = locale === 'es' ? 'EN' : 'ES';
+                $('#lang-btn').text(text);
+            }
+
+        })();
+    </script>
 
 </body>
 </html>

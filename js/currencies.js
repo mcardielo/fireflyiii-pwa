@@ -55,8 +55,8 @@
                     resolve(processed);
                 },
                 error: function(xhr) {
-                    let msg = 'Error al cargar monedas';
-                    if (xhr.status === 0) msg += ' (sin conexión)';
+                    let msg = __('currency.error_fetch');
+                    if (xhr.status === 0) msg += __('currency.error_no_connection');
                     reject(new Error(msg));
                 }
             });
@@ -91,7 +91,10 @@
         window.FFPWA.currencies.primary = currenciesData.find(c => c.primary) || currenciesData[0];
         window.FFPWA.currencies.enabled = currenciesData.filter(c => c.enabled);
 
-        console.log(`[CURRENCIES] Primaria: ${window.FFPWA.currencies.primary.code}, Habilitadas: ${window.FFPWA.currencies.enabled.length}`);
+        console.log('[CURRENCIES] ' + __('resource.currencies_loaded', {
+            primary: window.FFPWA.currencies.primary.code,
+            enabled: window.FFPWA.currencies.enabled.length
+        }));
 
         populateCurrencyDropdown();
         setupCurrencyChangeHandler();
@@ -160,7 +163,7 @@
                     console.warn(`[RATES] Usando tasa cacheada ${fromCurrency}→${toCurrency} del ${cached.date}`);
                     return { rate: cached.rate, date: cached.date };
                 }
-                throw new Error(`No hay tasa disponible para ${fromCurrency} → ${toCurrency}`);
+                throw new Error(__('currency.error_rate_unavailable', { from: fromCurrency, to: toCurrency }));
             });
     }
     window.FFPWA.getExchangeRate = getExchangeRate;
@@ -176,11 +179,11 @@
                     if (data.rate) {
                         resolve({ rate: data.rate, date: data.date });
                     } else {
-                        reject(new Error(`Sin tasa ${from}→${to} en Frankfurter`));
+                        reject(new Error(__('currency.error_frankfurter', { from: from, to: to })));
                     }
                 },
                 error: function() {
-                    reject(new Error('Frankfurter API no disponible'));
+                    reject(new Error(__('currency.error_frankfurter_down')));
                 }
             });
         });
@@ -203,17 +206,20 @@
 
         // Mostrar estado de carga
         $rateInfo.removeClass('hidden');
-        $rateDisplay.text('Obteniendo tipo de cambio...');
+        $rateDisplay.text(__('currency.loading_rate'));
 
         getExchangeRate(selectedCurrency, primaryCurrency.code)
             .then(rateInfo => {
-                $rateDisplay.text(
-                    `Tasa: 1 ${selectedCurrency} = ${rateInfo.rate.toFixed(4)} ${primaryCurrency.code} (${rateInfo.date})`
-                );
+                $rateDisplay.text(__('currency.rate_display', {
+                    from: selectedCurrency,
+                    rate: rateInfo.rate.toFixed(4),
+                    to: primaryCurrency.code,
+                    date: rateInfo.date
+                }));
                 recalcAmountDisplay();
             })
             .catch(err => {
-                $rateDisplay.text(`⚠ ${err.message}`);
+                $rateDisplay.text(__('currency.rate_error', { message: err.message }));
             });
     }
 
@@ -239,9 +245,10 @@
 
         const converted = (amount * rateInfo.rate).toFixed(primaryCurrency.decimal_places || 2);
         $converted.removeClass('hidden');
-        $converted.text(
-            `= ${converted} ${primaryCurrency.code}`
-        );
+        $converted.text(__('currency.converted_display', {
+            amount: converted,
+            code: primaryCurrency.code
+        }));
     }
 
     function setupCurrencyChangeHandler() {
@@ -263,7 +270,7 @@
         // Cargar caché inmediatamente (offline)
         const cached = getCachedCurrencies();
         if (cached && cached.length > 0) {
-            console.log('[CURRENCIES] Usando caché local.');
+            console.log('[CURRENCIES] ' + __('resource.currencies_cache'));
             initCurrencies(cached);
         }
 
@@ -279,7 +286,7 @@
                     // Fallback: crear moneda por defecto
                     initCurrencies([{
                         code: 'MXN',
-                        name: 'Peso Mexicano',
+                        name: __('currency.default_name_mxn'),
                         symbol: '$',
                         decimal_places: 2,
                         enabled: true,

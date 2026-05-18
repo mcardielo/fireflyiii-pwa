@@ -46,11 +46,11 @@
     function validateAndFormatAmount() {
         const raw = $('#amount').val().trim();
         if (!raw) {
-            throw new Error('Por favor, ingresa un monto.');
+            throw new Error(__('transaction.error.amount_required'));
         }
         const amount = parseFloat(raw.replace(',', '.'));
         if (isNaN(amount) || amount <= 0) {
-            throw new Error('El monto debe ser un número positivo. Ej: 100.50');
+            throw new Error(__('transaction.error.amount_positive'));
         }
         return amount.toFixed(2);
     }
@@ -118,22 +118,22 @@
         const dest = resolveField('destination');
 
         if (!source.name || !dest.name) {
-            throw new Error('Por favor, selecciona o ingresa nombres de cuenta válidos para ambos campos.');
+            throw new Error(__('transaction.error.accounts_required'));
         }
 
         // Validaciones según tipo
         if (transactionType === 'deposit') {
             // En depósitos, destino es asset — no se puede crear cuenta nueva
             if (!dest.id) {
-                throw new Error('La cuenta destino (Asset) debe existir. Selecciona una cuenta existente.');
+                throw new Error(__('transaction.error.dest_asset_required'));
             }
         } else if (transactionType === 'transfer') {
             // Transferencias: ambas cuentas son asset — no se pueden crear nuevas
             if (!source.id) {
-                throw new Error('La cuenta origen (Asset) debe existir. Selecciona una cuenta existente.');
+                throw new Error(__('transaction.error.source_asset_required'));
             }
             if (!dest.id) {
-                throw new Error('La cuenta destino (Asset) debe existir. Selecciona una cuenta existente.');
+                throw new Error(__('transaction.error.dest_asset_transfer'));
             }
         }
 
@@ -146,7 +146,7 @@
         // - Si no hay ID, NO incluirlo (Firefly creará la cuenta por el nombre)
         const transaction = {
             "type": transactionType,
-            "description": $('#description').val().trim() || "Transacción sin descripción",
+            "description": $('#description').val().trim() || __('transaction.no_description'),
             "date": new Date().toISOString(),
             "source_name": source.name
         };
@@ -168,10 +168,10 @@
                     transaction.foreign_currency_code = destCurrency;
                     console.log(`💱 Transfer: ${amount} ${sourceCurrency} → ${converted} ${destCurrency} (tasa: ${rateInfo.rate})`);
                 } catch (e) {
-                    throw new Error(
-                        `Tipo de cambio ${sourceCurrency} → ${destCurrency} no disponible. ` +
-                        'Intenta de nuevo en unos segundos.'
-                    );
+                    throw new Error(__('transaction.error.rate_unavailable', {
+                        from: sourceCurrency,
+                        to: destCurrency
+                    }));
                 }
             } else {
                 // Misma moneda o no disponible — flujo normal
@@ -182,10 +182,10 @@
         else if (primaryCurrency && selectedCurrency && selectedCurrency !== primaryCurrency.code) {
             const rateInfo = window.FFPWA.getCachedRate(selectedCurrency, primaryCurrency.code);
             if (!rateInfo) {
-                throw new Error(
-                    `Tipo de cambio ${selectedCurrency} → ${primaryCurrency.code} no disponible. ` +
-                    'Espera a que se cargue o usa la moneda predeterminada.'
-                );
+                throw new Error(__('transaction.error.rate_missing', {
+                    from: selectedCurrency,
+                    to: primaryCurrency.code
+                }));
             }
             const converted = (parseFloat(amount) * rateInfo.rate).toFixed(primaryCurrency.decimal_places || 2);
             transaction.amount = converted;
@@ -233,7 +233,7 @@
         if (defaultAccount && defaultAccount.id) {
             const isDeposit = transactionType === 'deposit';
             const targetField = isDeposit ? 'destination' : 'source';
-            $(`#${targetField}-account`).val('').attr('placeholder', defaultAccount.name + ' (default)');
+            $(`#${targetField}-account`).val('').attr('placeholder', __('accounts.placeholder_default', { name: defaultAccount.name }));
             $(`#${targetField}-account-id`).val(defaultAccount.id);
             $(`#${targetField}-account-name`).val(defaultAccount.name);
         }
@@ -265,9 +265,9 @@
                     resolve(true);
                 },
                 error: function(xhr) {
-                    let errorMsg = `Error al registrar transacción: ${xhr.statusText}.`;
+                    let errorMsg = __('transaction.submit_error_prefix') + ' ' + xhr.statusText + '.';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg += ` Detalles: ${xhr.responseJSON.message}`;
+                        errorMsg += ' ' + __('transaction.submit_error_details') + ' ' + xhr.responseJSON.message;
                     }
                     const status = xhr.status || 0;
                     console.error("❌ Error de envío:", errorMsg, `(HTTP ${status})`);
@@ -286,7 +286,7 @@
         localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
         console.log(`🟡 Transacción encolada. Cola actual: ${queue.length} ítems.`);
 
-        showStatusMessage('💾 Transacción guardada localmente. Se sincronizará cuando haya conexión.', 'warning');
+        showStatusMessage('💾 ' + __('sync.queued'), 'warning');
 
         // Registrar Background Sync si el navegador lo soporta
         if ('serviceWorker' in navigator && 'SyncManager' in window) {
@@ -313,16 +313,16 @@
     async function syncQueue() {
         const queue = getQueue();
         if (queue.length === 0) {
-            console.log('📦 Cola de sincronización vacía.');
+            console.log('📦 ' + __('sync.queue_empty'));
             return;
         }
 
         if (!navigator.onLine) {
-            console.warn('❌ Intento de sincronización fallido: No hay conexión.');
+            console.warn('❌ ' + __('sync.fail_no_connection'));
             return;
         }
 
-        showStatusMessage(`🔄 Sincronizando ${queue.length} transacciones...`, 'warning');
+        showStatusMessage('🔄 ' + __('sync.progress', { count: queue.length }), 'warning');
 
         const remaining = [];
         let successfulSends = 0;
@@ -343,13 +343,13 @@
 
         let message = '';
         if (successfulSends > 0) {
-            message += `✔️ ${successfulSends} transacción(es) enviada(s). `;
+            message += __('sync.sent', { count: successfulSends }) + ' ';
         }
         if (failedSends > 0) {
-            message += `⚠️ ${failedSends} fallaron y serán reintentadas.`;
+            message += __('sync.failed', { count: failedSends });
             showStatusMessage(message, 'warning');
         } else {
-            message = message || '🔄 Sincronización completada.';
+            message = message || __('sync.complete');
             showStatusMessage(message, 'success');
         }
 
@@ -384,7 +384,7 @@
                 success: function() {
                     if (!fireflyServerAvailable) {
                         console.log('[HEALTH] ✅ Servidor Firefly disponible de nuevo.');
-                        window.FFPWA.updateStatus('🟢 Online');
+                        window.FFPWA.updateStatus(__('nav.online'));
                         fireflyServerAvailable = true;
                         syncQueue();
                     }
@@ -397,7 +397,7 @@
                 error: function(xhr) {
                     if (fireflyServerAvailable) {
                         console.warn('[HEALTH] ❌ Servidor Firefly no disponible.');
-                        window.FFPWA.updateStatus('🔶 Servidor no disponible');
+                        window.FFPWA.updateStatus(__('nav.server_down'));
                         fireflyServerAvailable = false;
                     }
                     resolve(false);
@@ -449,22 +449,22 @@
         try {
             transactionPayload = await buildTransactionPayload();
         } catch (error) {
-            showStatusMessage(`❌ ${error.message}`, 'error');
+            showStatusMessage('❌ ' + error.message, 'error');
             return;
         }
 
         const $btn = $('#submit-transaction-btn');
-        $btn.prop('disabled', true).text('Enviando...');
+        $btn.prop('disabled', true).text(__('transaction.submit_sending'));
 
         if (navigator.onLine) {
             sendTransaction(transactionPayload)
                 .then(() => {
-                    showStatusMessage('✅ Transacción registrada exitosamente.', 'success');
+                    showStatusMessage('✅ ' + __('transaction.submit_success'), 'success');
                     resetTransactionForm();
                     // Si el servidor estaba marcado como caído, restaurar estado
                     if (!fireflyServerAvailable) {
                         fireflyServerAvailable = true;
-                        window.FFPWA.updateStatus('🟢 Online');
+                        window.FFPWA.updateStatus(__('nav.online'));
                         stopFireflyHealthCheck();
                     }
                 })
@@ -473,28 +473,28 @@
 
                     // Errores de autenticación o autorización: no son recuperables
                     if (status === 401 || status === 403) {
-                        showStatusMessage(`🛑 ${error.message}`, 'error');
-                        window.FFPWA.updateStatus('🔶 Servidor no disponible');
+                        showStatusMessage('🛑 ' + error.message, 'error');
+                        window.FFPWA.updateStatus(__('nav.server_down'));
                         fireflyServerAvailable = false;
                         startFireflyHealthCheck();
                     }
                     // Errores temporales: servidor caído, timeout, 5xx
                     else {
-                        showStatusMessage('🟡 Servidor Firefly no disponible. Transacción encolada para reintento.', 'warning');
+                        showStatusMessage('🟡 ' + __('transaction.submit_error_temp'), 'warning');
                         queueTransaction(transactionPayload);
                         resetTransactionForm();
-                        window.FFPWA.updateStatus('🔶 Servidor no disponible');
+                        window.FFPWA.updateStatus(__('nav.server_down'));
                         fireflyServerAvailable = false;
                         startFireflyHealthCheck();
                     }
                 })
                 .finally(() => {
-                    $btn.prop('disabled', false).text('Registrar Transacción');
+                    $btn.prop('disabled', false).text(__('transaction.submit_btn'));
                 });
         } else {
             queueTransaction(transactionPayload);
             resetTransactionForm();
-            $btn.prop('disabled', false).text('Registrar Transacción');
+            $btn.prop('disabled', false).text(__('transaction.submit_btn'));
         }
     }
 
@@ -505,16 +505,16 @@
         window.addEventListener('online', () => {
             console.log('[NETWORK]: Online. Verificando servidor...');
             if (fireflyServerAvailable) {
-                window.FFPWA.updateStatus('🟢 Online');
+                window.FFPWA.updateStatus(__('nav.online'));
                 syncQueue();
             } else {
-                window.FFPWA.updateStatus('🔶 Servidor no disponible (verificando...)');
+                window.FFPWA.updateStatus(__('nav.server_checking'));
                 checkFireflyHealth();
             }
         });
 
         window.addEventListener('offline', () => {
-            window.FFPWA.updateStatus('🔴 Offline');
+            window.FFPWA.updateStatus(__('nav.offline'));
             console.log('[NETWORK]: Offline. Modo desconectado.');
         });
 
@@ -538,7 +538,7 @@
         if (pendingQueue.length > 0) {
             console.log(`[INIT] ${pendingQueue.length} transacción(es) pendiente(s) en la cola.`);
             fireflyServerAvailable = false;
-            window.FFPWA.updateStatus('🔶 Servidor no disponible');
+            window.FFPWA.updateStatus(__('nav.server_down'));
         }
         // Siempre iniciar health check para monitoreo continuo;
         // si no hay items pendientes, se detendrá automáticamente
