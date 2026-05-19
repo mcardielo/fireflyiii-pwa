@@ -1,43 +1,76 @@
 # Firefly Ledger PWA
 
-Aplicación Web Progresiva para el registro de transacciones en Firefly III, con soporte offline y multi-moneda.
+A **Progressive Web App** for registering, viewing, and managing transactions on **Firefly III** — entirely client-side, with full offline support and multi-currency capabilities.
 
-## Características
+> 🚀 **Try it live:** [https://mcardielo.github.io/fireflyiii-pwa/](https://mcardielo.github.io/fireflyiii-pwa/)
 
-- **Registro de transacciones** — Soporta los tres tipos de transacciones de Firefly III: retiros (withdrawal), depósitos (deposit) y transferencias (transfer).
-- **Offline primero** — Las transacciones se almacenan localmente y se sincronizan automáticamente al recuperar la conexión. Utiliza Background Sync cuando el navegador lo soporta.
-- **Selección contextual de cuentas** — Autocompletado inteligente que filtra cuentas según el tipo de transacción: Asset para retiros y transferencias, Revenue para depósitos, Expense para retiros.
-- **Multi-moneda** — Conversión automática de divisas usando la API de Frankfurter. En transferencias entre cuentas con distinta moneda, calcula automáticamente el monto en la moneda de destino.
-- **Cuenta origen por defecto** — Configuración inicial de una cuenta Asset predeterminada que se usa automáticamente en el campo correspondiente según el tipo de transacción.
-- **Health check** — Monitoreo periódico de disponibilidad del servidor Firefly III. Reintenta la sincronización automáticamente cuando el servidor se recupera.
+## What is this?
 
-## Requisitos
+Firefly Ledger is a **PWA (Progressive Web App)** that runs entirely in your browser. Everything stays on your device:
 
-- Instancia de Firefly III con acceso a la API REST.
-- Token de Acceso Personal (PAT) generado desde el perfil de usuario en Firefly III.
+- **Your data never leaves your control** — all credentials and transactions are stored locally in your browser's `localStorage`, never uploaded to any third-party server.
+- **Fully offline** — the app caches itself via Service Worker, so it works without internet. Transactions you create while offline are queued and automatically synced when connectivity is restored.
+- **No backend needed** — the app communicates directly with your **own** Firefly III instance through its REST API. There is no intermediary server, no cloud, no middleman.
 
-## Instalación
+## Features
 
-1. Clona el repositorio o descarga los archivos.
-2. Sirve el directorio raíz con cualquier servidor web estático:
+### Transaction Recording
+- Supports all three Firefly III transaction types: **Withdrawal**, **Deposit**, and **Transfer**.
+- Smart contextual autocomplete — filters accounts based on transaction type (Asset for withdrawals/transfers, Revenue for deposits, Expense for withdrawals).
+- Create new non-Asset accounts on the fly directly from the form.
+
+### Multi-Currency
+- Automatic exchange rate conversion using the Frankfurter API.
+- Transfers between accounts with different currencies calculate the destination amount automatically.
+- Real-time exchange rate display as you type.
+
+### Accounts & Balances
+- Browse all your **Asset accounts** with current balances, currency codes, and colored role badges (Checking, Savings, Credit Card, Cash, Shared).
+- **Transaction history** per account — tap any account to see its last 50 transactions.
+- Pagination: "Load 50 more" to scroll through older entries.
+- Filters out future-dated transactions automatically.
+
+### Offline-First
+- Service Worker caches all static assets on first visit — the app loads instantly even without internet.
+- Background Sync queues transactions when offline or when the Firefly III server is unreachable.
+- Automatic health checks re-sync pending transactions as soon as the server is back.
+
+### Multi-Language
+- English and Spanish built-in.
+- Switch languages on the fly with the EN/ES button in the nav bar — no reload needed.
+
+### iOS-Style Design
+- Native-feeling iOS interface with blurred nav bars, segmented controls, sticky footers, and a bottom tab bar.
+- Installable on your home screen (iOS / Android / Desktop) like a native app.
+
+## Requirements
+
+- A **Firefly III** instance with REST API access.
+- A **Personal Access Token (PAT)** generated from your Firefly III profile page.
+- A modern browser (Chrome, Firefox, Safari, Edge).
+
+## Getting Started
+
+1. **Open the app** — visit the live demo or serve the files locally.
+2. **Configure** — enter your Firefly III URL and Personal Access Token.
+3. **Select a default account** — pick an Asset account to pre-fill when recording transactions.
+4. **Start transacting** — record withdrawals, deposits, and transfers. Everything works offline.
+
+### Run Locally
 
 ```bash
 npx http-server -o
 ```
 
-O desde VS Code, abre el proyecto y usa "Open with Live Server".
+Or open the project in VS Code and use "Open with Live Server".
 
-3. Abre la URL en tu navegador. La primera vez solicitará la URL de tu instancia de Firefly III y el PAT.
-4. Selecciona la cuenta Asset que se usará por defecto.
+## Privacy & Data
 
-## Uso
+- **No third-party servers.** The app connects exclusively to your Firefly III instance.
+- **All data stays local.** Credentials, transaction queue, and account cache are stored in your browser's `localStorage`.
+- **No analytics, no tracking.** Zero telemetry. Zero cookies from the app itself.
+- **Exchange rates** are fetched from the public Frankfurter API only when needed (no personal data sent).
 
-1. Selecciona el tipo de transacción: Retiro, Depósito o Transferencia.
-2. Completa los campos de cuenta. El autocompletado filtra las cuentas disponibles según el tipo seleccionado.
-3. Si el tipo de cuenta lo permite, puedes escribir un nombre nuevo para crear una cuenta sobre la marcha (no aplica para cuentas tipo Asset).
-4. Ingresa el concepto y el monto. Si seleccionas una moneda distinta a la predeterminada, el sistema muestra la conversión en tiempo real.
-5. Envía la transacción. Si no hay conexión o el servidor no responde, la transacción se encola y se sincroniza automáticamente cuando sea posible.
-
-## Licencia
+## License
 
 MIT
