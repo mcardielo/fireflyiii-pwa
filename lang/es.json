@@ -130,7 +130,35 @@
   "currency.error_frankfurter": "Sin tasa {from}→{to} en Frankfurter",
   "currency.error_frankfurter_down": "Frankfurter API no disponible",
 
+  "nav.accounts": "Cuentas",
+  "nav.record": "Registro",
+  "nav.back_record": "Volver a Registro",
+  "nav.history": "Historial",
+
+  "accounts.title": "Cuentas",
+  "accounts.total_balance": "Balance Total",
+  "accounts.loading": "Cargando cuentas...",
+  "accounts.no_accounts": "No se encontraron cuentas Asset.",
+  "accounts.unnamed": "Cuenta sin nombre",
+  "accounts.error_fetch": "Error al cargar cuentas.",
+  "accounts.error_not_configured": "Firefly III no configurado.",
+  "accounts.role_default": "Corriente",
+  "accounts.role_savings": "Ahorros",
+  "accounts.role_shared": "Compartida",
+  "accounts.role_cc": "Tarjeta de Crédito",
+  "accounts.role_cash": "Efectivo",
+  "accounts.role_asset": "Asset",
+
+  "detail.back": "← Cuentas",
+  "detail.loading": "Cargando transacciones...",
+  "detail.load_more": "Cargar 50 más",
+  "detail.no_transactions": "No se encontraron transacciones.",
+  "detail.no_description": "Sin descripción",
+  "detail.error_fetch": "Error al cargar transacciones.",
+
   "config.title": "Configuración",
+  "history.placeholder": "Próximamente: historial de transacciones",
+
   "config.save": "Guardar",
   "config.cancel": "Cancelar",
   "config.reset": "Reiniciar"

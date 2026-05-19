@@ -501,7 +501,7 @@
     $(document).ready(function() {
         $('#transaction-form').on('submit', handleTransactionSubmit);
 
-        // Al recuperar conexión de red, verificar salud del servidor antes de sincronizar
+        // Network connectivity detection
         window.addEventListener('online', () => {
             console.log('[NETWORK]: Online. Verificando servidor...');
             if (fireflyServerAvailable) {
@@ -517,6 +517,13 @@
             window.FFPWA.updateStatus(__('nav.offline'));
             console.log('[NETWORK]: Offline. Modo desconectado.');
         });
+
+        // Periodic network poll (events are unreliable in some PWA scenarios)
+        setInterval(function() {
+            if (!navigator.onLine) {
+                window.FFPWA.updateStatus(__('nav.offline'));
+            }
+        }, 15000);
 
         // Escuchar mensajes del Service Worker (Background Sync)
         if ('serviceWorker' in navigator) {

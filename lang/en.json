@@ -130,7 +130,35 @@
   "currency.error_frankfurter": "No rate for {from}→{to} in Frankfurter",
   "currency.error_frankfurter_down": "Frankfurter API unavailable",
 
+  "nav.accounts": "Accounts",
+  "nav.record": "Record",
+  "nav.back_record": "Back to Record",
+  "nav.history": "History",
+
+  "accounts.title": "Accounts",
+  "accounts.total_balance": "Total Balance",
+  "accounts.loading": "Loading accounts...",
+  "accounts.no_accounts": "No asset accounts found.",
+  "accounts.unnamed": "Unnamed account",
+  "accounts.error_fetch": "Error loading accounts.",
+  "accounts.error_not_configured": "Firefly III not configured.",
+  "accounts.role_default": "Checking",
+  "accounts.role_savings": "Savings",
+  "accounts.role_shared": "Shared",
+  "accounts.role_cc": "Credit Card",
+  "accounts.role_cash": "Cash",
+  "accounts.role_asset": "Asset",
+
+  "detail.back": "← Accounts",
+  "detail.loading": "Loading transactions...",
+  "detail.load_more": "Load 50 more",
+  "detail.no_transactions": "No transactions found.",
+  "detail.no_description": "No description",
+  "detail.error_fetch": "Error loading transactions.",
+
   "config.title": "Configuration",
+  "history.placeholder": "Coming soon: transaction history",
+
   "config.save": "Save",
   "config.cancel": "Cancel",
   "config.reset": "Reset"

@@ -6,7 +6,10 @@ const ASSETS_TO_CACHE = [
     'js/accounts.js',
     'js/currencies.js',
     'js/transactions.js',
-    'js/app.js',
+    'js/accounts-screen.js',
+    'js/i18n.js',
+    'lang/en.json',
+    'lang/es.json',
     'manifest.json'
 ];
 

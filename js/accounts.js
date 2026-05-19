@@ -42,7 +42,7 @@
     window.FFPWA.getAccountTypeForField = getAccountTypeForField;
 
     function updateStatus(statusText) {
-        const statusEl = $('#online-status');
+        const statusEl = $('.online-status');
         statusEl.removeClass('bg-green-100 text-green-800 bg-red-100 text-red-800 bg-yellow-100 text-yellow-800');
         if (statusText.includes('Online') || statusText === __('nav.online')) {
             statusEl.addClass('bg-green-100 text-green-800');

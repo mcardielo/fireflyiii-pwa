@@ -87,6 +87,9 @@
         // Transicionar al dashboard
         $('#default-account-container').addClass('hidden');
         $('#dashboard-container').removeClass('hidden');
+        $('#tab-bar').removeClass('hidden');
+        $('#tab-bar .tab-btn').removeClass('active');
+        $('#tab-bar .tab-btn[data-screen="record"]').addClass('active');
         $(window).trigger('configLoaded');
     }
 
@@ -97,6 +100,8 @@
         $('#setup-container').addClass('hidden');
         $('#default-account-container').removeClass('hidden');
         $('#dashboard-container').addClass('hidden');
+        $('#accounts-container').addClass('hidden');
+        $('#tab-bar').addClass('hidden');
 
         $('#save-default-account-btn').on('click', handleDefaultAccountSave);
         loadAssetAccountsForPicker();
@@ -108,7 +113,11 @@
     function showDashboard() {
         $('#setup-container').addClass('hidden');
         $('#default-account-container').addClass('hidden');
+        $('#accounts-container').addClass('hidden');
         $('#dashboard-container').removeClass('hidden');
+        $('#tab-bar').removeClass('hidden');
+        $('#tab-bar .tab-btn').removeClass('active');
+        $('#tab-bar .tab-btn[data-screen="record"]').addClass('active');
         $(window).trigger('configLoaded');
     }
 
@@ -215,5 +224,10 @@
 
     // Expose for orchestration — called after i18n is ready
     window.initConfig = checkConfiguration;
+
+    // Config button: re-open default account picker
+    $(document).on('click', '#config-btn, #accounts-config-btn', function() {
+        showDefaultAccountPicker();
+    });
 
 })();

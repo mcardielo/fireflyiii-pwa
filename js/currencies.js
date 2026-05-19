@@ -76,7 +76,7 @@
 
         $select.empty();
         enabled.forEach(c => {
-            const label = `${c.symbol} ${c.code} — ${c.name}`;
+            const label = c.code;
             $select.append(`<option value="${c.code}" ${c.code === primaryCode ? 'selected' : ''}>${label}</option>`);
         });
     }

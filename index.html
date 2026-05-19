@@ -18,16 +18,15 @@
     <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
-    <!-- Tailwind CSS CDN (Play CDN - redirige a versión, no aplica SRI) -->
+    <!-- Tailwind CSS CDN (Play CDN) -->
     <script defer src="https://cdn.tailwindcss.com"></script>
 
-    <!-- jQuery CDN (con SRI hash) -->
+    <!-- jQuery CDN -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
             integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK"
             crossorigin="anonymous"></script>
 
     <style>
-        /* Prevenir scroll, zoom y bounce en PWA standalone */
         html, body {
             height: 100%;
             overflow: hidden;
@@ -40,27 +39,19 @@
         body {
             background: #f2f3f7;
         }
-        #setup-container,
-        #default-account-container,
-        #dashboard-container {
-            height: 100vh;
-            height: 100dvh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        #setup-container, #default-account-container {
+        #app {
+            height: 100%;
+            width: 100%;
             display: flex;
             flex-direction: column;
-            padding: 0;
         }
-        #dashboard-container {
+        .screen-stack {
             display: flex;
             flex-direction: column;
         }
         .hidden {
             display: none !important;
         }
-        /* Spinner de carga */
         .spinner {
             border: 3px solid #e5e7eb;
             border-top: 3px solid #5856D6;
@@ -83,9 +74,6 @@
             color: #5856D6;
             margin-left: 0.5rem;
         }
-
-        /* === iOS-Styled Components === */
-        /* Nav bar blur */
         .nav-bar {
             padding-top: max(env(safe-area-inset-top, 0px), 4px);
             padding-bottom: 8px;
@@ -98,7 +86,6 @@
             -webkit-backdrop-filter: saturate(180%) blur(20px);
             backdrop-filter: saturate(180%) blur(20px);
         }
-        /* Segmented control */
         .segmented-control {
             background: #e5e5ea;
             border-radius: 9px;
@@ -124,7 +111,6 @@
             color: #1c1c1e;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
-        /* Section label */
         .section-label {
             font-size: 13px;
             font-weight: 600;
@@ -134,8 +120,6 @@
             padding-left: 4px;
             margin-bottom: 8px;
         }
-        /* Field rows (iOS settings-style) */
-        .field-group {}
         .field-card {
             background: #ffffff;
             border-radius: 10px;
@@ -182,21 +166,35 @@
         .ios-input::placeholder {
             color: #c7c7cc;
         }
+        .currency-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            margin-left: 8px;
+        }
         .currency-badge {
             font-size: 13px;
             font-weight: 500;
             color: #5856D6;
             background: #e8e7ff;
-            padding: 2px 10px;
+            padding: 2px 22px 2px 10px;
             border-radius: 12px;
-            margin-left: 8px;
             border: none;
             cursor: pointer;
             appearance: none;
             -webkit-appearance: none;
             white-space: nowrap;
+            min-width: 0;
         }
-        /* Sticky footer */
+        .currency-chevron {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 8px;
+            color: #5856D6;
+            pointer-events: none;
+        }
         .sticky-footer {
             padding: 8px 16px;
             padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
@@ -222,7 +220,6 @@
             opacity: 0.4;
             cursor: not-allowed;
         }
-        /* Status message iOS-style */
         .ios-status {
             background: #ffffff;
             border-radius: 10px;
@@ -243,7 +240,6 @@
             border-left-color: #ff3b30;
             color: #1c1c1e;
         }
-        /* Autocomplete styles */
         .autocomplete-dropdown {
             position: fixed;
             z-index: 9999;
@@ -274,15 +270,13 @@
             color: #5856D6;
             margin-left: 0.5rem;
         }
-        /* Exchange rate info */
         #exchange-rate-info {
             background: #ffffff;
             border-radius: 10px;
             padding: 12px 16px;
             margin-top: 8px;
         }
-        /* Language switcher */
-        #lang-btn {
+        .lang-btn {
             background: #e5e5ea;
             border-radius: 6px;
             padding: 3px 8px;
@@ -293,240 +287,410 @@
             border: none;
             transition: opacity 0.2s;
         }
-        #lang-btn:active {
+        .lang-btn:active {
             opacity: 0.5;
+        }
+
+        /* ─── Tab Bar (iOS-style) ─── */
+        #tab-bar {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(242, 243, 247, 0.94);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-top: 0.5px solid #c6c6c8;
+            padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
+        }
+        .screen {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 52px;
+        }
+        .tab-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 0 2px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            min-height: 48px;
+        }
+        .tab-btn:active {
+            opacity: 0.5;
+        }
+        .tab-icon {
+            font-size: 22px;
+            line-height: 1.2;
+        }
+        .tab-label {
+            font-size: 10px;
+            color: #8e8e93;
+            margin-top: 1px;
+            font-weight: 500;
+        }
+        .tab-btn.active .tab-label {
+            color: #5856D6;
         }
     </style>
 </head>
 <body>
 
-    <!-- ========== PANTALLA DE CONFIGURACIÓN ========== -->
-    <div id="setup-container" class="w-full hidden">
-        <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4" style="-webkit-overflow-scrolling: touch">
-            <!-- Header -->
-            <div class="text-center mb-10">
-                <div class="w-16 h-16 bg-[#e8e7ff] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                    </svg>
-                </div>
-                <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="setup.title">Configuración</h1>
-                <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="setup.subtitle">
-                    Conecta tu instancia de Firefly III con tu Token de Acceso Personal para empezar.
-                </p>
-            </div>
+    <!-- Mount point: screens get injected here -->
+    <div id="app"></div>
 
-            <form id="config-form">
-                <p class="section-label" data-i18n="setup.section_connection">Conexión</p>
+    <!-- ============================================================ -->
+    <!-- SCREEN TEMPLATES                                             -->
+    <!-- ============================================================ -->
+
+    <!-- ── Configuración (URL + Token) ── -->
+    <template id="screen-setup">
+        <div id="setup-container" class="screen screen-stack hidden">
+            <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4" style="-webkit-overflow-scrolling: touch">
+                <div class="text-center mb-10">
+                    <div class="w-16 h-16 bg-[#e8e7ff] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </div>
+                    <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="setup.title">Configuración</h1>
+                    <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="setup.subtitle">
+                        Conecta tu instancia de Firefly III con tu Token de Acceso Personal para empezar.
+                    </p>
+                </div>
+                <form id="config-form">
+                    <p class="section-label" data-i18n="setup.section_connection">Conexión</p>
+                    <div class="field-card mb-6">
+                        <div class="field-row">
+                            <span class="field-label" style="min-width:0; white-space:nowrap" data-i18n="setup.url_label">URL</span>
+                            <div class="field-value">
+                                <input type="url" id="firefly-url" required placeholder="https://miapp.firefly-iii.org"
+                                       class="ios-input" style="width:100%; text-align:right"
+                                       data-i18n-placeholder="setup.url_placeholder">
+                            </div>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label" style="min-width:0; white-space:nowrap" data-i18n="setup.token_label">Token</span>
+                            <div class="field-value">
+                                <input type="password" id="personal-token" required placeholder="xxxxxxxxxxxxxxxxxxxxxxx"
+                                       class="ios-input" style="width:100%; text-align:right"
+                                       data-i18n-placeholder="setup.token_placeholder">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="config-message" class="ios-status hidden"></div>
+                </form>
+            </div>
+            <footer class="sticky-footer">
+                <button type="submit" id="setup-submit-btn" class="ios-btn-primary" form="config-form">
+                    <span data-i18n="setup.submit_btn">Conectar y Continuar</span>
+                </button>
+            </footer>
+        </div>
+    </template>
+
+    <!-- ── Selección de Cuenta Default ── -->
+    <template id="screen-account-picker">
+        <div id="default-account-container" class="screen screen-stack hidden">
+            <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4" style="-webkit-overflow-scrolling: touch">
+                <div class="text-center mb-10">
+                    <div class="w-16 h-16 bg-[#e8e7ff] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="5" width="20" height="14" rx="2"/>
+                            <line x1="2" y1="10" x2="22" y2="10"/>
+                        </svg>
+                    </div>
+                    <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="account.title">Cuenta Default</h1>
+                    <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="account.subtitle">
+                        Selecciona la cuenta que se usará por defecto como origen al registrar tus transacciones.
+                    </p>
+                </div>
+                <p class="section-label" data-i18n="account.section">Cuenta Origen</p>
                 <div class="field-card mb-6">
                     <div class="field-row">
-                        <span class="field-label" style="min-width:0; white-space:nowrap" data-i18n="setup.url_label">URL</span>
+                        <span class="field-label" style="min-width:0" data-i18n="account.select_label">Cuenta</span>
                         <div class="field-value">
-                            <input type="url" id="firefly-url" required
-                                   placeholder="https://miapp.firefly-iii.org"
-                                   class="ios-input" style="width:100%; text-align:right"
-                                   data-i18n-placeholder="setup.url_placeholder">
-                        </div>
-                    </div>
-                    <div class="field-row">
-                        <span class="field-label" style="min-width:0; white-space:nowrap" data-i18n="setup.token_label">Token</span>
-                        <div class="field-value">
-                            <input type="password" id="personal-token" required
-                                   placeholder="xxxxxxxxxxxxxxxxxxxxxxx"
-                                   class="ios-input" style="width:100%; text-align:right"
-                                   data-i18n-placeholder="setup.token_placeholder">
+                            <select id="default-account-select" style="-webkit-appearance:none;appearance:none;border:none;background:transparent;font-size:15px;color:#1c1c1e;text-align:right;direction:rtl;padding:0;outline:none;cursor:pointer;flex:1">
+                                <option value="" data-i18n="account.loading">Cargando cuentas...</option>
+                            </select>
                         </div>
                     </div>
                 </div>
-
-                <div id="config-message" class="ios-status hidden"></div>
-            </form>
-        </div>
-
-        <footer class="sticky-footer">
-            <button type="submit" id="setup-submit-btn" class="ios-btn-primary" form="config-form">
-                <span data-i18n="setup.submit_btn">Conectar y Continuar</span>
-            </button>
-        </footer>
-    </div>
-
-    <!-- ========== SELECCIONAR CUENTA DEFAULT ========== -->
-    <div id="default-account-container" class="w-full hidden">
-        <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4" style="-webkit-overflow-scrolling: touch">
-            <!-- Header -->
-            <div class="text-center mb-10">
-                <div class="w-16 h-16 bg-[#e8e7ff] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="5" width="20" height="14" rx="2"/>
-                        <line x1="2" y1="10" x2="22" y2="10"/>
-                    </svg>
-                </div>
-                <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="account.title">Cuenta Default</h1>
-                <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="account.subtitle">
-                    Selecciona la cuenta que se usará por defecto como origen al registrar tus transacciones.
-                </p>
+                <div id="default-account-message" class="ios-status hidden"></div>
             </div>
+            <footer class="sticky-footer">
+                <button id="save-default-account-btn" class="ios-btn-primary">
+                    <span data-i18n="account.save_btn">Guardar y Continuar</span>
+                </button>
+            </footer>
+        </div>
+    </template>
 
-            <p class="section-label" data-i18n="account.section">Cuenta Origen</p>
-            <div class="field-card mb-6">
-                <div class="field-row">
-                    <span class="field-label" style="min-width:0" data-i18n="account.select_label">Cuenta</span>
-                    <div class="field-value">
-                        <select id="default-account-select" style="-webkit-appearance:none; appearance:none; border:none; background:transparent; font-size:15px; color:#1c1c1e; text-align:right; direction:rtl; padding:0; outline:none; cursor:pointer; flex:1">
-                            <option value="" data-i18n="account.loading">Cargando cuentas...</option>
-                        </select>
+    <!-- ── Dashboard / Registro de Transacciones ── -->
+    <template id="screen-record">
+        <div id="dashboard-container" class="screen screen-stack hidden">
+            <header class="nav-bar">
+                <h1 class="text-[22px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="app.title">Registro</h1>
+                <div class="flex items-center gap-4">
+                    <button class="lang-btn text-sm font-semibold text-[#5856D6]">EN</button>
+                    <button id="config-btn" class="text-sm font-semibold text-[#5856D6]" data-i18n="nav.config">Config</button>
+                    <span class="online-status text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full">● Online</span>
+                </div>
+            </header>
+            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4" style="-webkit-overflow-scrolling: touch">
+                <div class="mb-6">
+                    <p class="section-label" data-i18n="transaction.type">Tipo de Transacción</p>
+                    <div class="segmented-control" role="radiogroup" id="type-selector">
+                        <button type="button" role="radio" aria-checked="true" data-type="withdrawal" class="segmented-btn active">💸 <span data-i18n="transaction.withdrawal">Gasto</span></button>
+                        <button type="button" role="radio" aria-checked="false" data-type="deposit" class="segmented-btn">💰 <span data-i18n="transaction.deposit">Depósito</span></button>
+                        <button type="button" role="radio" aria-checked="false" data-type="transfer" class="segmented-btn">🔄 <span data-i18n="transaction.transfer">Transferencia</span></button>
                     </div>
+                    <input type="hidden" id="transaction-type" value="withdrawal">
                 </div>
-            </div>
-
-            <div id="default-account-message" class="ios-status hidden"></div>
-        </div>
-
-        <footer class="sticky-footer">
-            <button id="save-default-account-btn" class="ios-btn-primary">
-                <span data-i18n="account.save_btn">Guardar y Continuar</span>
-            </button>
-        </footer>
-    </div>
-
-    <!-- ========== DASHBOARD ========== -->
-    <div id="dashboard-container" class="w-full flex flex-col hidden">
-
-        <!-- NAV BAR -->
-        <header class="nav-bar">
-            <h1 class="text-[22px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="app.title">Registro</h1>
-            <div class="flex items-center gap-4">
-                <button id="lang-btn" class="text-sm font-semibold text-[#5856D6]">EN</button>
-                <button id="config-btn" class="text-sm font-semibold text-[#5856D6]" data-i18n="nav.config">Config</button>
-                <span id="online-status" class="text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full" data-i18n="nav.online">
-                    ● Online
-                </span>
-            </div>
-        </header>
-
-        <!-- SCROLLABLE CONTENT -->
-        <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4" style="-webkit-overflow-scrolling: touch">
-
-            <!-- Tipo de Transacción (Segmented Control) -->
-            <div class="mb-6">
-                <p class="section-label" data-i18n="transaction.type">Tipo de Transacción</p>
-                <div class="segmented-control" role="radiogroup" id="type-selector">
-                    <button type="button" role="radio" aria-checked="true" data-type="withdrawal" class="segmented-btn active">💸 <span data-i18n="transaction.withdrawal">Gasto</span></button>
-                    <button type="button" role="radio" aria-checked="false" data-type="deposit" class="segmented-btn">💰 <span data-i18n="transaction.deposit">Depósito</span></button>
-                    <button type="button" role="radio" aria-checked="false" data-type="transfer" class="segmented-btn">🔄 <span data-i18n="transaction.transfer">Transferencia</span></button>
-                </div>
-                <input type="hidden" id="transaction-type" value="withdrawal">
-            </div>
-
-            <!-- Status Message -->
-            <div id="status-message" class="ios-status hidden"></div>
-
-            <form id="transaction-form">
-
-                <!-- Cuenta Origen -->
-                <div class="mb-6 field-group">
-                    <p class="section-label" data-i18n="transaction.source_section">Cuenta Origen</p>
-                    <div class="field-card">
-                        <div class="field-row">
-                            <span class="field-label"><span data-i18n="transaction.source_label">Origen</span> <span id="source-type-hint" class="field-hint" data-i18n="transaction.source_hint_asset">(Asset)</span></span>
-                            <div class="field-value">
-                                <div class="relative" style="flex:1">
-                                    <input type="text" id="source-account" placeholder="Selecciona..."
-                                           autocomplete="off"
-                                           class="ios-input" style="width:100%; text-align:right"
-                                           data-i18n-placeholder="transaction.source_placeholder">
-                                    <div id="source-autocomplete" class="autocomplete-dropdown hidden"></div>
+                <div id="status-message" class="ios-status hidden"></div>
+                <form id="transaction-form">
+                    <div class="mb-6 field-group">
+                        <p class="section-label" data-i18n="transaction.source_section">Cuenta Origen</p>
+                        <div class="field-card">
+                            <div class="field-row">
+                                <span class="field-label"><span data-i18n="transaction.source_label">Origen</span> <span id="source-type-hint" class="field-hint" data-i18n="transaction.source_hint_asset">(Asset)</span></span>
+                                <div class="field-value">
+                                    <div class="relative" style="flex:1">
+                                        <input type="text" id="source-account" placeholder="Selecciona..." autocomplete="off" class="ios-input" style="width:100%; text-align:right" data-i18n-placeholder="transaction.source_placeholder">
+                                        <div id="source-autocomplete" class="autocomplete-dropdown hidden"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <input type="hidden" id="source-account-id" name="source-account-id">
+                        <input type="hidden" id="source-account-name" name="source-account-name">
                     </div>
-                    <input type="hidden" id="source-account-id" name="source-account-id">
-                    <input type="hidden" id="source-account-name" name="source-account-name">
-                </div>
-
-                <!-- Cuenta Destino -->
-                <div class="mb-6 field-group">
-                    <p class="section-label" data-i18n="transaction.dest_section">Cuenta Destino</p>
-                    <div class="field-card">
-                        <div class="field-row">
-                            <span class="field-label"><span data-i18n="transaction.dest_label">Destino</span> <span id="dest-type-hint" class="field-hint" data-i18n="transaction.dest_hint_expense">(Expense)</span></span>
-                            <div class="field-value">
-                                <div class="relative" style="flex:1">
-                                    <input type="text" id="destination-account" required placeholder="Buscar cuenta..."
-                                           autocomplete="off"
-                                           class="ios-input" style="width:100%; text-align:right"
-                                           data-i18n-placeholder="transaction.dest_placeholder">
-                                    <div id="destination-autocomplete" class="autocomplete-dropdown hidden"></div>
+                    <div class="mb-6 field-group">
+                        <p class="section-label" data-i18n="transaction.dest_section">Cuenta Destino</p>
+                        <div class="field-card">
+                            <div class="field-row">
+                                <span class="field-label"><span data-i18n="transaction.dest_label">Destino</span> <span id="dest-type-hint" class="field-hint" data-i18n="transaction.dest_hint_expense">(Expense)</span></span>
+                                <div class="field-value">
+                                    <div class="relative" style="flex:1">
+                                        <input type="text" id="destination-account" required placeholder="Buscar cuenta..." autocomplete="off" class="ios-input" style="width:100%; text-align:right" data-i18n-placeholder="transaction.dest_placeholder">
+                                        <div id="destination-autocomplete" class="autocomplete-dropdown hidden"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <input type="hidden" id="destination-account-id" name="destination-account-id">
+                        <input type="hidden" id="destination-account-name" name="destination-account-name">
                     </div>
-                    <input type="hidden" id="destination-account-id" name="destination-account-id">
-                    <input type="hidden" id="destination-account-name" name="destination-account-name">
-                </div>
-
-                <!-- Detalles (Concepto + Importe) -->
-                <div class="mb-6 field-group">
-                    <p class="section-label" data-i18n="transaction.details_section">Detalles</p>
-                    <div class="field-card">
-                        <div class="field-row">
-                            <span class="field-label" data-i18n="transaction.description_label">Concepto</span>
-                            <div class="field-value">
-                                <input type="text" id="description" required placeholder="Ej: Compra en supermercado"
-                                       class="ios-input" data-i18n-placeholder="transaction.description_placeholder">
+                    <div class="mb-6 field-group">
+                        <p class="section-label" data-i18n="transaction.details_section">Detalles</p>
+                        <div class="field-card">
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="transaction.description_label">Concepto</span>
+                                <div class="field-value">
+                                    <input type="text" id="description" required placeholder="Ej: Compra en supermercado" class="ios-input" data-i18n-placeholder="transaction.description_placeholder">
+                                </div>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="transaction.amount_label">Importe</span>
+                                <div class="field-value">
+                                    <input type="number" step="0.01" min="0" id="amount" required placeholder="0.00" class="ios-input" data-i18n-placeholder="transaction.amount_placeholder">
+                                    <span class="currency-wrap">
+                                        <select id="currency-select" class="currency-badge"></select>
+                                        <span class="currency-chevron">▼</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <div class="field-row">
-                            <span class="field-label" data-i18n="transaction.amount_label">Importe</span>
-                            <div class="field-value">
-                                <input type="number" step="0.01" min="0" id="amount" required placeholder="0.00"
-                                       class="ios-input" data-i18n-placeholder="transaction.amount_placeholder">
-                                <select id="currency-select" class="currency-badge"></select>
-                            </div>
+                        <div id="exchange-rate-info" class="hidden" style="margin-top:8px">
+                            <p id="exchange-rate-display" class="text-xs text-[#8e8e93]"></p>
+                            <p id="amount-converted" class="text-sm font-medium text-[#5856D6] hidden"></p>
                         </div>
                     </div>
-                    <div id="exchange-rate-info" class="hidden" style="margin-top:8px">
-                        <p id="exchange-rate-display" class="text-xs text-[#8e8e93]"></p>
-                        <p id="amount-converted" class="text-sm font-medium text-[#5856D6] hidden"></p>
-                    </div>
+                </form>
+            </main>
+            <footer class="sticky-footer">
+                <button type="submit" id="submit-transaction-btn" class="ios-btn-primary" form="transaction-form">
+                    <span data-i18n="transaction.submit_btn">Registrar Transacción</span>
+                </button>
+            </footer>
+        </div>
+    </template>
+
+    <!-- ── Consultar Cuentas y Saldos ── -->
+    <template id="screen-accounts">
+        <div id="accounts-container" class="screen screen-stack hidden">
+            <header class="nav-bar">
+                <h1 class="text-[22px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="accounts.title">Cuentas</h1>
+                <div class="flex items-center gap-4">
+                    <button class="lang-btn text-sm font-semibold text-[#5856D6]">EN</button>
+                    <button id="accounts-config-btn" class="text-sm font-semibold text-[#5856D6]" data-i18n="nav.config">Config</button>
+                    <span class="online-status text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full">● Online</span>
                 </div>
+            </header>
+            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4" style="-webkit-overflow-scrolling: touch">
+                <!-- Accounts list view -->
+                <div id="accounts-loading" class="text-center py-8">
+                    <div class="spinner mx-auto mb-2"></div>
+                    <p class="text-sm text-[#8e8e93]" data-i18n="accounts.loading">Cargando cuentas...</p>
+                </div>
+                <div id="accounts-error" class="ios-status error hidden"></div>
+                <div id="accounts-list" class="space-y-3"></div>
 
-            </form>
-        </main>
+                <!-- Transaction detail view (hidden by default) -->
+                <div id="account-detail" class="hidden">
+                    <!-- Back button + account name -->
+                    <button id="detail-back-btn" class="text-sm font-semibold text-[#5856D6] mb-4">
+                        <span data-i18n="detail.back">← Cuentas</span>
+                    </button>
 
-        <!-- STICKY FOOTER -->
-        <footer class="sticky-footer">
-            <button type="submit" id="submit-transaction-btn" class="ios-btn-primary" form="transaction-form">
-                <span data-i18n="transaction.submit_btn">Registrar Transacción</span>
-            </button>
-        </footer>
+                    <!-- Account summary -->
+                    <div class="field-card mb-6 p-4">
+                        <h2 id="detail-account-name" class="text-[17px] font-semibold text-[#1c1c1e]"></h2>
+                        <p id="detail-account-balance" class="text-[22px] font-bold text-[#1c1c1e] mt-1"></p>
+                        <p id="detail-account-role" class="text-[12px] text-[#8e8e93] mt-0.5"></p>
+                    </div>
 
-    </div>
+                    <!-- Loading -->
+                    <div id="detail-loading" class="text-center py-8 hidden">
+                        <div class="spinner mx-auto mb-2"></div>
+                        <p class="text-sm text-[#8e8e93]" data-i18n="detail.loading">Cargando transacciones...</p>
+                    </div>
 
+                    <!-- Error -->
+                    <div id="detail-error" class="ios-status error hidden"></div>
+
+                    <!-- Transaction list -->
+                    <div id="detail-list"></div>
+
+                    <!-- Load more button -->
+                    <button id="detail-load-more" class="ios-btn-primary mt-4 hidden">
+                        <span data-i18n="detail.load_more">Cargar 50 más</span>
+                    </button>
+                </div>
+            </main>
+        </div>
+    </template>
+
+    <!-- ── (Próximamente) Historial de Transacciones ── -->
+    <template id="screen-history">
+        <div id="history-container" class="screen screen-stack hidden">
+            <header class="nav-bar">
+                <h1 class="text-[22px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="nav.history">Historial</h1>
+                <div class="flex items-center gap-4">
+                    <button class="lang-btn text-sm font-semibold text-[#5856D6]">EN</button>
+                    <span class="online-status text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full">● Online</span>
+                </div>
+            </header>
+            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4">
+                <p class="text-[#8e8e93] text-center mt-10" data-i18n="history.placeholder">Próximamente: historial de transacciones</p>
+            </main>
+        </div>
+    </template>
+
+    <!-- Scripts -->
     <script src="js/i18n.js"></script>
     <script src="js/config.js"></script>
     <script src="js/accounts.js"></script>
     <script src="js/currencies.js"></script>
     <script src="js/transactions.js"></script>
+    <script src="js/accounts-screen.js"></script>
     <script src="js/app.js"></script>
 
-    <!-- Language switcher + i18n init (waits for translations, then boots the app) -->
+    <!-- Boot: inject templates, boot app -->
     <script>
         (function() {
             'use strict';
 
-            // Init i18n first, THEN boot the app
+            var $app = $('#app');
+
+            // Mount screens
+            $app.append(document.getElementById('screen-setup').content.cloneNode(true));
+            $app.append(document.getElementById('screen-account-picker').content.cloneNode(true));
+            $app.append(document.getElementById('screen-record').content.cloneNode(true));
+
+            // Mount tab bar
+            $app.append(
+                '<div id="tab-bar" class="hidden">' +
+                    '<button class="tab-btn active" data-screen="record">' +
+                        '<span class="tab-icon">📝</span>' +
+                        '<span class="tab-label" data-i18n="nav.record">Registro</span>' +
+                    '</button>' +
+                    '<button class="tab-btn" data-screen="accounts">' +
+                        '<span class="tab-icon">💰</span>' +
+                        '<span class="tab-label" data-i18n="nav.accounts">Cuentas</span>' +
+                    '</button>' +
+
+                '</div>'
+            );
+
+            // Mount utility
+            window.mountScreen = function(templateId) {
+                var tpl = document.getElementById(templateId);
+                if (!tpl) return;
+                var content = tpl.content;
+                var firstEl = content.firstElementChild;
+                if (firstEl && firstEl.id && $('#' + firstEl.id).length) return;
+                // Insert before tab bar
+                $app.append(content.cloneNode(true));
+            };
+
+            /* ─── Tab switching ─── */
+            function switchTab(screen) {
+                // Hide all screens
+                $('#setup-container, #default-account-container, #dashboard-container, #accounts-container').addClass('hidden');
+
+                // Show the target screen
+                if (screen === 'record') {
+                    $('#dashboard-container').removeClass('hidden');
+                } else if (screen === 'accounts') {
+                    window.mountScreen('screen-accounts');
+                    $('#accounts-container').removeClass('hidden');
+                    if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
+                }
+                
+                // Update tab bar
+                $('#tab-bar .tab-btn').removeClass('active');
+                $('#tab-bar .tab-btn[data-screen="' + screen + '"]').addClass('active');
+
+                // Show tab bar (hidden during setup)
+                $('#tab-bar').removeClass('hidden');
+
+                // Refresh network status badge on visible screen
+                if (!navigator.onLine) {
+                    window.FFPWA.updateStatus(__('nav.offline'));
+                }
+
+                // Re-translate DOM
+                if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+            }
+
+            // Tab click events
+            $(document).on('click', '#tab-bar .tab-btn', function() {
+                var screen = $(this).data('screen');
+                if ($(this).hasClass('active')) return;
+                switchTab(screen);
+            });
+
+            // Expose for external use
+            window.switchTab = switchTab;
+
+            /* ─── Init ─── */
             window.initI18n(function(locale) {
                 $('html').attr('lang', locale);
                 updateLangBtn(locale);
-
-                // i18n is ready — safe to start the app
                 window.initConfig();
             });
 
-            // Language toggle button
-            $(document).on('click', '#lang-btn', function() {
+            $(document).on('click', '.lang-btn', function() {
                 var current = window.getLocale();
                 var next = current === 'es' ? 'en' : 'es';
                 window.setLocale(next).then(function() {
@@ -536,8 +700,7 @@
             });
 
             function updateLangBtn(locale) {
-                var text = locale === 'es' ? 'EN' : 'ES';
-                $('#lang-btn').text(text);
+                $('.lang-btn').text(locale === 'es' ? 'EN' : 'ES');
             }
 
         })();
