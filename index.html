@@ -511,19 +511,18 @@
     <script src="js/transactions.js"></script>
     <script src="js/app.js"></script>
 
-    <!-- Language switcher logic + i18n init -->
+    <!-- Language switcher + i18n init (waits for translations, then boots the app) -->
     <script>
         (function() {
             'use strict';
 
-            // Init i18n before anything else
-            $(document).ready(function() {
-                window.initI18n(function(locale) {
-                    // Update <html lang>
-                    $('html').attr('lang', locale);
-                    // Update lang-btn text
-                    updateLangBtn(locale);
-                });
+            // Init i18n first, THEN boot the app
+            window.initI18n(function(locale) {
+                $('html').attr('lang', locale);
+                updateLangBtn(locale);
+
+                // i18n is ready — safe to start the app
+                window.initConfig();
             });
 
             // Language toggle button

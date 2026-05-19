@@ -213,8 +213,7 @@
         return true;
     }
 
-    $(document).ready(function() {
-        checkConfiguration();
-    });
+    // Expose for orchestration — called after i18n is ready
+    window.initConfig = checkConfiguration;
 
 })();
