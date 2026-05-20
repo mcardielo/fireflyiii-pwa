@@ -161,7 +161,7 @@
 
                 // Guardar URL y token
                 localStorage.setItem('FIREFLY_URL', cleanUrl);
-                localStorage.setItem('FIREFLY_TOKEN', token);
+                localStorage.setItem('FIREFLY_TOKEN', _obfuscate(token));
 
                 window.FFPWA.config.url = cleanUrl;
                 window.FFPWA.config.token = token;
@@ -193,9 +193,29 @@
     /**
      * Determina el estado inicial de la aplicación.
      */
+    /**
+     * Ofuscación ligera para el token en localStorage.
+     * No es seguridad real — solo evita exposición accidental.
+     */
+    var OBFUSCATE_PREFIX = 'ff_';
+
+    function _obfuscate(raw) {
+        if (!raw) return raw;
+        return OBFUSCATE_PREFIX + btoa(raw);
+    }
+
+    function _deobfuscate(obfuscated) {
+        if (!obfuscated || obfuscated.indexOf(OBFUSCATE_PREFIX) !== 0) return obfuscated;
+        try {
+            return atob(obfuscated.slice(OBFUSCATE_PREFIX.length));
+        } catch (_) {
+            return obfuscated;
+        }
+    }
+
     function checkConfiguration() {
         const storedUrl = localStorage.getItem('FIREFLY_URL');
-        const storedToken = localStorage.getItem('FIREFLY_TOKEN');
+        const storedToken = _deobfuscate(localStorage.getItem('FIREFLY_TOKEN'));
         const storedDefault = localStorage.getItem(DEFAULT_ACCOUNT_KEY);
 
         if (!storedUrl || !storedToken) {

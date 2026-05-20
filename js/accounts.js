@@ -41,19 +41,6 @@
     }
     window.FFPWA.getAccountTypeForField = getAccountTypeForField;
 
-    function updateStatus(statusText) {
-        const statusEl = $('.online-status');
-        statusEl.removeClass('bg-green-100 text-green-800 bg-red-100 text-red-800 bg-yellow-100 text-yellow-800');
-        if (statusText.includes('Online') || statusText === __('nav.online')) {
-            statusEl.addClass('bg-green-100 text-green-800');
-        } else if (statusText.includes('Offline') || statusText === __('nav.offline')) {
-            statusEl.addClass('bg-red-100 text-red-800');
-        } else {
-            statusEl.addClass('bg-yellow-100 text-yellow-800');
-        }
-        statusEl.text(statusText);
-    }
-    window.FFPWA.updateStatus = updateStatus;
 
     function getCachedAccounts() {
         const cachedData = localStorage.getItem(ACCOUNT_STORAGE_KEY);
@@ -193,6 +180,16 @@
     /**
      * Renderiza el dropdown de sugerencias.
      */
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function renderAutocomplete(dropdownEl, results) {
         dropdownEl.empty();
 
@@ -200,10 +197,12 @@
 
         results.forEach(item => {
             const isNew = item.isNew || false;
-            const dataAttributes = `data-account-id="${item.id !== undefined ? item.id : ''}" data-account-name="${item.name}" data-is-new="${isNew}"`;
+            const escapedName = escapeHtml(item.name);
+            const escapedId = item.id !== undefined ? escapeHtml(String(item.id)) : '';
+            const dataAttributes = `data-account-id="${escapedId}" data-account-name="${escapeHtml(item.name)}" data-is-new="${isNew}"`;
 
             htmlContent += `<li ${dataAttributes} class="autocomplete-item">
-                <span>${item.name}</span>
+                <span>${escapedName}</span>
                 ${isNew ? '<span class="new-badge">' + __('resource.create_new') + '</span>' : ''}
             </li>`;
         });

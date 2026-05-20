@@ -38,8 +38,8 @@
 
   "nav.dashboard": "Registro",
   "nav.config": "Config",
-  "nav.online": "🟢 Online",
-  "nav.offline": "🔴 Offline",
+  "nav.online": "● Online",
+  "nav.offline": "● Offline",
   "nav.server_down": "🔶 Servidor no disponible",
   "nav.server_checking": "🔶 Servidor no disponible (verificando...)",
 
@@ -91,6 +91,7 @@
   "sync.failed": "⚠️ {count} fallaron y serán reintentadas.",
   "sync.complete": "🔄 Sincronización completada.",
   "sync.queue_empty": "Cola de sincronización vacía.",
+  "sync.queue_full": "Cola llena. Reintenta más tarde.",
   "sync.fail_no_connection": "Intento de sincronización fallido: No hay conexión.",
 
   "status.new_account_warning": "⚠️ Atención: Se ha seleccionado la opción de crear una nueva cuenta ({field}).",

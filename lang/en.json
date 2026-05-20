@@ -38,8 +38,8 @@
 
   "nav.dashboard": "Transactions",
   "nav.config": "Config",
-  "nav.online": "🟢 Online",
-  "nav.offline": "🔴 Offline",
+  "nav.online": "● Online",
+  "nav.offline": "● Offline",
   "nav.server_down": "🔶 Server unavailable",
   "nav.server_checking": "🔶 Server unavailable (checking...)",
 
@@ -91,6 +91,7 @@
   "sync.failed": "⚠️ {count} failed and will be retried.",
   "sync.complete": "🔄 Sync complete.",
   "sync.queue_empty": "Sync queue is empty.",
+  "sync.queue_full": "Queue full. Try again later.",
   "sync.fail_no_connection": "Sync failed: No connection.",
 
   "status.new_account_warning": "⚠️ Warning: The option to create a new account ({field}) has been selected.",

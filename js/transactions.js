@@ -2,6 +2,7 @@
     'use strict';
 
     const QUEUE_STORAGE_KEY = 'firefly_transaction_queue';
+    const MAX_QUEUE_SIZE = 100;
     const HEALTH_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutos
 
     window.FFPWA = window.FFPWA || {};
@@ -180,7 +181,13 @@
         }
         // ── Withdrawal / Deposit: usar lógica del dropdown ──
         else if (primaryCurrency && selectedCurrency && selectedCurrency !== primaryCurrency.code) {
-            const rateInfo = window.FFPWA.getCachedRate(selectedCurrency, primaryCurrency.code);
+            let rateInfo;
+            try {
+                // Intentar fresh de Frankfurter, fallback a caché
+                rateInfo = await window.FFPWA.getExchangeRate(selectedCurrency, primaryCurrency.code);
+            } catch (_) {
+                rateInfo = window.FFPWA.getCachedRate(selectedCurrency, primaryCurrency.code);
+            }
             if (!rateInfo) {
                 throw new Error(__('transaction.error.rate_missing', {
                     from: selectedCurrency,
@@ -294,6 +301,11 @@
      */
     function queueTransaction(payload) {
         let queue = getQueue();
+        if (queue.length >= MAX_QUEUE_SIZE) {
+            console.warn('⚠️ Cola llena (' + MAX_QUEUE_SIZE + '). No se puede encolar más.');
+            showStatusMessage('❌ ' + __('sync.queue_full'), 'error');
+            return;
+        }
         queue.push(payload);
         localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
         console.log(`🟡 Transacción encolada. Cola actual: ${queue.length} ítems.`);
@@ -396,7 +408,7 @@
                 success: function() {
                     if (!fireflyServerAvailable) {
                         console.log('[HEALTH] ✅ Servidor Firefly disponible de nuevo.');
-                        window.FFPWA.updateStatus(__('nav.online'));
+                        window.FFPWA.updateStatus('online');
                         fireflyServerAvailable = true;
                         syncQueue();
                     }
@@ -409,7 +421,7 @@
                 error: function(xhr) {
                     if (fireflyServerAvailable) {
                         console.warn('[HEALTH] ❌ Servidor Firefly no disponible.');
-                        window.FFPWA.updateStatus(__('nav.server_down'));
+                        window.FFPWA.updateStatus('server_down');
                         fireflyServerAvailable = false;
                     }
                     resolve(false);
@@ -476,7 +488,7 @@
                     // Si el servidor estaba marcado como caído, restaurar estado
                     if (!fireflyServerAvailable) {
                         fireflyServerAvailable = true;
-                        window.FFPWA.updateStatus(__('nav.online'));
+                        window.FFPWA.updateStatus('online');
                         stopFireflyHealthCheck();
                     }
                 })
@@ -486,7 +498,7 @@
                     // Errores de autenticación o autorización: no son recuperables
                     if (status === 401 || status === 403) {
                         showStatusMessage('🛑 ' + error.message, 'error');
-                        window.FFPWA.updateStatus(__('nav.server_down'));
+                        window.FFPWA.updateStatus('server_down');
                         fireflyServerAvailable = false;
                         startFireflyHealthCheck();
                     }
@@ -495,7 +507,7 @@
                         showStatusMessage('🟡 ' + error.message, 'warning');
                         queueTransaction(transactionPayload);
                         resetTransactionForm();
-                        window.FFPWA.updateStatus(__('nav.server_down'));
+                        window.FFPWA.updateStatus('server_down');
                         fireflyServerAvailable = false;
                         startFireflyHealthCheck();
                     }
@@ -517,23 +529,23 @@
         window.addEventListener('online', () => {
             console.log('[NETWORK]: Online. Verificando servidor...');
             if (fireflyServerAvailable) {
-                window.FFPWA.updateStatus(__('nav.online'));
+                window.FFPWA.updateStatus('online');
                 syncQueue();
             } else {
-                window.FFPWA.updateStatus(__('nav.server_checking'));
+                window.FFPWA.updateStatus('checking');
                 checkFireflyHealth();
             }
         });
 
         window.addEventListener('offline', () => {
-            window.FFPWA.updateStatus(__('nav.offline'));
+            window.FFPWA.updateStatus('offline');
             console.log('[NETWORK]: Offline. Modo desconectado.');
         });
 
         // Periodic network poll (events are unreliable in some PWA scenarios)
         setInterval(function() {
             if (!navigator.onLine) {
-                window.FFPWA.updateStatus(__('nav.offline'));
+                window.FFPWA.updateStatus('offline');
             }
         }, 15000);
 
@@ -557,7 +569,7 @@
         if (pendingQueue.length > 0) {
             console.log(`[INIT] ${pendingQueue.length} transacción(es) pendiente(s) en la cola.`);
             fireflyServerAvailable = false;
-            window.FFPWA.updateStatus(__('nav.server_down'));
+            window.FFPWA.updateStatus('server_down');
         }
         // Siempre iniciar health check para monitoreo continuo;
         // si no hay items pendientes, se detendrá automáticamente
