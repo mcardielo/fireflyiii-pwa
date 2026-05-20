@@ -57,17 +57,25 @@
      * Actualiza el badge de estado online/offline en todas las pantallas.
      */
     window.FFPWA.updateStatus = function(state) {
+        function t(key, fallback) {
+            if (typeof window.__ === 'function') {
+                var val = window.__(key);
+                return val !== key ? val : fallback;
+            }
+            return fallback;
+        }
+
         var $badges = $('.online-status');
         if (state === 'offline') {
             $badges
                 .removeClass('text-[#34c759] bg-[#e8f8ee]')
                 .addClass('text-[#ff9500] bg-[#fff4e5]')
-                .text('● ' + (window.__ ? __('nav.offline') : 'Offline'));
+                .text(t('nav.offline', 'Offline'));
         } else {
             $badges
                 .removeClass('text-[#ff9500] bg-[#fff4e5]')
                 .addClass('text-[#34c759] bg-[#e8f8ee]')
-                .text('● ' + (window.__ ? __('nav.online') : 'Online'));
+                .text(t('nav.online', 'Online'));
         }
     };
 

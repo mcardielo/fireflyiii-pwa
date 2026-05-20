@@ -705,7 +705,7 @@
                     $('#tab-bar').removeClass('hidden');
 
                     if (!navigator.onLine) {
-                        window.FFPWA.updateStatus(__('nav.offline'));
+                        window.FFPWA.updateStatus('offline');
                     }
                     if (window.i18nTranslateDOM) window.i18nTranslateDOM();
                 }
