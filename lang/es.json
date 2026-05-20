@@ -156,6 +156,8 @@
   "detail.no_description": "Sin descripción",
   "detail.error_fetch": "Error al cargar transacciones.",
 
+  "loading.message": "Cargando...",
+
   "config.title": "Configuración",
   "history.placeholder": "Próximamente: historial de transacciones",
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'firefly-pwa-v2.1';
+const CACHE_NAME = 'firefly-pwa-v2.2';
 const ASSETS_TO_CACHE = [
     './',
     'index.html',
@@ -8,21 +8,24 @@ const ASSETS_TO_CACHE = [
     'js/transactions.js',
     'js/accounts-screen.js',
     'js/i18n.js',
+    'js/app.js',
     'lang/en.json',
     'lang/es.json',
-    'manifest.json'
+    'manifest.json',
+    'https://code.jquery.com/jquery-3.6.0.min.js',
+    'https://cdn.tailwindcss.com'
 ];
 
 /**
- * Estrategia Cache First para HTML: sirve desde caché al instante,
- * y actualiza en background cuando la red responde.
- * Así la PWA nunca espera por la red al abrirse o reanudarse.
+ * Estrategia Cache First con fallback offline para HTML.
+ *  1. Sirve desde caché al instante.
+ *  2. Actualiza en background desde la red (si hay conexión).
+ *  3. Si no hay caché ni red, devuelve index.html como fallback.
  */
 async function cacheFirstWithNetworkUpdate(request) {
     const cache = await caches.open(CACHE_NAME);
     const cachedResponse = await cache.match(request);
 
-    // Actualizar caché en background (sin bloquear)
     const updateCache = fetch(request).then(networkResponse => {
         if (networkResponse && networkResponse.ok) {
             cache.put(request, networkResponse.clone());
@@ -31,25 +34,56 @@ async function cacheFirstWithNetworkUpdate(request) {
     }).catch(() => null);
 
     if (cachedResponse) {
-        // Servir caché inmediato, actualizar en background
         return cachedResponse;
     }
 
     // Sin caché: esperar la red
-    return updateCache;
+    try {
+        return await updateCache;
+    } catch (_) {
+        // Sin red ni caché → fallback a index.html
+        const fallback = await cache.match('/index.html');
+        if (fallback) return fallback;
+        const fallback2 = await cache.match('index.html');
+        if (fallback2) return fallback2;
+        const fallback3 = await cache.match('./index.html');
+        if (fallback3) return fallback3;
+        throw new Error('No hay caché ni conexión');
+    }
+}
+
+/**
+ * Cachea una lista de recursos con tolerancia a fallos individuales.
+ * Si un recurso falla, el resto se cachean igual.
+ */
+async function cacheAllTolerant(cache, assets) {
+    const results = await Promise.allSettled(
+        assets.map(url =>
+            cache.add(url).catch(err => {
+                console.warn('[SW] No se pudo cachear:', url, err.message);
+            })
+        )
+    );
+    const failed = results.filter(r => r.status === 'rejected');
+    if (failed.length > 0) {
+        console.warn(`[SW] ${failed.length} recurso(s) no se pudieron cachear (pueden ser CDN con restricciones de CORS).`);
+    }
 }
 
 self.addEventListener('install', (event) => {
-    console.log('[Service Worker] Instalando: Cacheando assets estáticos.');
+    console.log('[Service Worker] Instalando: Cacheando assets estáticos + CDN.');
 
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('[Service Worker] Cache abierto. Cacheando assets...');
-                return cache.addAll(ASSETS_TO_CACHE);
+                console.log('[Service Worker] Cache abierto. Cacheando recursos...');
+                return cacheAllTolerant(cache, ASSETS_TO_CACHE);
+            })
+            .then(() => {
+                console.log('[Service Worker] Todos los assets procesados.');
             })
             .catch((error) => {
-                console.error('Fallo al cachear assets:', error);
+                console.error('[Service Worker] Error en instalación:', error);
             })
     );
 
@@ -79,38 +113,43 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const requestUrl = new URL(event.request.url);
 
-    // Las peticiones a la API de Firefly III siempre van por red (sin cachear)
+    // ── Firefly III API: siempre va por red ──
     if (requestUrl.pathname.startsWith('/api/v1')) {
-        event.respondWith(fetch(event.request));
+        event.respondWith(
+            fetch(event.request).catch(() => {
+                return new Response(
+                    JSON.stringify({ error: 'offline' }),
+                    { status: 503, headers: { 'Content-Type': 'application/json' } }
+                );
+            })
+        );
         return;
     }
 
-    // HTML: Cache First — sirve al instante desde caché, actualiza en background
+    // ── Navegación (HTML): Cache First + fallback offline ──
     if (requestUrl.pathname.endsWith('/') || requestUrl.pathname.endsWith('.html')) {
         event.respondWith(cacheFirstWithNetworkUpdate(event.request));
         return;
     }
 
-    // Assets estáticos (JS, CSS, etc): Cache First
+    // ── CDN y assets estáticos: Cache First ──
     event.respondWith(
         caches.match(event.request)
             .then((cachedResponse) => {
                 if (cachedResponse) {
                     return cachedResponse;
                 }
-                return fetch(event.request);
-            })
-            .catch((error) => {
-                console.error('[Service Worker] Fallo al cargar recurso:', error);
-                return new Response('Error al cargar recurso', { status: 502 });
+                return fetch(event.request).catch(() => {
+                    // Si falla un recurso no cacheado (p.ej. una imagen no crítica),
+                    // devolver 404 silencioso en vez de error fatal
+                    return new Response(null, { status: 404 });
+                });
             })
     );
 });
 
 /**
- * Background Sync: cuando el SW recibe un evento sync, 
- * notifica a todas las páginas cliente para que ejecuten syncQueue().
- * La página se encarga de leer la cola desde localStorage.
+ * Background Sync
  */
 self.addEventListener('sync', (event) => {
     console.log(`[Service Worker] Sync event recibido: "${event.tag}"`);
@@ -141,9 +180,6 @@ self.addEventListener('sync', (event) => {
     }
 });
 
-/**
- * Mensajes desde la página (cliente)
- */
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();

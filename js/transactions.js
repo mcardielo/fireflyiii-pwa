@@ -260,16 +260,28 @@
                 },
                 data: JSON.stringify(payload),
                 dataType: 'json',
+                timeout: 15000, // 15 segundos máx, si no responde se trata como server caído
                 success: function(response) {
                     console.log("✅ Transacción enviada exitosamente.");
                     resolve(true);
                 },
-                error: function(xhr) {
-                    let errorMsg = __('transaction.submit_error_prefix') + ' ' + xhr.statusText + '.';
+                error: function(xhr, textStatus) {
+                    var status = xhr.status || 0;
+                    var errorMsg;
+
+                    // Timeout (servidor no responde) o error de conexión
+                    if (textStatus === 'timeout' || status === 0) {
+                        errorMsg = __('transaction.submit_error_temp');
+                        console.warn("⏱️ Timeout/error de conexión al enviar transacción.");
+                        reject({ message: errorMsg, status: 0, timeout: true });
+                        return;
+                    }
+
+                    // HTTP error real (4xx, 5xx)
+                    errorMsg = __('transaction.submit_error_prefix') + ' ' + xhr.statusText + '.';
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMsg += ' ' + __('transaction.submit_error_details') + ' ' + xhr.responseJSON.message;
                     }
-                    const status = xhr.status || 0;
                     console.error("❌ Error de envío:", errorMsg, `(HTTP ${status})`);
                     reject({ message: errorMsg, status: status });
                 }
@@ -478,9 +490,9 @@
                         fireflyServerAvailable = false;
                         startFireflyHealthCheck();
                     }
-                    // Errores temporales: servidor caído, timeout, 5xx
+                    // Errores temporales: servidor caído (timeout, conexión rechazada), 5xx
                     else {
-                        showStatusMessage('🟡 ' + __('transaction.submit_error_temp'), 'warning');
+                        showStatusMessage('🟡 ' + error.message, 'warning');
                         queueTransaction(transactionPayload);
                         resetTransactionForm();
                         window.FFPWA.updateStatus(__('nav.server_down'));

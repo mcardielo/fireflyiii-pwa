@@ -156,6 +156,8 @@
   "detail.no_description": "No description",
   "detail.error_fetch": "Error loading transactions.",
 
+  "loading.message": "Loading...",
+
   "config.title": "Configuration",
   "history.placeholder": "Coming soon: transaction history",
 

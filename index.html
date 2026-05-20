@@ -344,6 +344,12 @@
 </head>
 <body>
 
+    <!-- Loading indicator: visible until app boots -->
+    <div id="loading-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#f2f3f7;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999">
+        <div class="spinner" style="width:36px;height:36px;border-width:4px"></div>
+        <p style="margin-top:16px;font-size:15px;color:#8e8e93;font-weight:500" data-i18n="loading.message">Cargando...</p>
+    </div>
+
     <!-- Mount point: screens get injected here -->
     <div id="app"></div>
 
@@ -610,98 +616,133 @@
         (function() {
             'use strict';
 
-            var $app = $('#app');
+            var loadingEl = document.getElementById('loading-screen');
 
-            // Mount screens
-            $app.append(document.getElementById('screen-setup').content.cloneNode(true));
-            $app.append(document.getElementById('screen-account-picker').content.cloneNode(true));
-            $app.append(document.getElementById('screen-record').content.cloneNode(true));
-
-            // Mount tab bar
-            $app.append(
-                '<div id="tab-bar" class="hidden">' +
-                    '<button class="tab-btn active" data-screen="record">' +
-                        '<span class="tab-icon">📝</span>' +
-                        '<span class="tab-label" data-i18n="nav.record">Registro</span>' +
-                    '</button>' +
-                    '<button class="tab-btn" data-screen="accounts">' +
-                        '<span class="tab-icon">💰</span>' +
-                        '<span class="tab-label" data-i18n="nav.accounts">Cuentas</span>' +
-                    '</button>' +
-
-                '</div>'
-            );
-
-            // Mount utility
-            window.mountScreen = function(templateId) {
-                var tpl = document.getElementById(templateId);
-                if (!tpl) return;
-                var content = tpl.content;
-                var firstEl = content.firstElementChild;
-                if (firstEl && firstEl.id && $('#' + firstEl.id).length) return;
-                // Insert before tab bar
-                $app.append(content.cloneNode(true));
-            };
-
-            /* ─── Tab switching ─── */
-            function switchTab(screen) {
-                // Hide all screens
-                $('#setup-container, #default-account-container, #dashboard-container, #accounts-container').addClass('hidden');
-
-                // Show the target screen
-                if (screen === 'record') {
-                    $('#dashboard-container').removeClass('hidden');
-                } else if (screen === 'accounts') {
-                    window.mountScreen('screen-accounts');
-                    $('#accounts-container').removeClass('hidden');
-                    if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
-                }
-                
-                // Update tab bar
-                $('#tab-bar .tab-btn').removeClass('active');
-                $('#tab-bar .tab-btn[data-screen="' + screen + '"]').addClass('active');
-
-                // Show tab bar (hidden during setup)
-                $('#tab-bar').removeClass('hidden');
-
-                // Refresh network status badge on visible screen
-                if (!navigator.onLine) {
-                    window.FFPWA.updateStatus(__('nav.offline'));
-                }
-
-                // Re-translate DOM
-                if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+            function hideLoadingScreen() {
+                if (loadingEl) loadingEl.style.display = 'none';
             }
 
-            // Tab click events
-            $(document).on('click', '#tab-bar .tab-btn', function() {
-                var screen = $(this).data('screen');
-                if ($(this).hasClass('active')) return;
-                switchTab(screen);
-            });
+            function showOfflineFallback() {
+                hideLoadingScreen();
+                var appEl = document.getElementById('app');
+                if (appEl) {
+                    appEl.innerHTML =
+                        '<div style="text-align:center;padding:60px 20px;color:#8e8e93">' +
+                        '  <div style="font-size:48px;margin-bottom:16px">📡</div>' +
+                        '  <p style="font-size:17px;font-weight:500;color:#1c1c1e;margin-bottom:8px">Sin conexión</p>' +
+                        '  <p style="font-size:14px">Conéctate a internet y vuelve a abrir la app.</p>' +
+                        '</div>';
+                }
+            }
 
-            // Expose for external use
-            window.switchTab = switchTab;
+            // Esperar a que jQuery esté disponible (máximo 5s)
+            function bootWhenReady(callback) {
+                if (typeof $ !== 'undefined') {
+                    callback();
+                    return;
+                }
+                var attempts = 0;
+                var timer = setInterval(function() {
+                    attempts++;
+                    if (typeof $ !== 'undefined') {
+                        clearInterval(timer);
+                        callback();
+                    } else if (attempts >= 50) {
+                        clearInterval(timer);
+                        // jQuery nunca cargó (offline sin SW o error CDN)
+                        showOfflineFallback();
+                    }
+                }, 100);
+            }
 
-            /* ─── Init ─── */
-            window.initI18n(function(locale) {
-                $('html').attr('lang', locale);
-                updateLangBtn(locale);
-                window.initConfig();
-            });
+            bootWhenReady(function() {
 
-            $(document).on('click', '.lang-btn', function() {
-                var current = window.getLocale();
-                var next = current === 'es' ? 'en' : 'es';
-                window.setLocale(next).then(function() {
-                    $('html').attr('lang', next);
-                    updateLangBtn(next);
+                var $app = $('#app');
+
+                // Mount screens
+                $app.append(document.getElementById('screen-setup').content.cloneNode(true));
+                $app.append(document.getElementById('screen-account-picker').content.cloneNode(true));
+                $app.append(document.getElementById('screen-record').content.cloneNode(true));
+
+                // Mount tab bar
+                $app.append(
+                    '<div id="tab-bar" class="hidden">' +
+                        '<button class="tab-btn active" data-screen="record">' +
+                            '<span class="tab-icon">📝</span>' +
+                            '<span class="tab-label" data-i18n="nav.record">Registro</span>' +
+                        '</button>' +
+                        '<button class="tab-btn" data-screen="accounts">' +
+                            '<span class="tab-icon">💰</span>' +
+                            '<span class="tab-label" data-i18n="nav.accounts">Cuentas</span>' +
+                        '</button>' +
+                    '</div>'
+                );
+
+                // Mount utility
+                window.mountScreen = function(templateId) {
+                    var tpl = document.getElementById(templateId);
+                    if (!tpl) return;
+                    var content = tpl.content;
+                    var firstEl = content.firstElementChild;
+                    if (firstEl && firstEl.id && $('#' + firstEl.id).length) return;
+                    $app.append(content.cloneNode(true));
+                };
+
+                /* ─── Tab switching ─── */
+                function switchTab(screen) {
+                    $('#setup-container, #default-account-container, #dashboard-container, #accounts-container').addClass('hidden');
+
+                    if (screen === 'record') {
+                        $('#dashboard-container').removeClass('hidden');
+                    } else if (screen === 'accounts') {
+                        window.mountScreen('screen-accounts');
+                        $('#accounts-container').removeClass('hidden');
+                        if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
+                    }
+
+                    $('#tab-bar .tab-btn').removeClass('active');
+                    $('#tab-bar .tab-btn[data-screen="' + screen + '"]').addClass('active');
+                    $('#tab-bar').removeClass('hidden');
+
+                    if (!navigator.onLine) {
+                        window.FFPWA.updateStatus(__('nav.offline'));
+                    }
+                    if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+                }
+
+                $(document).on('click', '#tab-bar .tab-btn', function() {
+                    var screen = $(this).data('screen');
+                    if ($(this).hasClass('active')) return;
+                    switchTab(screen);
                 });
-            });
 
-            function updateLangBtn(locale) {
-                $('.lang-btn').text(locale === 'es' ? 'EN' : 'ES');
-            }
+                window.switchTab = switchTab;
+
+                /* ─── Init ─── */
+                window.initI18n(function(locale) {
+                    $('html').attr('lang', locale);
+                    updateLangBtn(locale);
+                    window.initConfig();
+                    hideLoadingScreen();
+                });
+
+                $(document).on('click', '.lang-btn', function() {
+                    var current = window.getLocale();
+                    var next = current === 'es' ? 'en' : 'es';
+                    window.setLocale(next).then(function() {
+                        $('html').attr('lang', next);
+                        updateLangBtn(next);
+                    });
+                });
+
+                function updateLangBtn(locale) {
+                    $('.lang-btn').text(locale === 'es' ? 'EN' : 'ES');
+                }
+
+                // Fallback por si initI18n tarda demasiado
+                setTimeout(hideLoadingScreen, 3000);
+
+            }); // fin bootWhenReady
 
         })();
     </script>
