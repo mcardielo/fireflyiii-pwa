@@ -10,20 +10,20 @@
 
     var ROLE_LABELS = {};
     var ROLE_COLORS = {
-        'defaultAsset':     '#5856D6',
-        'savingAsset':      '#34c759',
-        'sharedAsset':      '#5ac8fa',
-        'ccAsset':          '#ff9500',
-        'cashWalletAsset':  '#af52de',
-        '':                 '#8e8e93'
+        'defaultAsset':     'var(--role-default)',
+        'savingAsset':      'var(--role-saving)',
+        'sharedAsset':      'var(--role-shared)',
+        'ccAsset':          'var(--role-cc)',
+        'cashWalletAsset':  'var(--role-cash)',
+        '':                 'var(--role-other)'
     };
     var ROLE_BG_COLORS = {
-        'defaultAsset':     '#e8e7ff',
-        'savingAsset':      '#e8f8ee',
-        'sharedAsset':      '#e4f7fe',
-        'ccAsset':          '#fff3e0',
-        'cashWalletAsset':  '#f2e9fb',
-        '':                 '#f2f2f7'
+        'defaultAsset':     'var(--role-bg-default)',
+        'savingAsset':      'var(--role-bg-saving)',
+        'sharedAsset':      'var(--role-bg-shared)',
+        'ccAsset':          'var(--role-bg-cc)',
+        'cashWalletAsset':  'var(--role-bg-cash)',
+        '':                 'var(--role-bg-other)'
     };
 
     function buildRoleLabels() {
@@ -145,7 +145,7 @@
             html += '<div class="field-card mb-3 account-card" data-account-id="' + id + '">' +
                 '<div class="field-row" style="justify-content:space-between;padding:14px 16px;cursor:pointer;">' +
                     '<div>' +
-                        '<p class="text-[15px] font-medium text-[#1c1c1e]">' + escapeHtml(name) + '</p>' +
+                        '<p class="text-[15px] font-medium text-ios-text">' + escapeHtml(name) + '</p>' +
                         '<p class="mt-1">' +
                             '<span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full" ' +
                                   'style="color:' + roleColor + ';background:' + roleBg + ';">' +
@@ -154,10 +154,10 @@
                         '</p>' +
                     '</div>' +
                     '<div class="text-right ml-4 flex-shrink-0">' +
-                        '<p class="text-[17px] font-semibold ' + (balance < 0 ? 'text-[#ff3b30]' : 'text-[#1c1c1e]') + '">' +
+                        '<p class="text-[17px] font-semibold ' + (balance < 0 ? 'text-ios-red' : 'text-ios-text') + '">' +
                             formatMoney(balance, symbol, decimals) +
                         '</p>' +
-                        '<p class="text-[11px] text-[#8e8e93] mt-0.5">' + escapeHtml(code) + '</p>' +
+                        '<p class="text-[11px] text-ios-text-secondary mt-0.5">' + escapeHtml(code) + '</p>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -274,19 +274,19 @@
             }
 
             var sign = isNegative ? '-' : '+';
-            var colorClass = isNegative ? 'text-[#ff3b30]' : 'text-[#34c759]';
+            var colorClass = isNegative ? 'text-ios-red' : 'text-ios-green';
 
             html += '<div class="field-card mb-2">' +
                 '<div class="field-row" style="justify-content:space-between;padding:10px 14px;">' +
                     '<div style="flex:1;min-width:0;">' +
-                        '<p class="text-[13px] text-[#8e8e93]">' + escapeHtml(displayDate) + '</p>' +
-                        '<p class="text-[15px] font-medium text-[#1c1c1e] truncate">' + escapeHtml(description) + '</p>' +
-                        (otherParty ? '<p class="text-[12px] text-[#8e8e93] truncate">' + otherParty + '</p>' : '') +
-                        (categoryName ? '<p class="text-[11px] text-[#5856D6] mt-0.5">📂 ' + escapeHtml(categoryName) + '</p>' : '') +
+                        '<p class="text-[13px] text-ios-text-secondary">' + escapeHtml(displayDate) + '</p>' +
+                        '<p class="text-[15px] font-medium text-ios-text truncate">' + escapeHtml(description) + '</p>' +
+                        (otherParty ? '<p class="text-[12px] text-ios-text-secondary truncate">' + otherParty + '</p>' : '') +
+                        (categoryName ? '<p class="text-[11px] text-ios-blue mt-0.5">📂 ' + escapeHtml(categoryName) + '</p>' : '') +
                     '</div>' +
                     '<div class="text-right ml-3 flex-shrink-0">' +
                         '<p class="text-[15px] font-semibold ' + colorClass + '">' + sign + formatMoney(amount, symbol, decimals) + '</p>' +
-                        '<p class="text-[10px] text-[#8e8e93] mt-0.5">' + escapeHtml(code) + '</p>' +
+                        '<p class="text-[10px] text-ios-text-secondary mt-0.5">' + escapeHtml(code) + '</p>' +
                     '</div>' +
                 '</div>' +
             '</div>';

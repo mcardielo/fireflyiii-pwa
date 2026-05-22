@@ -1,10 +1,87 @@
+/* ═══════════════════════════════════════════
+   iOS Design Tokens (CSS Variables)
+   ═══════════════════════════════════════════ */
+
+:root {
+    --ios-bg: #f2f3f7;
+    --role-default: #5856D6;
+    --role-bg-default: #e8e7ff;
+    --role-saving: #34c759;
+    --role-bg-saving: #e8f8ee;
+    --role-shared: #5ac8fa;
+    --role-bg-shared: #e4f7fe;
+    --role-cc: #ff9500;
+    --role-bg-cc: #fff3e0;
+    --role-cash: #af52de;
+    --role-bg-cash: #f2e9fb;
+    --role-other: #8e8e93;
+    --role-bg-other: #f2f2f7;
+    --ios-card: #ffffff;
+    --ios-text: #1c1c1e;
+    --ios-text-secondary: #8e8e93;
+    --ios-text-tertiary: #c7c7cc;
+    --ios-separator: #e5e5ea;
+    --ios-tab-border: #c6c6c8;
+    --ios-nav-bg: rgba(242, 243, 247, 0.88);
+    --ios-tab-bg: rgba(242, 243, 247, 0.94);
+    --ios-blue: #5856D6;
+    --ios-blue-bg: #e8e7ff;
+    --ios-green: #34c759;
+    --ios-green-bg: #e8f8ee;
+    --ios-orange: #ff9500;
+    --ios-orange-bg: #fff4e5;
+    --ios-red: #ff3b30;
+    --ios-lang-btn-bg: #e5e5ea;
+    --ios-spinner-bg: #e5e7eb;
+    --ios-segmented-bg: #e5e5ea;
+    --ios-segmented-active: #ffffff;
+    --ios-btn-shadow: 0 4px 12px rgba(88, 86, 214, 0.3);
+    --ios-dropdown-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    --ios-btn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Forced Dark Mode ─── */
+:root.dark {
+    --ios-bg: #1c1c1e;
+    --ios-card: #2c2c2e;
+    --ios-text: #ffffff;
+    --ios-text-secondary: #8e8e93;
+    --ios-text-tertiary: #48484a;
+    --ios-separator: #3a3a3c;
+    --ios-tab-border: #3a3a3c;
+    --ios-nav-bg: rgba(28, 28, 30, 0.88);
+    --ios-tab-bg: rgba(28, 28, 30, 0.94);
+    --ios-blue: #5856D6;
+    --ios-blue-bg: #2c2b5e;
+    --ios-green: #34c759;
+    --ios-green-bg: #1e3a2a;
+    --ios-orange: #ff9500;
+    --ios-orange-bg: #3a2e1e;
+    --ios-red: #ff3b30;
+    --role-default: #7d7aff;
+    --role-bg-default: rgba(88, 86, 214, 0.15);
+    --role-saving: #5be37e;
+    --role-bg-saving: rgba(52, 199, 89, 0.15);
+    --role-shared: #8ad4ff;
+    --role-bg-shared: rgba(90, 200, 250, 0.15);
+    --role-cc: #ffb340;
+    --role-bg-cc: rgba(255, 149, 0, 0.15);
+    --role-cash: #ce84ff;
+    --role-bg-cash: rgba(175, 82, 222, 0.15);
+    --role-other: #aeaeae;
+    --role-bg-other: rgba(142, 142, 147, 0.15);
+    --ios-lang-btn-bg: #3a3a3c;
+    --ios-spinner-bg: #3a3a3c;
+    --ios-segmented-bg: #3a3a3c;
+    --ios-segmented-active: #2c2c2e;
+    --ios-btn-shadow: 0 4px 12px rgba(88, 86, 214, 0.3);
+    --ios-dropdown-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --ios-btn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.24);
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* ═══════════════════════════════════════════
-   iOS-Style Base
-   ═══════════════════════════════════════════ */
 
 @layer base {
     html, body {
@@ -17,7 +94,7 @@
         touch-action: manipulation;
     }
     body {
-        background: #f2f3f7;
+        background: var(--ios-bg);
     }
     button:disabled {
         cursor: not-allowed;
@@ -39,8 +116,8 @@
 
     /* ─── Spinner ─── */
     .spinner {
-        border: 3px solid #e5e7eb;
-        border-top: 3px solid #5856D6;
+        border: 3px solid var(--ios-spinner-bg);
+        border-top: 3px solid var(--ios-blue);
         border-radius: 50%;
         width: 24px;
         height: 24px;
@@ -67,14 +144,14 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: rgba(242, 243, 247, 0.88);
+        background: var(--ios-nav-bg);
         -webkit-backdrop-filter: saturate(180%) blur(20px);
         backdrop-filter: saturate(180%) blur(20px);
     }
 
     /* ─── Segmented Control ─── */
     .segmented-control {
-        background: #e5e5ea;
+        background: var(--ios-segmented-bg);
         border-radius: 9px;
         padding: 2px;
         display: flex;
@@ -87,23 +164,23 @@
         font-weight: 500;
         text-align: center;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        color: #8e8e93;
+        color: var(--ios-text-secondary);
         border: none;
         background: transparent;
         cursor: pointer;
         white-space: nowrap;
     }
     .segmented-btn.active {
-        background: #ffffff;
-        color: #1c1c1e;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        background: var(--ios-segmented-active);
+        color: var(--ios-text);
+        box-shadow: var(--ios-btn-shadow-sm);
     }
 
     /* ─── Section Label ─── */
     .section-label {
         font-size: 13px;
         font-weight: 600;
-        color: #8e8e93;
+        color: var(--ios-text-secondary);
         text-transform: uppercase;
         letter-spacing: 0.5px;
         padding-left: 4px;
@@ -112,7 +189,7 @@
 
     /* ─── Field Card / Form ─── */
     .field-card {
-        background: #ffffff;
+        background: var(--ios-card);
         border-radius: 10px;
     }
     .field-row {
@@ -122,18 +199,18 @@
         min-height: 44px;
     }
     .field-row + .field-row {
-        border-top: 0.5px solid #e5e5ea;
+        border-top: 0.5px solid var(--ios-separator);
     }
     .field-label {
         font-size: 15px;
-        color: #1c1c1e;
+        color: var(--ios-text);
         min-width: 80px;
         flex-shrink: 0;
         padding: 12px 0;
     }
     .field-label .field-hint {
         font-size: 12px;
-        color: #8e8e93;
+        color: var(--ios-text-secondary);
         font-weight: 400;
     }
     .field-value {
@@ -151,14 +228,14 @@
         border: none;
         background: transparent;
         font-size: 15px;
-        color: #1c1c1e;
+        color: var(--ios-text);
         text-align: right;
         padding: 0;
         outline: none;
         min-width: 0;
     }
     .ios-input::placeholder {
-        color: #c7c7cc;
+        color: var(--ios-text-tertiary);
     }
 
     /* ─── Currency Badge ─── */
@@ -171,8 +248,8 @@
     .currency-badge {
         font-size: 13px;
         font-weight: 500;
-        color: #5856D6;
-        background: #e8e7ff;
+        color: var(--ios-blue);
+        background: var(--ios-blue-bg);
         padding: 2px 22px 2px 10px;
         border-radius: 12px;
         border: none;
@@ -188,7 +265,7 @@
         top: 50%;
         transform: translateY(-50%);
         font-size: 8px;
-        color: #5856D6;
+        color: var(--ios-blue);
         pointer-events: none;
     }
 
@@ -196,7 +273,7 @@
     .sticky-footer {
         padding: 8px 16px;
         padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
-        background: #f2f3f7;
+        background: var(--ios-bg);
     }
 
     /* ─── Primary Button ─── */
@@ -208,10 +285,10 @@
         font-size: 17px;
         font-weight: 600;
         color: #ffffff;
-        background: #5856D6;
+        background: var(--ios-blue);
         cursor: pointer;
         transition: opacity 0.2s;
-        box-shadow: 0 4px 12px rgba(88, 86, 214, 0.3);
+        box-shadow: var(--ios-btn-shadow);
     }
     .ios-btn-primary:active {
         opacity: 0.7;
@@ -223,7 +300,7 @@
 
     /* ─── Status Messages ─── */
     .ios-status {
-        background: #ffffff;
+        background: var(--ios-card);
         border-radius: 10px;
         padding: 12px 16px;
         margin-bottom: 12px;
@@ -231,25 +308,25 @@
         border-left: 4px solid transparent;
     }
     .ios-status.success {
-        border-left-color: #34c759;
-        color: #1c1c1e;
+        border-left-color: var(--ios-green);
+        color: var(--ios-text);
     }
     .ios-status.warning {
-        border-left-color: #ff9500;
-        color: #1c1c1e;
+        border-left-color: var(--ios-orange);
+        color: var(--ios-text);
     }
     .ios-status.error {
-        border-left-color: #ff3b30;
-        color: #1c1c1e;
+        border-left-color: var(--ios-red);
+        color: var(--ios-text);
     }
 
     /* ─── Autocomplete ─── */
     .autocomplete-dropdown {
         position: fixed;
         z-index: 9999;
-        background: #ffffff;
+        background: var(--ios-card);
         border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        box-shadow: var(--ios-dropdown-shadow);
         max-height: 200px;
         overflow-y: auto;
         display: none;
@@ -261,23 +338,23 @@
         padding: 12px 16px;
         cursor: pointer;
         font-size: 15px;
-        color: #1c1c1e;
+        color: var(--ios-text);
     }
     .autocomplete-item:hover {
-        background: #f2f3f7;
+        background: var(--ios-bg);
     }
     .autocomplete-item + .autocomplete-item {
-        border-top: 0.5px solid #e5e5ea;
+        border-top: 0.5px solid var(--ios-separator);
     }
     .autocomplete-item .new-badge {
         font-size: 0.7rem;
-        color: #5856D6;
+        color: var(--ios-blue);
         margin-left: 0.5rem;
     }
 
     /* ─── Exchange Rate Info ─── */
     #exchange-rate-info {
-        background: #ffffff;
+        background: var(--ios-card);
         border-radius: 10px;
         padding: 12px 16px;
         margin-top: 8px;
@@ -285,7 +362,7 @@
 
     /* ─── Language Button ─── */
     .lang-btn {
-        background: #e5e5ea;
+        background: var(--ios-lang-btn-bg);
         border-radius: 6px;
         padding: 3px 8px;
         font-size: 12px;
@@ -310,10 +387,10 @@
         left: 0;
         right: 0;
         z-index: 100;
-        background: rgba(242, 243, 247, 0.94);
+        background: var(--ios-tab-bg);
         -webkit-backdrop-filter: saturate(180%) blur(20px);
         backdrop-filter: saturate(180%) blur(20px);
-        border-top: 0.5px solid #c6c6c8;
+        border-top: 0.5px solid var(--ios-tab-border);
         padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
     }
     .screen {
@@ -344,22 +421,22 @@
     }
     .tab-label {
         font-size: 10px;
-        color: #8e8e93;
+        color: var(--ios-text-secondary);
         margin-top: 1px;
         font-weight: 500;
     }
     .tab-btn.active .tab-label {
-        color: #5856D6;
+        color: var(--ios-blue);
     }
 
-    /* ─── iOS-style Select (replaces inline styles) ─── */
+    /* ─── iOS-style Select ─── */
     .ios-select {
         -webkit-appearance: none;
         appearance: none;
         border: none;
         background: transparent;
         font-size: 15px;
-        color: #1c1c1e;
+        color: var(--ios-text);
         text-align: right;
         direction: rtl;
         padding: 0;
@@ -377,5 +454,25 @@
     /* ─── Overflow touch (iOS momentum scroll) ─── */
     .ios-scroll {
         -webkit-overflow-scrolling: touch;
+    }
+
+    /* ─── Dark Mode Toggle Button ─── */
+    .theme-toggle {
+        background: var(--ios-lang-btn-bg);
+        border-radius: 6px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: none;
+        font-size: 15px;
+        line-height: 1;
+        transition: opacity 0.2s;
+        padding: 0;
+    }
+    .theme-toggle:active {
+        opacity: 0.5;
     }
 }

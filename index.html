@@ -28,16 +28,16 @@
 <body>
 
     <!-- Loading indicator: visible until app boots -->
-    <div id="loading-screen" class="fixed inset-0 bg-[#f2f3f7] flex flex-col items-center justify-center z-[9999]">
+    <div id="loading-screen" class="fixed inset-0 bg-ios-bg flex flex-col items-center justify-center z-[9999]">
         <div class="spinner spinner-lg"></div>
-        <p class="mt-4 text-[15px] text-[#8e8e93] font-medium" data-i18n="loading.message">Cargando...</p>
+        <p class="mt-4 text-[15px] text-ios-text-secondary font-medium" data-i18n="loading.message">Cargando...</p>
     </div>
 
     <!-- Mount point: screens get injected here -->
     <div id="app"></div>
 
     <!-- ============================================================ -->
-    <!-- SCREEN TEMPLATES                                             -->
+    <!-- SCREEN TEMPLATES -->
     <!-- ============================================================ -->
 
     <!-- ── Configuración (URL + Token) ── -->
@@ -45,14 +45,14 @@
         <div id="setup-container" class="screen screen-stack hidden">
             <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll">
                 <div class="text-center mb-10">
-                    <div class="w-16 h-16 bg-[#e8e7ff] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <div class="w-16 h-16 bg-ios-blue-bg rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"/>
                             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                         </svg>
                     </div>
-                    <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="setup.title">Configuración</h1>
-                    <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="setup.subtitle">
+                    <h1 class="text-[28px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="setup.title">Configuración</h1>
+                    <p class="text-ios-text-secondary text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="setup.subtitle">
                         Conecta tu instancia de Firefly III con tu Token de Acceso Personal para empezar.
                     </p>
                 </div>
@@ -92,14 +92,14 @@
         <div id="default-account-container" class="screen screen-stack hidden">
             <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll">
                 <div class="text-center mb-10">
-                    <div class="w-16 h-16 bg-[#e8e7ff] rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <div class="w-16 h-16 bg-ios-blue-bg rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="2" y="5" width="20" height="14" rx="2"/>
                             <line x1="2" y1="10" x2="22" y2="10"/>
                         </svg>
                     </div>
-                    <h1 class="text-[28px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="account.title">Cuenta Default</h1>
-                    <p class="text-[#8e8e93] text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="account.subtitle">
+                    <h1 class="text-[28px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="account.title">Cuenta Default</h1>
+                    <p class="text-ios-text-secondary text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="account.subtitle">
                         Selecciona la cuenta que se usará por defecto como origen al registrar tus transacciones.
                     </p>
                 </div>
@@ -128,11 +128,12 @@
     <template id="screen-record">
         <div id="dashboard-container" class="screen screen-stack hidden">
             <header class="nav-bar">
-                <h1 class="text-[22px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="app.title">Registro</h1>
+                <h1 class="text-[22px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="app.title">Registro</h1>
                 <div class="flex items-center gap-4">
-                    <button class="lang-btn text-sm font-semibold text-[#5856D6]">EN</button>
-                    <button id="config-btn" class="text-sm font-semibold text-[#5856D6]" data-i18n="nav.config">Config</button>
-                    <span class="online-status text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full">● Online</span>
+                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🖥️</span></button>
+                    <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
+                    <button id="config-btn" class="text-sm font-semibold text-ios-blue" data-i18n="nav.config">Config</button>
+                    <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
                 </div>
             </header>
             <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4 ios-scroll">
@@ -200,8 +201,8 @@
                             </div>
                         </div>
                         <div id="exchange-rate-info" class="hidden">
-                            <p id="exchange-rate-display" class="text-xs text-[#8e8e93]"></p>
-                            <p id="amount-converted" class="text-sm font-medium text-[#5856D6] hidden"></p>
+                            <p id="exchange-rate-display" class="text-xs text-ios-text-secondary"></p>
+                            <p id="amount-converted" class="text-sm font-medium text-ios-blue hidden"></p>
                         </div>
                     </div>
                 </form>
@@ -218,18 +219,19 @@
     <template id="screen-accounts">
         <div id="accounts-container" class="screen screen-stack hidden">
             <header class="nav-bar">
-                <h1 class="text-[22px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="accounts.title">Cuentas</h1>
+                <h1 class="text-[22px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="accounts.title">Cuentas</h1>
                 <div class="flex items-center gap-4">
-                    <button class="lang-btn text-sm font-semibold text-[#5856D6]">EN</button>
-                    <button id="accounts-config-btn" class="text-sm font-semibold text-[#5856D6]" data-i18n="nav.config">Config</button>
-                    <span class="online-status text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full">● Online</span>
+                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🖥️</span></button>
+                    <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
+                    <button id="accounts-config-btn" class="text-sm font-semibold text-ios-blue" data-i18n="nav.config">Config</button>
+                    <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
                 </div>
             </header>
             <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4 ios-scroll">
                 <!-- Accounts list view -->
                 <div id="accounts-loading" class="text-center py-8">
                     <div class="spinner mx-auto mb-2"></div>
-                    <p class="text-sm text-[#8e8e93]" data-i18n="accounts.loading">Cargando cuentas...</p>
+                    <p class="text-sm text-ios-text-secondary" data-i18n="accounts.loading">Cargando cuentas...</p>
                 </div>
                 <div id="accounts-error" class="ios-status error hidden"></div>
                 <div id="accounts-list" class="space-y-3"></div>
@@ -237,21 +239,21 @@
                 <!-- Transaction detail view (hidden by default) -->
                 <div id="account-detail" class="hidden">
                     <!-- Back button + account name -->
-                    <button id="detail-back-btn" class="text-sm font-semibold text-[#5856D6] mb-4">
+                    <button id="detail-back-btn" class="text-sm font-semibold text-ios-blue mb-4">
                         <span data-i18n="detail.back">← Cuentas</span>
                     </button>
 
                     <!-- Account summary -->
                     <div class="field-card mb-6 p-4">
-                        <h2 id="detail-account-name" class="text-[17px] font-semibold text-[#1c1c1e]"></h2>
-                        <p id="detail-account-balance" class="text-[22px] font-bold text-[#1c1c1e] mt-1"></p>
-                        <p id="detail-account-role" class="text-[12px] text-[#8e8e93] mt-0.5"></p>
+                        <h2 id="detail-account-name" class="text-[17px] font-semibold text-ios-text"></h2>
+                        <p id="detail-account-balance" class="text-[22px] font-bold text-ios-text mt-1"></p>
+                        <p id="detail-account-role" class="text-[12px] text-ios-text-secondary mt-0.5"></p>
                     </div>
 
                     <!-- Loading -->
                     <div id="detail-loading" class="text-center py-8 hidden">
                         <div class="spinner mx-auto mb-2"></div>
-                        <p class="text-sm text-[#8e8e93]" data-i18n="detail.loading">Cargando transacciones...</p>
+                        <p class="text-sm text-ios-text-secondary" data-i18n="detail.loading">Cargando transacciones...</p>
                     </div>
 
                     <!-- Error -->
@@ -273,20 +275,22 @@
     <template id="screen-history">
         <div id="history-container" class="screen screen-stack hidden">
             <header class="nav-bar">
-                <h1 class="text-[22px] font-bold text-[#1c1c1e] tracking-[-0.5px]" data-i18n="nav.history">Historial</h1>
+                <h1 class="text-[22px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="nav.history">Historial</h1>
                 <div class="flex items-center gap-4">
-                    <button class="lang-btn text-sm font-semibold text-[#5856D6]">EN</button>
-                    <span class="online-status text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full">● Online</span>
+                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🖥️</span></button>
+                    <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
+                    <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
                 </div>
             </header>
             <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4">
-                <p class="text-[#8e8e93] text-center mt-10" data-i18n="history.placeholder">Próximamente: historial de transacciones</p>
+                <p class="text-ios-text-secondary text-center mt-10" data-i18n="history.placeholder">Próximamente: historial de transacciones</p>
             </main>
         </div>
     </template>
 
     <!-- Scripts -->
     <script src="js/i18n.js"></script>
+    <script src="js/darkmode.js"></script>
     <script src="js/config.js"></script>
     <script src="js/accounts.js"></script>
     <script src="js/currencies.js"></script>

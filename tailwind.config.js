@@ -1,22 +1,28 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: ['./index.html', './js/*.js'],
   theme: {
     extend: {
       colors: {
-        'ios-bg': '#f2f3f7',
-        'ios-separator': '#e5e5ea',
-        'ios-gray': '#8e8e93',
-        'ios-gray-light': '#c7c7cc',
-        'ios-text': '#1c1c1e',
+        'ios-bg': 'var(--ios-bg)',
+        'ios-card': 'var(--ios-card)',
+        'ios-text': 'var(--ios-text)',
+        'ios-text-secondary': 'var(--ios-text-secondary)',
+        'ios-text-tertiary': 'var(--ios-text-tertiary)',
+        'ios-separator': 'var(--ios-separator)',
+        'ios-tab-border': 'var(--ios-tab-border)',
+        'ios-nav-bg': 'var(--ios-nav-bg)',
+        'ios-tab-bg': 'var(--ios-tab-bg)',
         'ios-blue': '#5856D6',
+        'ios-blue-bg': 'var(--ios-blue-bg)',
         'ios-green': '#34c759',
+        'ios-green-bg': 'var(--ios-green-bg)',
         'ios-orange': '#ff9500',
+        'ios-orange-bg': 'var(--ios-orange-bg)',
         'ios-red': '#ff3b30',
-        'ios-white': '#ffffff',
-        'ios-blue-bg': '#e8e7ff',
-        'ios-green-bg': '#e8f8ee',
-        'tab-bar-bg': 'rgba(242, 243, 247, 0.94)',
+        'ios-lang-btn-bg': 'var(--ios-lang-btn-bg)',
+        'ios-spinner-bg': 'var(--ios-spinner-bg)',
       },
       borderRadius: {
         'ios-sm': '7px',

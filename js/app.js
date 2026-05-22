@@ -68,13 +68,13 @@
         var $badges = $('.online-status');
         if (state === 'offline') {
             $badges
-                .removeClass('text-[#34c759] bg-[#e8f8ee]')
-                .addClass('text-[#ff9500] bg-[#fff4e5]')
+                .removeClass('text-ios-green bg-ios-green-bg')
+                .addClass('text-ios-orange bg-ios-orange-bg')
                 .text(t('nav.offline', '● Offline'));
         } else {
             $badges
-                .removeClass('text-[#ff9500] bg-[#fff4e5]')
-                .addClass('text-[#34c759] bg-[#e8f8ee]')
+                .removeClass('text-ios-orange bg-ios-orange-bg')
+                .addClass('text-ios-green bg-ios-green-bg')
                 .text(t('nav.online', '● Online'));
         }
     };
