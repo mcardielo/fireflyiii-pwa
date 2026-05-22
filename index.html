@@ -130,7 +130,7 @@
             <header class="nav-bar">
                 <h1 class="text-[22px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="app.title">Registro</h1>
                 <div class="flex items-center gap-4">
-                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🖥️</span></button>
+                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🌙</span></button>
                     <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
                     <button id="config-btn" class="text-sm font-semibold text-ios-blue" data-i18n="nav.config">Config</button>
                     <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
@@ -221,7 +221,7 @@
             <header class="nav-bar">
                 <h1 class="text-[22px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="accounts.title">Cuentas</h1>
                 <div class="flex items-center gap-4">
-                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🖥️</span></button>
+                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🌙</span></button>
                     <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
                     <button id="accounts-config-btn" class="text-sm font-semibold text-ios-blue" data-i18n="nav.config">Config</button>
                     <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
@@ -277,7 +277,7 @@
             <header class="nav-bar">
                 <h1 class="text-[22px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="nav.history">Historial</h1>
                 <div class="flex items-center gap-4">
-                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🖥️</span></button>
+                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🌙</span></button>
                     <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
                     <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
                 </div>
@@ -365,6 +365,15 @@
                     '</div>'
                 );
 
+                // Actualizar íconos del theme toggle
+                if (window.FFPWA && window.FFPWA.theme) {
+                    var mode = window.FFPWA.theme.getCurrent();
+                    var btns = document.querySelectorAll('.theme-toggle .theme-icon');
+                    btns.forEach(function(icon) {
+                        icon.textContent = mode === 'dark' ? '☀️' : '🌙';
+                    });
+                }
+
                 // Mount utility
                 window.mountScreen = function(templateId) {
                     var tpl = document.getElementById(templateId);
@@ -373,6 +382,14 @@
                     var firstEl = content.firstElementChild;
                     if (firstEl && firstEl.id && $('#' + firstEl.id).length) return;
                     $app.append(content.cloneNode(true));
+                    
+                    // Actualizar íconos del theme si hay toggle en el template recién montado
+                    if (window.FFPWA && window.FFPWA.theme) {
+                        var mode = window.FFPWA.theme.getCurrent();
+                        document.querySelectorAll('.theme-toggle .theme-icon').forEach(function(icon) {
+                            icon.textContent = mode === 'dark' ? '☀️' : '🌙';
+                        });
+                    }
                 };
 
                 /* ─── Tab switching ─── */
