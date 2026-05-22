@@ -300,6 +300,9 @@
     }
 
     /* ─── Tab Bar ─── */
+    #tab-bar.hidden {
+        display: none !important;
+    }
     #tab-bar {
         display: flex;
         position: fixed;
