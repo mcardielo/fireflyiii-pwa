@@ -18,336 +18,19 @@
     <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
-    <!-- Tailwind CSS CDN (Play CDN) -->
-    <script defer src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="css/style.css">
 
-    <!-- jQuery CDN -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-            integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK"
-            crossorigin="anonymous"></script>
+    <!-- jQuery -->
+    <script src="js/jquery-3.6.0.min.js"></script>
 
-    <style>
-        html, body {
-            height: 100%;
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            overscroll-behavior: none;
-            -webkit-overflow-scrolling: auto;
-            touch-action: manipulation;
-        }
-        body {
-            background: #f2f3f7;
-        }
-        #app {
-            height: 100%;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        .screen-stack {
-            display: flex;
-            flex-direction: column;
-        }
-        .hidden {
-            display: none !important;
-        }
-        .spinner {
-            border: 3px solid #e5e7eb;
-            border-top: 3px solid #5856D6;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 0.8s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        button:disabled {
-            cursor: not-allowed;
-        }
-        .autocomplete-item .new-badge {
-            font-size: 0.7rem;
-            color: #5856D6;
-            margin-left: 0.5rem;
-        }
-        .nav-bar {
-            padding-top: max(env(safe-area-inset-top, 0px), 4px);
-            padding-bottom: 8px;
-            padding-left: 16px;
-            padding-right: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(242, 243, 247, 0.88);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            backdrop-filter: saturate(180%) blur(20px);
-        }
-        .segmented-control {
-            background: #e5e5ea;
-            border-radius: 9px;
-            padding: 2px;
-            display: flex;
-        }
-        .segmented-btn {
-            flex: 1;
-            padding: 8px 6px;
-            border-radius: 7px;
-            font-size: 13px;
-            font-weight: 500;
-            text-align: center;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            color: #8e8e93;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        .segmented-btn.active {
-            background: #ffffff;
-            color: #1c1c1e;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-        .section-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #8e8e93;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding-left: 4px;
-            margin-bottom: 8px;
-        }
-        .field-card {
-            background: #ffffff;
-            border-radius: 10px;
-        }
-        .field-row {
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
-            min-height: 44px;
-        }
-        .field-row + .field-row {
-            border-top: 0.5px solid #e5e5ea;
-        }
-        .field-label {
-            font-size: 15px;
-            color: #1c1c1e;
-            min-width: 80px;
-            flex-shrink: 0;
-            padding: 12px 0;
-        }
-        .field-label .field-hint {
-            font-size: 12px;
-            color: #8e8e93;
-            font-weight: 400;
-        }
-        .field-value {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 12px 0;
-        }
-        .ios-input {
-            flex: 1;
-            border: none;
-            background: transparent;
-            font-size: 15px;
-            color: #1c1c1e;
-            text-align: right;
-            padding: 0;
-            outline: none;
-            min-width: 0;
-        }
-        .ios-input::placeholder {
-            color: #c7c7cc;
-        }
-        .currency-wrap {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            margin-left: 8px;
-        }
-        .currency-badge {
-            font-size: 13px;
-            font-weight: 500;
-            color: #5856D6;
-            background: #e8e7ff;
-            padding: 2px 22px 2px 10px;
-            border-radius: 12px;
-            border: none;
-            cursor: pointer;
-            appearance: none;
-            -webkit-appearance: none;
-            white-space: nowrap;
-            min-width: 0;
-        }
-        .currency-chevron {
-            position: absolute;
-            right: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 8px;
-            color: #5856D6;
-            pointer-events: none;
-        }
-        .sticky-footer {
-            padding: 8px 16px;
-            padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
-            background: #f2f3f7;
-        }
-        .ios-btn-primary {
-            width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            border: none;
-            font-size: 17px;
-            font-weight: 600;
-            color: #ffffff;
-            background: #5856D6;
-            cursor: pointer;
-            transition: opacity 0.2s;
-            box-shadow: 0 4px 12px rgba(88, 86, 214, 0.3);
-        }
-        .ios-btn-primary:active {
-            opacity: 0.7;
-        }
-        .ios-btn-primary:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .ios-status {
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            font-size: 14px;
-            border-left: 4px solid transparent;
-        }
-        .ios-status.success {
-            border-left-color: #34c759;
-            color: #1c1c1e;
-        }
-        .ios-status.warning {
-            border-left-color: #ff9500;
-            color: #1c1c1e;
-        }
-        .ios-status.error {
-            border-left-color: #ff3b30;
-            color: #1c1c1e;
-        }
-        .autocomplete-dropdown {
-            position: fixed;
-            z-index: 9999;
-            background: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-            max-height: 200px;
-            overflow-y: auto;
-            display: none;
-        }
-        .autocomplete-dropdown.visible {
-            display: block;
-        }
-        .autocomplete-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            font-size: 15px;
-            color: #1c1c1e;
-        }
-        .autocomplete-item:hover {
-            background: #f2f3f7;
-        }
-        .autocomplete-item + .autocomplete-item {
-            border-top: 0.5px solid #e5e5ea;
-        }
-        .autocomplete-item .new-badge {
-            font-size: 0.7rem;
-            color: #5856D6;
-            margin-left: 0.5rem;
-        }
-        #exchange-rate-info {
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 12px 16px;
-            margin-top: 8px;
-        }
-        .lang-btn {
-            background: #e5e5ea;
-            border-radius: 6px;
-            padding: 3px 8px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            border: none;
-            transition: opacity 0.2s;
-        }
-        .lang-btn:active {
-            opacity: 0.5;
-        }
-
-        /* ─── Tab Bar (iOS-style) ─── */
-        #tab-bar {
-            display: flex;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: rgba(242, 243, 247, 0.94);
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            backdrop-filter: saturate(180%) blur(20px);
-            border-top: 0.5px solid #c6c6c8;
-            padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px);
-        }
-        .screen {
-            flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 52px;
-        }
-        .tab-btn {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 4px 0 2px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-            min-height: 48px;
-        }
-        .tab-btn:active {
-            opacity: 0.5;
-        }
-        .tab-icon {
-            font-size: 22px;
-            line-height: 1.2;
-        }
-        .tab-label {
-            font-size: 10px;
-            color: #8e8e93;
-            margin-top: 1px;
-            font-weight: 500;
-        }
-        .tab-btn.active .tab-label {
-            color: #5856D6;
-        }
-    </style>
 </head>
 <body>
 
     <!-- Loading indicator: visible until app boots -->
-    <div id="loading-screen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#f2f3f7;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999">
-        <div class="spinner" style="width:36px;height:36px;border-width:4px"></div>
-        <p style="margin-top:16px;font-size:15px;color:#8e8e93;font-weight:500" data-i18n="loading.message">Cargando...</p>
+    <div id="loading-screen" class="fixed inset-0 bg-[#f2f3f7] flex flex-col items-center justify-center z-[9999]">
+        <div class="spinner spinner-lg"></div>
+        <p class="mt-4 text-[15px] text-[#8e8e93] font-medium" data-i18n="loading.message">Cargando...</p>
     </div>
 
     <!-- Mount point: screens get injected here -->
@@ -360,7 +43,7 @@
     <!-- ── Configuración (URL + Token) ── -->
     <template id="screen-setup">
         <div id="setup-container" class="screen screen-stack hidden">
-            <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4" style="-webkit-overflow-scrolling: touch">
+            <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll">
                 <div class="text-center mb-10">
                     <div class="w-16 h-16 bg-[#e8e7ff] rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -377,18 +60,18 @@
                     <p class="section-label" data-i18n="setup.section_connection">Conexión</p>
                     <div class="field-card mb-6">
                         <div class="field-row">
-                            <span class="field-label" style="min-width:0; white-space:nowrap" data-i18n="setup.url_label">URL</span>
+                            <span class="field-label field-label--tight" data-i18n="setup.url_label">URL</span>
                             <div class="field-value">
                                 <input type="url" id="firefly-url" required placeholder="https://miapp.firefly-iii.org"
-                                       class="ios-input" style="width:100%; text-align:right"
+                                       class="ios-input"
                                        data-i18n-placeholder="setup.url_placeholder">
                             </div>
                         </div>
                         <div class="field-row">
-                            <span class="field-label" style="min-width:0; white-space:nowrap" data-i18n="setup.token_label">Token</span>
+                            <span class="field-label field-label--tight" data-i18n="setup.token_label">Token</span>
                             <div class="field-value">
                                 <input type="password" id="personal-token" required placeholder="xxxxxxxxxxxxxxxxxxxxxxx"
-                                       class="ios-input" style="width:100%; text-align:right"
+                                       class="ios-input"
                                        data-i18n-placeholder="setup.token_placeholder">
                             </div>
                         </div>
@@ -407,7 +90,7 @@
     <!-- ── Selección de Cuenta Default ── -->
     <template id="screen-account-picker">
         <div id="default-account-container" class="screen screen-stack hidden">
-            <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4" style="-webkit-overflow-scrolling: touch">
+            <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll">
                 <div class="text-center mb-10">
                     <div class="w-16 h-16 bg-[#e8e7ff] rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -423,9 +106,9 @@
                 <p class="section-label" data-i18n="account.section">Cuenta Origen</p>
                 <div class="field-card mb-6">
                     <div class="field-row">
-                        <span class="field-label" style="min-width:0" data-i18n="account.select_label">Cuenta</span>
+                        <span class="field-label field-label--tight" data-i18n="account.select_label">Cuenta</span>
                         <div class="field-value">
-                            <select id="default-account-select" style="-webkit-appearance:none;appearance:none;border:none;background:transparent;font-size:15px;color:#1c1c1e;text-align:right;direction:rtl;padding:0;outline:none;cursor:pointer;flex:1">
+                            <select id="default-account-select" class="ios-select">
                                 <option value="" data-i18n="account.loading">Cargando cuentas...</option>
                             </select>
                         </div>
@@ -452,7 +135,7 @@
                     <span class="online-status text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full">● Online</span>
                 </div>
             </header>
-            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4" style="-webkit-overflow-scrolling: touch">
+            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4 ios-scroll">
                 <div class="mb-6">
                     <p class="section-label" data-i18n="transaction.type">Tipo de Transacción</p>
                     <div class="segmented-control" role="radiogroup" id="type-selector">
@@ -470,8 +153,8 @@
                             <div class="field-row">
                                 <span class="field-label"><span data-i18n="transaction.source_label">Origen</span> <span id="source-type-hint" class="field-hint" data-i18n="transaction.source_hint_asset">(Asset)</span></span>
                                 <div class="field-value">
-                                    <div class="relative" style="flex:1">
-                                        <input type="text" id="source-account" placeholder="Selecciona..." autocomplete="off" class="ios-input" style="width:100%; text-align:right" data-i18n-placeholder="transaction.source_placeholder">
+                                    <div class="relative flex-1">
+                                        <input type="text" id="source-account" placeholder="Selecciona..." autocomplete="off" class="ios-input" data-i18n-placeholder="transaction.source_placeholder">
                                         <div id="source-autocomplete" class="autocomplete-dropdown hidden"></div>
                                     </div>
                                 </div>
@@ -486,8 +169,8 @@
                             <div class="field-row">
                                 <span class="field-label"><span data-i18n="transaction.dest_label">Destino</span> <span id="dest-type-hint" class="field-hint" data-i18n="transaction.dest_hint_expense">(Expense)</span></span>
                                 <div class="field-value">
-                                    <div class="relative" style="flex:1">
-                                        <input type="text" id="destination-account" required placeholder="Buscar cuenta..." autocomplete="off" class="ios-input" style="width:100%; text-align:right" data-i18n-placeholder="transaction.dest_placeholder">
+                                    <div class="relative flex-1">
+                                        <input type="text" id="destination-account" required placeholder="Buscar cuenta..." autocomplete="off" class="ios-input" data-i18n-placeholder="transaction.dest_placeholder">
                                         <div id="destination-autocomplete" class="autocomplete-dropdown hidden"></div>
                                     </div>
                                 </div>
@@ -516,7 +199,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="exchange-rate-info" class="hidden" style="margin-top:8px">
+                        <div id="exchange-rate-info" class="hidden">
                             <p id="exchange-rate-display" class="text-xs text-[#8e8e93]"></p>
                             <p id="amount-converted" class="text-sm font-medium text-[#5856D6] hidden"></p>
                         </div>
@@ -542,7 +225,7 @@
                     <span class="online-status text-xs font-semibold text-[#34c759] bg-[#e8f8ee] px-3 py-1 rounded-full">● Online</span>
                 </div>
             </header>
-            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4" style="-webkit-overflow-scrolling: touch">
+            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4 ios-scroll">
                 <!-- Accounts list view -->
                 <div id="accounts-loading" class="text-center py-8">
                     <div class="spinner mx-auto mb-2"></div>

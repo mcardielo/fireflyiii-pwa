@@ -1,7 +1,8 @@
-const CACHE_NAME = 'firefly-pwa-v2.3';
+const CACHE_NAME = 'firefly-pwa-v2.4';
 const ASSETS_TO_CACHE = [
     './',
     'index.html',
+    'css/style.css',
     'js/config.js',
     'js/accounts.js',
     'js/currencies.js',
@@ -9,11 +10,10 @@ const ASSETS_TO_CACHE = [
     'js/accounts-screen.js',
     'js/i18n.js',
     'js/app.js',
+    'js/jquery-3.6.0.min.js',
     'lang/en.json',
     'lang/es.json',
-    'manifest.json',
-    'https://code.jquery.com/jquery-3.6.0.min.js',
-    'https://cdn.tailwindcss.com'
+    'manifest.json'
 ];
 
 /**

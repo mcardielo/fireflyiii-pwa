@@ -70,12 +70,12 @@
             $badges
                 .removeClass('text-[#34c759] bg-[#e8f8ee]')
                 .addClass('text-[#ff9500] bg-[#fff4e5]')
-                .text(t('nav.offline', 'Offline'));
+                .text(t('nav.offline', '● Offline'));
         } else {
             $badges
                 .removeClass('text-[#ff9500] bg-[#fff4e5]')
                 .addClass('text-[#34c759] bg-[#e8f8ee]')
-                .text(t('nav.online', 'Online'));
+                .text(t('nav.online', '● Online'));
         }
     };
 
