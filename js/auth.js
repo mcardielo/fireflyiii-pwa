@@ -133,6 +133,11 @@
             });
         },
 
+        /* ─── Check if a WebAuthn credential exists ─── */
+        hasCredential: function() {
+            try { return !!localStorage.getItem('ffpwa_credential_id'); } catch (e) { return false; }
+        },
+
         /* ─── Check if PIN is configured ─── */
         hasPin: function() {
             try { return !!localStorage.getItem('ffpwa_pin_hash'); } catch (e) { return false; }

@@ -327,8 +327,8 @@
             }
         });
 
-        // If security is already enabled and method is webauthn, try register
-        if (enabled && method === 'webauthn') {
+        // If security is already enabled with webauthn and no credential stored, register
+        if (enabled && method === 'webauthn' && !window.FFPWA.auth.hasCredential()) {
             window.FFPWA.auth.webauthnAvailable().then(function(avail) {
                 if (avail) {
                     window.FFPWA.auth.registerWebAuthn();
