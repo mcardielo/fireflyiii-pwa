@@ -195,9 +195,6 @@
     }
 
     /**
-     * Determina el estado inicial de la aplicación.
-     */
-    /**
      * Ofuscación ligera para el token en localStorage.
      * No es seguridad real — solo evita exposición accidental.
      */
@@ -275,6 +272,12 @@
                 $msg.removeClass('hidden success error').addClass('warning')
                     .text('🔓 ' + (window.__ && window.__('security.disabled') || 'Seguridad desactivada'));
                 setTimeout(function() { $msg.addClass('hidden'); }, 2000);
+            } else {
+                window.FFPWA.auth.setEnabled(true);
+                // Trigger biometric registration if checkbox is already checked
+                if ($biometric.is(':checked')) {
+                    $biometric.trigger('change');
+                }
             }
         });
 
@@ -295,6 +298,8 @@
                     } else {
                         window.FFPWA.auth.registerWebAuthn().then(function(ok) {
                             if (ok) {
+                                window.FFPWA.auth.setEnabled(true);
+                                window.FFPWA.auth.setMethod('webauthn');
                                 $msg.removeClass('hidden warning error').addClass('success')
                                     .text('✅ ' + (window.__ && window.__('security.biometric_ready') || 'Biometría lista'));
                                 setTimeout(function() { $msg.addClass('hidden'); }, 2000);
