@@ -456,6 +456,46 @@
         -webkit-overflow-scrolling: touch;
     }
 
+    /* ─── iOS Switch (toggle) ─── */
+    .ios-switch {
+        position: relative;
+        display: inline-block;
+        width: 51px;
+        height: 31px;
+        flex-shrink: 0;
+    }
+    .ios-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .ios-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: #e5e5ea;
+        transition: 0.3s;
+        border-radius: 16px;
+    }
+    .ios-slider:before {
+        content: '';
+        position: absolute;
+        height: 27px;
+        width: 27px;
+        left: 2px;
+        bottom: 2px;
+        background: #ffffff;
+        transition: 0.3s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .ios-switch input:checked + .ios-slider {
+        background: #34c759;
+    }
+    .ios-switch input:checked + .ios-slider:before {
+        transform: translateX(20px);
+    }
+
     /* ─── Dark Mode Toggle Button ─── */
     .theme-toggle {
         background: var(--ios-lang-btn-bg);

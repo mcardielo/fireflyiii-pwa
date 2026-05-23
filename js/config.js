@@ -103,8 +103,12 @@
         $('#accounts-container').addClass('hidden');
         $('#tab-bar').addClass('hidden');
 
-        $('#save-default-account-btn').on('click', handleDefaultAccountSave);
+        $('#save-default-account-btn').off('click').on('click', handleDefaultAccountSave);
         loadAssetAccountsForPicker();
+        setTimeout(function() {
+            initSecurityUI('-2');
+            if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+        }, 100);
     }
 
     /**
@@ -242,7 +246,92 @@
         return true;
     }
 
-    // Expose for orchestration — called after i18n is ready
+    /* ─── Security UI ─── */
+
+    function initSecurityUI(suffix) {
+        suffix = suffix || '';
+        var $toggle = $('#security-toggle' + suffix);
+        var $biometric = $('#auth-biometric' + suffix);
+        var $pinRow = $('#pin-config-row' + suffix);
+        var $pinInput = $('#auth-pin' + suffix);
+        var $configArea = $('#security-config-area' + suffix);
+        var $msg = $('#security-message' + suffix);
+
+        if (!$toggle.length) return;
+
+        var enabled = window.FFPWA.auth.isEnabled();
+        var method = window.FFPWA.auth.getMethod();
+        $toggle.prop('checked', enabled);
+        $configArea.toggleClass('hidden', !enabled);
+        $biometric.prop('checked', method === 'webauthn');
+        $pinRow.toggleClass('hidden', method !== 'pin');
+
+        // Toggle security on/off
+        $toggle.off('change').on('change', function() {
+            var on = $(this).is(':checked');
+            $configArea.toggleClass('hidden', !on);
+            if (!on) {
+                window.FFPWA.auth.setEnabled(false);
+                $msg.removeClass('hidden success error').addClass('warning')
+                    .text('🔓 ' + (window.__ && window.__('security.disabled') || 'Seguridad desactivada'));
+                setTimeout(function() { $msg.addClass('hidden'); }, 2000);
+            }
+        });
+
+        // Toggle biometric vs PIN
+        $biometric.off('change').on('change', function() {
+            var useBiometric = $(this).is(':checked');
+            $pinRow.toggleClass('hidden', useBiometric);
+
+            if (useBiometric) {
+                window.FFPWA.auth.setMethod('webauthn');
+                window.FFPWA.auth.webauthnAvailable().then(function(avail) {
+                    if (!avail) {
+                        $msg.removeClass('hidden success error').addClass('warning')
+                            .text('⚠️ ' + (window.__ && window.__('security.no_biometric') || 'Biometría no disponible'));
+                        $biometric.prop('checked', false);
+                        $pinRow.removeClass('hidden');
+                        window.FFPWA.auth.setMethod('pin');
+                    } else {
+                        window.FFPWA.auth.registerWebAuthn().then(function(ok) {
+                            if (ok) {
+                                $msg.removeClass('hidden warning error').addClass('success')
+                                    .text('✅ ' + (window.__ && window.__('security.biometric_ready') || 'Biometría lista'));
+                                setTimeout(function() { $msg.addClass('hidden'); }, 2000);
+                            }
+                        });
+                    }
+                });
+            } else {
+                window.FFPWA.auth.setMethod('pin');
+                $pinRow.removeClass('hidden');
+            }
+        });
+
+        // PIN input
+        $pinInput.off('input').on('input', function() {
+            var pin = $(this).val();
+            if (pin.length >= 4) {
+                window.FFPWA.auth.setPin(pin).then(function() {
+                    window.FFPWA.auth.setEnabled(true);
+                    window.FFPWA.auth.setMethod('pin');
+                    $msg.removeClass('hidden warning error').addClass('success')
+                        .text('✅ ' + (window.__ && window.__('security.pin_ready') || 'PIN configurado'));
+                    setTimeout(function() { $msg.addClass('hidden'); }, 1500);
+                });
+            }
+        });
+
+        // If security is already enabled and method is webauthn, try register
+        if (enabled && method === 'webauthn') {
+            window.FFPWA.auth.webauthnAvailable().then(function(avail) {
+                if (avail) {
+                    window.FFPWA.auth.registerWebAuthn();
+                }
+            });
+        }
+    }
+
     window.initConfig = checkConfiguration;
 
     // Config button: re-open default account picker

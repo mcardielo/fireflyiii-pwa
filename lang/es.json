@@ -164,5 +164,23 @@
 
   "config.save": "Guardar",
   "config.cancel": "Cancelar",
-  "config.reset": "Reiniciar"
+  "config.reset": "Reiniciar",
+
+  "security.section": "Seguridad",
+  "security.auth_label": "Autenticación para cuentas",
+  "security.method_label": "Método",
+  "security.method": "Usar biometría",
+  "security.pin_label": "PIN",
+  "security.hint": "La biometría usa Face ID / huella del dispositivo. Si no está disponible, puedes configurar un PIN.",
+  "security.disabled": "Seguridad desactivada",
+  "security.no_biometric": "Biometría no disponible",
+  "security.biometric_ready": "Biometría lista",
+  "security.pin_ready": "PIN configurado",
+
+  "lock.title": "Cuentas Bloqueadas",
+  "lock.subtitle": "Verifica tu identidad para acceder",
+  "lock.unlock_biometric": "Desbloquear con biometría",
+  "lock.pin_label": "O ingresa tu PIN",
+  "lock.pin_error": "PIN incorrecto",
+  "lock.verifying": "Verificando..."
 }

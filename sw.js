@@ -10,6 +10,7 @@ const ASSETS_TO_CACHE = [
     'js/accounts-screen.js',
     'js/i18n.js',
     'js/darkmode.js',
+    'js/auth.js',
     'js/app.js',
     'js/jquery-3.6.0.min.js',
     'lang/en.json',

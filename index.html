@@ -115,6 +115,46 @@
                     </div>
                 </div>
                 <div id="default-account-message" class="ios-status hidden"></div>
+
+                <!-- ── Seguridad ── -->
+                <p class="section-label" data-i18n="security.section">Seguridad</p>
+                <div class="field-card mb-6">
+                    <div class="field-row">
+                        <span class="field-label field-label--tight" data-i18n="security.auth_label">Autenticación para cuentas</span>
+                        <div class="field-value">
+                            <label class="ios-switch">
+                                <input type="checkbox" id="security-toggle-2">
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div id="security-config-area-2" class="hidden mb-6">
+                    <div class="field-card mb-4">
+                        <div class="field-row">
+                            <span class="field-label field-label--tight" data-i18n="security.method">Usar biometría</span>
+                            <div class="field-value">
+                                <label class="ios-switch">
+                                    <input type="checkbox" id="auth-biometric-2" checked>
+                                    <span class="ios-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="pin-config-row-2" class="field-row hidden">
+                            <span class="field-label field-label--tight" data-i18n="security.pin_label">PIN</span>
+                            <div class="field-value">
+                                <input type="password" id="auth-pin-2" placeholder="••••" maxlength="6"
+                                       class="ios-input" style="width:80px; text-align:center; font-size:20px; letter-spacing:4px">
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-ios-text-secondary px-1" data-i18n="security.hint">
+                        La biometría usa Face ID / huella del dispositivo.
+                        Si no está disponible, puedes configurar un PIN.
+                    </p>
+                    <div id="security-message-2" class="ios-status hidden mt-4"></div>
+                </div>
+
             </div>
             <footer class="sticky-footer">
                 <button id="save-default-account-btn" class="ios-btn-primary">
@@ -288,9 +328,39 @@
         </div>
     </template>
 
+    <!-- ── Lock Screen (overlay for accounts security) ── -->
+    <template id="screen-lock">
+        <div id="lock-container" class="fixed inset-0 z-[100] flex flex-col items-center justify-center"
+             style="background: var(--ios-bg);">
+            <div class="text-center px-8">
+                <div class="text-[48px] mb-6">🔒</div>
+                <h2 class="text-[22px] font-bold text-ios-text mb-2" data-i18n="lock.title">Cuentas Bloqueadas</h2>
+                <p class="text-[15px] text-ios-text-secondary mb-8" data-i18n="lock.subtitle">Verifica tu identidad para acceder</p>
+
+                <button id="lock-unlock-btn" class="ios-btn-primary mb-4">
+                    <span id="lock-btn-text" data-i18n="lock.unlock_biometric">Desbloquear con biometría</span>
+                </button>
+
+                <div id="lock-pin-area" class="hidden">
+                    <p class="text-sm text-ios-text-secondary mb-3" data-i18n="lock.pin_label">O ingresa tu PIN</p>
+                    <input type="password" id="lock-pin-input" placeholder="••••" maxlength="6"
+                           class="ios-input text-center text-[20px] tracking-[4px] mx-auto"
+                           style="width:140px; border-bottom:2px solid var(--ios-separator); border-radius:0;">
+                    <p id="lock-pin-error" class="text-xs text-ios-red mt-2 hidden" data-i18n="lock.pin_error">PIN incorrecto</p>
+                </div>
+
+                <div id="lock-loading" class="hidden">
+                    <div class="spinner mx-auto mb-2"></div>
+                    <p class="text-sm text-ios-text-secondary" data-i18n="lock.verifying">Verificando...</p>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <!-- Scripts -->
     <script src="js/i18n.js"></script>
     <script src="js/darkmode.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/config.js"></script>
     <script src="js/accounts.js"></script>
     <script src="js/currencies.js"></script>
@@ -392,16 +462,95 @@
                     }
                 };
 
+                /* ─── Lock Screen ─── */
+                function showLockScreen() {
+                    window.mountScreen('screen-lock');
+                    $('#lock-container').removeClass('hidden');
+                    $('#accounts-container').addClass('hidden');
+                    $('#tab-bar').addClass('hidden');
+
+                    $('#lock-pin-area').addClass('hidden');
+                    $('#lock-pin-error').addClass('hidden');
+                    $('#lock-loading').addClass('hidden');
+
+                    var method = window.FFPWA.auth.getMethod();
+                    var hasPin = window.FFPWA.auth.hasPin();
+
+                    if (method === 'webauthn' && !hasPin) {
+                        $('#lock-btn-text').text('🔒');
+                    } else if (method === 'webauthn' && hasPin) {
+                        $('#lock-btn-text').text('🔒 ' + (window.__ && window.__('lock.unlock_biometric') || 'Desbloquear con biometría'));
+                        $('#lock-pin-area').removeClass('hidden');
+                    } else {
+                        $('#lock-btn-text').addClass('hidden');
+                        $('#lock-pin-area').removeClass('hidden');
+                    }
+
+                    if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+                }
+
+                function hideLockScreen() {
+                    $('#lock-container').addClass('hidden');
+                }
+
+                function handleUnlockSuccess() {
+                    hideLockScreen();
+                    window.FFPWA.auth.unlocked = true;
+                    // Now show accounts
+                    $('#accounts-container').removeClass('hidden');
+                    $('#tab-bar').removeClass('hidden');
+                    if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
+                }
+
+                // Unlock button
+                $(document).on('click', '#lock-unlock-btn', function() {
+                    var method = window.FFPWA.auth.getMethod();
+                    $('#lock-loading').removeClass('hidden');
+
+                    window.FFPWA.auth.unlock(method).then(function(success) {
+                        $('#lock-loading').addClass('hidden');
+                        if (success) {
+                            handleUnlockSuccess();
+                        } else {
+                            // Try PIN as fallback
+                            if (window.FFPWA.auth.hasPin()) {
+                                $('#lock-pin-area').removeClass('hidden');
+                                $('#lock-btn-text').text('🔒 ' + 'Usar PIN');
+                            }
+                        }
+                    });
+                });
+
+                // PIN input
+                $(document).on('input', '#lock-pin-input', function() {
+                    var pin = $(this).val();
+                    if (pin.length >= 4) {
+                        $('#lock-pin-error').addClass('hidden');
+                        window.FFPWA.auth.verifyPin(pin).then(function(valid) {
+                            if (valid) {
+                                handleUnlockSuccess();
+                            } else {
+                                $('#lock-pin-error').removeClass('hidden');
+                                $('#lock-pin-input').val('');
+                            }
+                        });
+                    }
+                });
+
                 /* ─── Tab switching ─── */
                 function switchTab(screen) {
-                    $('#setup-container, #default-account-container, #dashboard-container, #accounts-container').addClass('hidden');
+                    $('#setup-container, #default-account-container, #dashboard-container, #accounts-container, #lock-container').addClass('hidden');
 
                     if (screen === 'record') {
                         $('#dashboard-container').removeClass('hidden');
                     } else if (screen === 'accounts') {
                         window.mountScreen('screen-accounts');
-                        $('#accounts-container').removeClass('hidden');
-                        if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
+                        if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {
+                            showLockScreen();
+                        } else {
+                            $('#accounts-container').removeClass('hidden');
+                            if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
+                        }
                     }
 
                     $('#tab-bar .tab-btn').removeClass('active');

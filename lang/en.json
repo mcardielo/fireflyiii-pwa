@@ -164,5 +164,23 @@
 
   "config.save": "Save",
   "config.cancel": "Cancel",
-  "config.reset": "Reset"
+  "config.reset": "Reset",
+
+  "security.section": "Security",
+  "security.auth_label": "Account authentication",
+  "security.method_label": "Method",
+  "security.method": "Use biometrics",
+  "security.pin_label": "PIN",
+  "security.hint": "Biometrics uses Face ID / fingerprint. If unavailable, you can set a PIN.",
+  "security.disabled": "Security disabled",
+  "security.no_biometric": "Biometrics not available",
+  "security.biometric_ready": "Biometrics ready",
+  "security.pin_ready": "PIN configured",
+
+  "lock.title": "Accounts Locked",
+  "lock.subtitle": "Verify your identity to access",
+  "lock.unlock_biometric": "Unlock with biometrics",
+  "lock.pin_label": "Or enter your PIN",
+  "lock.pin_error": "Incorrect PIN",
+  "lock.verifying": "Verifying..."
 }
