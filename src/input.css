@@ -298,6 +298,22 @@
         cursor: not-allowed;
     }
 
+    .ios-btn-secondary {
+        display: inline-block;
+        padding: 10px 24px;
+        border-radius: 12px;
+        border: none;
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--ios-blue);
+        background: transparent;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .ios-btn-secondary:active {
+        opacity: 0.5;
+    }
+
     /* ─── Status Messages ─── */
     .ios-status {
         background: var(--ios-card);

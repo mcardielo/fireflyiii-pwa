@@ -182,5 +182,6 @@
   "lock.unlock_biometric": "Unlock with biometrics",
   "lock.pin_label": "Or enter your PIN",
   "lock.pin_error": "Incorrect PIN",
-  "lock.verifying": "Verifying..."
+  "lock.verifying": "Verifying...",
+  "lock.cancel": "Cancel"
 }

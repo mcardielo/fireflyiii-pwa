@@ -83,28 +83,241 @@
     registerServiceWorker();
     setupConnectivityListeners();
 
-    // Inicializar app cuando DOM esté listo (depende de jQuery)
-    function initializeApp() {
-        console.log('Inicializando PWA de Registro de Transacciones...');
-        // Mark initial online status
-        window.FFPWA.updateStatus && window.FFPWA.updateStatus(
-            navigator.onLine ? 'online' : 'offline'
-        );
-    }
+    /* 
+     *  Montar templates que no estén ya montados (en caso de que scripts se carguen en <head> y #app no exista aún).
+     */
+    (function mountTemplatesSync() {
+        if (typeof $ === 'undefined') return;
+        var $app = $('#app');
+        if (!$app.length) return; // #app no existe (scripts en <head>)
 
-    // Usar DOMContentLoaded nativo por si jQuery no ha cargado aún
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            // Si jQuery ya cargó, usar el ready normal
-            if (typeof $ !== 'undefined') {
-                $(initializeApp);
-            } else {
-                // Fallback: inicializar manualmente
-                setTimeout(initializeApp, 100);
-            }
+        ['screen-setup', 'screen-account-picker', 'screen-record'].forEach(function(id) {
+            var tpl = document.getElementById(id);
+            if (tpl) $app.append(tpl.content.cloneNode(true));
         });
-    } else {
-        initializeApp();
-    }
+    })();
+
+    /*
+     *  Boot de la app: montar UI restante, configurar pantallas, handlers.
+     */
+    $(function() {
+
+        var loadingEl = document.getElementById('loading-screen');
+
+        function hideLoadingScreen() {
+            if (loadingEl) loadingEl.style.display = 'none';
+        }
+
+        function showOfflineFallback() {
+            hideLoadingScreen();
+            var appEl = document.getElementById('app');
+            if (appEl) {
+                appEl.innerHTML =
+                    '<div style="text-align:center;padding:60px 20px;color:#8e8e93">' +
+                    '  <div style="font-size:48px;margin-bottom:16px">📡</div>' +
+                    '  <p style="font-size:17px;font-weight:500;color:#1c1c1e;margin-bottom:8px">Sin conexión</p>' +
+                    '  <p style="font-size:14px">Conéctate a internet y vuelve a abrir la app.</p>' +
+                    '</div>';
+            }
+        }
+
+        function boot() {
+            if (typeof $ === 'undefined') {
+                showOfflineFallback();
+                return;
+            }
+
+            var $app = $('#app');
+
+            // ── Montar templates --
+            if (!$('#dashboard-container').length) {
+                $app.append(document.getElementById('screen-setup').content.cloneNode(true));
+                $app.append(document.getElementById('screen-account-picker').content.cloneNode(true));
+                $app.append(document.getElementById('screen-record').content.cloneNode(true));
+            }
+
+            // ── Montar tab bar ──
+            $app.append(
+                '<div id="tab-bar" class="hidden">' +
+                    '<button class="tab-btn active" data-screen="record">' +
+                        '<span class="tab-icon">📝</span>' +
+                        '<span class="tab-label" data-i18n="nav.record">Registro</span>' +
+                    '</button>' +
+                    '<button class="tab-btn" data-screen="accounts">' +
+                        '<span class="tab-icon">💰</span>' +
+                        '<span class="tab-label" data-i18n="nav.accounts">Cuentas</span>' +
+                    '</button>' +
+                '</div>'
+            );
+
+            // ── Theme icons init ──
+            if (window.FFPWA && window.FFPWA.theme) {
+                var mode = window.FFPWA.theme.getCurrent();
+                document.querySelectorAll('.theme-toggle .theme-icon').forEach(function(icon) {
+                    icon.textContent = mode === 'dark' ? '☀️' : '🌙';
+                });
+            }
+
+            /* ─── Montar utility ─── */
+            window.mountScreen = function(templateId) {
+                var tpl = document.getElementById(templateId);
+                if (!tpl) return;
+                var content = tpl.content;
+                var firstEl = content.firstElementChild;
+                if (firstEl && firstEl.id && $('#' + firstEl.id).length) return;
+                $app.append(content.cloneNode(true));
+
+                if (window.FFPWA && window.FFPWA.theme) {
+                    var mdl = window.FFPWA.theme.getCurrent();
+                    document.querySelectorAll('.theme-toggle .theme-icon').forEach(function(icon) {
+                        icon.textContent = mdl === 'dark' ? '☀️' : '🌙';
+                    });
+                }
+            };
+
+            /* ─── Lock Screen ─── */
+            function showLockScreen() {
+                window.mountScreen('screen-lock');
+                $('#lock-container').removeClass('hidden');
+                $('#accounts-container').addClass('hidden');
+                $('#tab-bar').addClass('hidden');
+
+                $('#lock-pin-area').addClass('hidden');
+                $('#lock-pin-error').addClass('hidden');
+                $('#lock-loading').addClass('hidden');
+
+                var method = window.FFPWA.auth.getMethod();
+                var hasPin = window.FFPWA.auth.hasPin();
+
+                if (method === 'webauthn' && !hasPin) {
+                    $('#lock-btn-text').text('🔒');
+                } else if (method === 'webauthn' && hasPin) {
+                    $('#lock-btn-text').text('🔒 ' + (window.__ && window.__('lock.unlock_biometric') || 'Desbloquear con biometría'));
+                    $('#lock-pin-area').removeClass('hidden');
+                } else {
+                    $('#lock-btn-text').addClass('hidden');
+                    $('#lock-pin-area').removeClass('hidden');
+                }
+
+                if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+            }
+
+            function hideLockScreen() {
+                $('#lock-container').addClass('hidden');
+            }
+
+            function handleUnlockSuccess() {
+                hideLockScreen();
+                window.FFPWA.auth.unlocked = true;
+                $('#accounts-container').removeClass('hidden');
+                $('#tab-bar').removeClass('hidden');
+                if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
+            }
+
+            /* ─── Tab switching ─── */
+            function switchTab(screen) {
+                var hidden = '#setup-container, #default-account-container, #dashboard-container, #accounts-container, #lock-container';
+                $(hidden).addClass('hidden');
+
+                if (screen === 'record') {
+                    $('#dashboard-container').removeClass('hidden');
+                } else if (screen === 'accounts') {
+                    window.mountScreen('screen-accounts');
+                    if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {
+                        showLockScreen();
+                    } else {
+                        $('#accounts-container').removeClass('hidden');
+                        if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
+                    }
+                }
+
+                $('#tab-bar .tab-btn').removeClass('active');
+                $('#tab-bar .tab-btn[data-screen="' + screen + '"]').addClass('active');
+                $('#tab-bar').removeClass('hidden');
+
+                if (!navigator.onLine) {
+                    window.FFPWA.updateStatus('offline');
+                }
+                if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+            }
+
+            window.switchTab = switchTab;
+
+            /* ─── Event handlers ─── */
+            $(document).on('click', '#lock-cancel-btn', function() {
+                hideLockScreen();
+                switchTab('record');
+            });
+
+            $(document).on('click', '#lock-unlock-btn', function() {
+                var method = window.FFPWA.auth.getMethod();
+                $('#lock-loading').removeClass('hidden');
+
+                window.FFPWA.auth.unlock(method).then(function(success) {
+                    $('#lock-loading').addClass('hidden');
+                    if (success) {
+                        handleUnlockSuccess();
+                    } else {
+                        if (window.FFPWA.auth.hasPin()) {
+                            $('#lock-pin-area').removeClass('hidden');
+                            $('#lock-btn-text').text('🔒 ' + 'Usar PIN');
+                        }
+                    }
+                });
+            });
+
+            $(document).on('input', '#lock-pin-input', function() {
+                var pin = $(this).val();
+                if (pin.length >= 4) {
+                    $('#lock-pin-error').addClass('hidden');
+                    window.FFPWA.auth.verifyPin(pin).then(function(valid) {
+                        if (valid) {
+                            handleUnlockSuccess();
+                        } else {
+                            $('#lock-pin-error').removeClass('hidden');
+                            $('#lock-pin-input').val('');
+                        }
+                    });
+                }
+            });
+
+            $(document).on('click', '#tab-bar .tab-btn', function() {
+                var screen = $(this).data('screen');
+                if ($(this).hasClass('active')) return;
+                switchTab(screen);
+            });
+
+            $(document).on('click', '.lang-btn', function() {
+                var current = window.getLocale();
+                var next = current === 'es' ? 'en' : 'es';
+                window.setLocale(next).then(function() {
+                    $('html').attr('lang', next);
+                    updateLangBtn(next);
+                });
+            });
+
+            function updateLangBtn(locale) {
+                $('.lang-btn').text(locale === 'es' ? 'EN' : 'ES');
+            }
+
+            /* ─── Init sequence ─── */
+            window.initI18n(function(locale) {
+                $('html').attr('lang', locale);
+                updateLangBtn(locale);
+                window.initConfig();
+                hideLoadingScreen();
+            });
+
+            // Fallback: esconder pantalla de carga después de 3 segundos si algo falla en init
+            setTimeout(hideLoadingScreen, 3000);
+
+            // Initial online status
+            window.FFPWA.updateStatus && window.FFPWA.updateStatus(
+                navigator.onLine ? 'online' : 'offline'
+            );
+        }
+
+        boot();
+    });
 
 })();

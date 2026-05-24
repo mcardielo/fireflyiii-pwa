@@ -29,17 +29,17 @@
     /**
      * Devuelve el tipo de cuenta filtrado para un campo según el tipo de transacción.
      */
-    function getAccountTypeForField(transactionType, fieldContext) {
+    function getAccountTypesForField(transactionType, fieldContext) {
         if (transactionType === 'deposit') {
-            return fieldContext === 'source' ? 'revenue' : 'asset';
+            return fieldContext === 'source' ? ['revenue'] : ['asset', 'liabilities'];
         }
         if (transactionType === 'transfer') {
-            return 'asset'; // ambos campos
+            return ['asset', 'liabilities'];
         }
         // withdrawal (default)
-        return fieldContext === 'source' ? 'asset' : 'expense';
+        return fieldContext === 'source' ? ['asset', 'liabilities'] : ['expense'];
     }
-    window.FFPWA.getAccountTypeForField = getAccountTypeForField;
+    window.FFPWA.getAccountTypesForField = getAccountTypesForField;
 
 
     function getCachedAccounts() {
@@ -153,19 +153,20 @@
         }
 
         const transactionType = $('#transaction-type').val();
-        const targetType = getAccountTypeForField(transactionType, fieldContext);
+        const targetTypes = getAccountTypesForField(transactionType, fieldContext);
 
         let accountsToFilter = cache.filter(account =>
-            account.type === targetType && account.active !== false
+            targetTypes.includes(account.type) && account.active !== false
         );
 
         const filteredAccounts = accountsToFilter.filter(account =>
             account.name.toLowerCase().includes(query)
         );
 
-        // Crear nueva cuenta: solo permitido si NO es tipo asset
+        // Crear nueva cuenta: solo si NO hay asset ni liabilities (cuentas predefinidas)
+        const hasPredefined = targetTypes.some(t => t === 'asset' || t === 'liabilities');
         const results = filteredAccounts.slice();
-        if (targetType !== 'asset') {
+        if (!hasPredefined) {
             results.push({
                 name: rawValue,
                 id: undefined,

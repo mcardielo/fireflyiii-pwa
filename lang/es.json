@@ -182,5 +182,6 @@
   "lock.unlock_biometric": "Desbloquear con biometría",
   "lock.pin_label": "O ingresa tu PIN",
   "lock.pin_error": "PIN incorrecto",
-  "lock.verifying": "Verificando..."
+  "lock.verifying": "Verificando...",
+  "lock.cancel": "Cancelar"
 }
