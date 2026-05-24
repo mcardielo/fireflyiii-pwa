@@ -140,11 +140,11 @@
             $app.append(
                 '<div id="tab-bar" class="hidden">' +
                     '<button class="tab-btn active" data-screen="record">' +
-                        '<span class="tab-icon">📝</span>' +
+                                                '<span class="tab-icon">' + Icons.receipt + '</span>' +
                         '<span class="tab-label" data-i18n="nav.record">Registro</span>' +
                     '</button>' +
                     '<button class="tab-btn" data-screen="accounts">' +
-                        '<span class="tab-icon">💰</span>' +
+                                                '<span class="tab-icon">' + Icons.wallet + '</span>' +
                         '<span class="tab-label" data-i18n="nav.accounts">Cuentas</span>' +
                     '</button>' +
                 '</div>'
@@ -154,7 +154,7 @@
             if (window.FFPWA && window.FFPWA.theme) {
                 var mode = window.FFPWA.theme.getCurrent();
                 document.querySelectorAll('.theme-toggle .theme-icon').forEach(function(icon) {
-                    icon.textContent = mode === 'dark' ? '☀️' : '🌙';
+                    icon.innerHTML = mode === 'dark' ? Icons.sun : Icons.moon;
                 });
             }
 
@@ -165,12 +165,19 @@
                 var content = tpl.content;
                 var firstEl = content.firstElementChild;
                 if (firstEl && firstEl.id && $('#' + firstEl.id).length) return;
-                $app.append(content.cloneNode(true));
+                var clone = content.cloneNode(true);
+                var root = clone.firstElementChild;
+                $app.append(clone);
+
+                // Inyectar iconos en el template recién montado
+                if (window.injectIcons && root) {
+                    window.injectIcons(root);
+                }
 
                 if (window.FFPWA && window.FFPWA.theme) {
                     var mdl = window.FFPWA.theme.getCurrent();
                     document.querySelectorAll('.theme-toggle .theme-icon').forEach(function(icon) {
-                        icon.textContent = mdl === 'dark' ? '☀️' : '🌙';
+                        icon.innerHTML = mdl === 'dark' ? Icons.sun : Icons.moon;
                     });
                 }
             };
@@ -190,9 +197,9 @@
                 var hasPin = window.FFPWA.auth.hasPin();
 
                 if (method === 'webauthn' && !hasPin) {
-                    $('#lock-btn-text').text('🔒');
+                    $('#lock-btn-text').html(Icons.lockSm);
                 } else if (method === 'webauthn' && hasPin) {
-                    $('#lock-btn-text').text('🔒 ' + (window.__ && window.__('lock.unlock_biometric') || 'Desbloquear con biometría'));
+                    $('#lock-btn-text').html(Icons.lockSm + ' ' + (window.__ && window.__('lock.unlock_biometric') || 'Desbloquear con biometría'));
                     $('#lock-pin-area').removeClass('hidden');
                 } else {
                     $('#lock-btn-text').addClass('hidden');
@@ -260,7 +267,7 @@
                     } else {
                         if (window.FFPWA.auth.hasPin()) {
                             $('#lock-pin-area').removeClass('hidden');
-                            $('#lock-btn-text').text('🔒 ' + 'Usar PIN');
+                            $('#lock-btn-text').html(Icons.lockSm + ' ' + 'Usar PIN');
                         }
                     }
                 });

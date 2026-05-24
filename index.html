@@ -45,12 +45,7 @@
         <div id="setup-container" class="screen screen-stack hidden">
             <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll">
                 <div class="text-center mb-10">
-                    <div class="w-16 h-16 bg-ios-blue-bg rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="3"/>
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                        </svg>
-                    </div>
+                    <span data-icon="cog" class="w-16 h-16 bg-ios-blue-bg rounded-2xl flex items-center justify-center mx-auto mb-4"></span>
                     <h1 class="text-[28px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="setup.title">Configuración</h1>
                     <p class="text-ios-text-secondary text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="setup.subtitle">
                         Conecta tu instancia de Firefly III con tu Token de Acceso Personal para empezar.
@@ -92,12 +87,7 @@
         <div id="default-account-container" class="screen screen-stack hidden">
             <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll">
                 <div class="text-center mb-10">
-                    <div class="w-16 h-16 bg-ios-blue-bg rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#5856D6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="5" width="20" height="14" rx="2"/>
-                            <line x1="2" y1="10" x2="22" y2="10"/>
-                        </svg>
-                    </div>
+                    <span data-icon="creditCard" class="w-16 h-16 bg-ios-blue-bg rounded-2xl flex items-center justify-center mx-auto mb-4"></span>
                     <h1 class="text-[28px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="account.title">Cuenta Default</h1>
                     <p class="text-ios-text-secondary text-[15px] mt-2 max-w-xs mx-auto leading-5" data-i18n="account.subtitle">
                         Selecciona la cuenta que se usará por defecto como origen al registrar tus transacciones.
@@ -170,7 +160,7 @@
             <header class="nav-bar">
                 <h1 class="text-[22px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="app.title">Registro</h1>
                 <div class="flex items-center gap-4">
-                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🌙</span></button>
+                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon" data-icon="moon"></span></button>
                     <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
                     <button id="config-btn" class="text-sm font-semibold text-ios-blue" data-i18n="nav.config">Config</button>
                     <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
@@ -180,9 +170,9 @@
                 <div class="mb-6">
                     <p class="section-label" data-i18n="transaction.type">Tipo de Transacción</p>
                     <div class="segmented-control" role="radiogroup" id="type-selector">
-                        <button type="button" role="radio" aria-checked="true" data-type="withdrawal" class="segmented-btn active">💸 <span data-i18n="transaction.withdrawal">Gasto</span></button>
-                        <button type="button" role="radio" aria-checked="false" data-type="deposit" class="segmented-btn">💰 <span data-i18n="transaction.deposit">Depósito</span></button>
-                        <button type="button" role="radio" aria-checked="false" data-type="transfer" class="segmented-btn">🔄 <span data-i18n="transaction.transfer">Transferencia</span></button>
+                        <button type="button" role="radio" aria-checked="true" data-type="withdrawal" class="segmented-btn active"><span data-icon="banknoteArrowUp"></span> <span data-i18n="transaction.withdrawal">Gasto</span></button>
+                        <button type="button" role="radio" aria-checked="false" data-type="deposit" class="segmented-btn"><span data-icon="banknoteArrowDown"></span> <span data-i18n="transaction.deposit">Depósito</span></button>
+                        <button type="button" role="radio" aria-checked="false" data-type="transfer" class="segmented-btn"><span data-icon="arrowLeftRight"></span> <span data-i18n="transaction.transfer">Transferencia</span></button>
                     </div>
                     <input type="hidden" id="transaction-type" value="withdrawal">
                 </div>
@@ -261,7 +251,7 @@
             <header class="nav-bar">
                 <h1 class="text-[22px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="accounts.title">Cuentas</h1>
                 <div class="flex items-center gap-4">
-                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🌙</span></button>
+                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon" data-icon="moon"></span></button>
                     <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
                     <button id="accounts-config-btn" class="text-sm font-semibold text-ios-blue" data-i18n="nav.config">Config</button>
                     <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
@@ -317,7 +307,7 @@
             <header class="nav-bar">
                 <h1 class="text-[22px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="nav.history">Historial</h1>
                 <div class="flex items-center gap-4">
-                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon">🌙</span></button>
+                    <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon" data-icon="moon"></span></button>
                     <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
                     <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
                 </div>
@@ -333,7 +323,7 @@
         <div id="lock-container" class="fixed inset-0 z-[100] flex flex-col items-center justify-center"
              style="background: var(--ios-bg);">
             <div class="text-center px-8">
-                <div class="text-[48px] mb-6">🔒</div>
+                <div class="text-center text-[48px] mb-6"><span data-icon="lock"></span></div>
                 <h2 class="text-[22px] font-bold text-ios-text mb-2" data-i18n="lock.title">Cuentas Bloqueadas</h2>
                 <p class="text-[15px] text-ios-text-secondary mb-8" data-i18n="lock.subtitle">Verifica tu identidad para acceder</p>
 
@@ -361,6 +351,7 @@
 
     <!-- Scripts -->
     <script src="js/i18n.js"></script>
+    <script src="js/icons.js"></script>
     <script src="js/darkmode.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/config.js"></script>

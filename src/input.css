@@ -169,6 +169,10 @@
         background: transparent;
         cursor: pointer;
         white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
     }
     .segmented-btn.active {
         background: var(--ios-segmented-active);
@@ -434,12 +438,16 @@
     .tab-icon {
         font-size: 22px;
         line-height: 1.2;
+        color: var(--ios-text-secondary);
     }
     .tab-label {
         font-size: 10px;
         color: var(--ios-text-secondary);
         margin-top: 1px;
         font-weight: 500;
+    }
+    .tab-btn.active .tab-icon {
+        color: var(--ios-blue);
     }
     .tab-btn.active .tab-label {
         color: var(--ios-blue);

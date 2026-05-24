@@ -34,7 +34,7 @@
         btns.forEach(function(btn) {
             var icon = btn.querySelector('.theme-icon');
             if (!icon) return;
-            icon.textContent = mode === 'dark' ? '☀️' : '🌙';
+            icon.innerHTML = mode === 'dark' ? Icons.sun : Icons.moon;
         });
     }
 
