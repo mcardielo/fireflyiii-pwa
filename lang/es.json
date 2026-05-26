@@ -83,6 +83,7 @@
   "transaction.error.dest_asset_transfer": "La cuenta destino (Asset) debe existir. Selecciona una cuenta existente.",
   "transaction.error.rate_unavailable": "Tipo de cambio {from} → {to} no disponible. Intenta de nuevo en unos segundos.",
   "transaction.error.rate_missing": "Tipo de cambio {from} → {to} no disponible. Espera a que se cargue o usa la moneda predeterminada.",
+  "transaction.error.both_liabilities": "Las cuentas de préstamo no pueden ser origen y destino a la vez. Selecciona una cuenta normal (Asset/Revenue) para uno de los lados.",
   "transaction.no_description": "Transacción sin descripción",
 
   "sync.queued": "Transacción guardada localmente. Se sincronizará cuando haya conexión.",
@@ -149,6 +150,13 @@
   "accounts.role_cc": "Tarjeta de Crédito",
   "accounts.role_cash": "Efectivo",
   "accounts.role_asset": "Asset",
+
+  "accounts.liability_title": "Créditos y Préstamos",
+  "accounts.liability_type_loan": "Préstamo",
+  "accounts.liability_type_debt": "Deuda",
+  "accounts.liability_type_credit": "Crédito",
+  "accounts.liability_direction_debit": "Debes esta deuda",
+  "accounts.liability_direction_credit": "Te deben esta deuda",
 
   "detail.back": "← Cuentas",
   "detail.loading": "Cargando transacciones...",

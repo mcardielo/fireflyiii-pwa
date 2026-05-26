@@ -138,6 +138,30 @@
             }
         }
 
+        // withdrawal/deposit no pueden tener liabilities en ambos lados
+        if (transactionType === 'withdrawal' || transactionType === 'deposit') {
+            var sourceIsLiability = false;
+            var destIsLiability = false;
+
+            if (source.id) {
+                var srcAccount = window.FFPWA.accountsCache && window.FFPWA.accountsCache.find(function(a) {
+                    return String(a.id) === String(source.id);
+                });
+                sourceIsLiability = srcAccount && srcAccount.type === 'liabilities';
+            }
+
+            if (dest.id) {
+                var dstAccount = window.FFPWA.accountsCache && window.FFPWA.accountsCache.find(function(a) {
+                    return String(a.id) === String(dest.id);
+                });
+                destIsLiability = dstAccount && dstAccount.type === 'liabilities';
+            }
+
+            if (sourceIsLiability && destIsLiability) {
+                throw new Error(__('transaction.error.both_liabilities'));
+            }
+        }
+
         const amount = validateAndFormatAmount();
         const selectedCurrency = $('#currency-select').val();
         const primaryCurrency = window.FFPWA.currencies && window.FFPWA.currencies.primary;

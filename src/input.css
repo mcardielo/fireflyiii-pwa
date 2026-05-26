@@ -535,6 +535,7 @@
         line-height: 1;
         transition: opacity 0.2s;
         padding: 0;
+        color: var(--ios-text);
     }
     .theme-toggle:active {
         opacity: 0.5;

@@ -83,6 +83,7 @@
   "transaction.error.dest_asset_transfer": "The destination account (Asset) must exist. Select an existing account.",
   "transaction.error.rate_unavailable": "Exchange rate {from} → {to} not available. Try again in a few seconds.",
   "transaction.error.rate_missing": "Exchange rate {from} → {to} not available. Wait for it to load or use the default currency.",
+  "transaction.error.both_liabilities": "Liability accounts cannot be both source and destination. Select a regular account (Asset/Revenue) for one side.",
   "transaction.no_description": "Transaction without description",
 
   "sync.queued": "Transaction saved locally. It will sync when connection is restored.",
@@ -149,6 +150,13 @@
   "accounts.role_cc": "Credit Card",
   "accounts.role_cash": "Cash",
   "accounts.role_asset": "Asset",
+
+  "accounts.liability_title": "Credit & Loans",
+  "accounts.liability_type_loan": "Loan",
+  "accounts.liability_type_debt": "Debt",
+  "accounts.liability_type_credit": "Credit",
+  "accounts.liability_direction_debit": "I owe this debt",
+  "accounts.liability_direction_credit": "I am owed this debt",
 
   "detail.back": "← Accounts",
   "detail.loading": "Loading transactions...",

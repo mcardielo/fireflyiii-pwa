@@ -37,6 +37,28 @@
         };
     }
 
+    /* ─── Liability labels ─── */
+
+    var LIABILITY_TYPE_LABELS = {};
+    var LIABILITY_DIRECTION_LABELS = {};
+
+    var LIABILITY_DIRECTION_ICONS = {
+        'debit':  '🔴',
+        'credit': '🟢'
+    };
+
+    function buildLiabilityLabels() {
+        LIABILITY_TYPE_LABELS = {
+            'loan':   __('accounts.liability_type_loan'),
+            'debt':   __('accounts.liability_type_debt'),
+            'credit': __('accounts.liability_type_credit')
+        };
+        LIABILITY_DIRECTION_LABELS = {
+            'debit':  __('accounts.liability_direction_debit'),
+            'credit': __('accounts.liability_direction_credit')
+        };
+    }
+
     /* ─── Account state for detail view ─── */
 
     var accountsMap = {};
@@ -57,6 +79,42 @@
         return new Promise(function(resolve, reject) {
             $.ajax({
                 url: url + '/api/v1/accounts?type=asset&limit=10000',
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                dataType: 'json',
+                timeout: 15000,
+                success: function(response) {
+                    var accounts = response.data || [];
+                    accounts = accounts.filter(function(acc) {
+                        return acc.attributes && acc.attributes.active !== false;
+                    });
+                    resolve(accounts);
+                },
+                error: function(xhr) {
+                    var msg = __('accounts.error_fetch');
+                    if (xhr.status === 401) msg += ' ' + __('setup.token_401');
+                    else if (xhr.status === 0) msg += ' ' + __('setup.no_connection');
+                    else msg += ' (HTTP ' + xhr.status + ')';
+                    reject(new Error(msg));
+                }
+            });
+        });
+    }
+
+    function fetchLiabilityAccounts() {
+        var url = window.FFPWA.config.url;
+        var token = window.FFPWA.config.token;
+
+        if (!url || !token) {
+            return Promise.reject(new Error(__('accounts.error_not_configured')));
+        }
+
+        return new Promise(function(resolve, reject) {
+            $.ajax({
+                url: url + '/api/v1/accounts?type=liabilities&limit=10000',
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + token,
@@ -164,6 +222,54 @@
         });
 
         $('#accounts-list').html(html);
+    }
+
+    function renderLiabilities(liabilities) {
+        if (!liabilities || liabilities.length === 0) return;
+
+        var html = '';
+
+        // Section header
+        html += '<div class="mb-2 mt-6 px-1">' +
+            '<h3 class="text-[13px] font-semibold uppercase tracking-wide text-ios-text-secondary">' +
+            __('accounts.liability_title') +
+            '</h3>' +
+        '</div>';
+
+        liabilities.forEach(function(acc) {
+            var attrs = acc.attributes || {};
+            var id = acc.id;
+            accountsMap[id] = acc;
+            var name = attrs.name || __('accounts.unnamed');
+            var balance = parseFloat(attrs.current_balance) || 0;
+            var code = attrs.currency_code || '';
+            var symbol = attrs.currency_symbol || '$';
+            var decimals = attrs.currency_decimal_places || 2;
+            var liabilityType = attrs.liability_type || '';
+            var typeLabel = LIABILITY_TYPE_LABELS[liabilityType] || __('accounts.role_asset');
+
+            html += '<div class="field-card mb-3 account-card" data-account-id="' + id + '">' +
+                '<div class="field-row" style="justify-content:space-between;padding:14px 16px;cursor:pointer;">' +
+                    '<div>' +
+                        '<p class="text-[15px] font-medium text-ios-text">' + escapeHtml(name) + '</p>' +
+                        '<p class="mt-1">' +
+                            '<span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full" ' +
+                                  'style="color:var(--ios-text-secondary);background:var(--ios-segmented-bg);">' +
+                                escapeHtml(typeLabel) +
+                            '</span>' +
+                        '</p>' +
+                    '</div>' +
+                    '<div class="text-right ml-4 flex-shrink-0">' +
+                        '<p class="text-[17px] font-semibold ' + (balance < 0 ? 'text-ios-red' : 'text-ios-text') + '">' +
+                            formatMoney(balance, symbol, decimals) +
+                        '</p>' +
+                        '<p class="text-[11px] text-ios-text-secondary mt-0.5">' + escapeHtml(code) + '</p>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        });
+
+        $('#accounts-list').append(html);
     }
 
     /* ─── Transaction detail ─── */
@@ -315,6 +421,7 @@
 
     window.FFPWA.showAccountsScreen = function() {
         buildRoleLabels();
+        buildLiabilityLabels();
 
         $('#accounts-list').removeClass('hidden');
         $('#account-detail').addClass('hidden');
@@ -324,7 +431,13 @@
 
         if (window.i18nTranslateDOM) window.i18nTranslateDOM();
 
-        fetchAssetAccounts().then(renderAccounts).catch(function(err) {
+        fetchAssetAccounts().then(function(assets) {
+            renderAccounts(assets);
+            return fetchLiabilityAccounts();
+        }).then(function(liabilities) {
+            renderLiabilities(liabilities);
+            $('#accounts-loading').addClass('hidden');
+        }).catch(function(err) {
             $('#accounts-loading').addClass('hidden');
             $('#accounts-error').removeClass('hidden').text('❌ ' + err.message);
         });
@@ -406,7 +519,13 @@
                 $('#account-detail').addClass('hidden');
             }
             buildRoleLabels();
-            fetchAssetAccounts().then(renderAccounts).catch(function(err) {
+            buildLiabilityLabels();
+            fetchAssetAccounts().then(function(assets) {
+                renderAccounts(assets);
+                return fetchLiabilityAccounts();
+            }).then(function(liabilities) {
+                renderLiabilities(liabilities);
+            }).catch(function(err) {
                 $('#accounts-loading').addClass('hidden');
             });
             if (window.i18nTranslateDOM) window.i18nTranslateDOM();

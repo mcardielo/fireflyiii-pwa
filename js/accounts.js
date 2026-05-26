@@ -31,14 +31,14 @@
      */
     function getAccountTypesForField(transactionType, fieldContext) {
         if (transactionType === 'deposit') {
-            return fieldContext === 'source' ? ['revenue'] : ['asset', 'liabilities'];
+            return fieldContext === 'source' ? ['revenue', 'liabilities'] : ['asset', 'liabilities'];
         }
         if (transactionType === 'transfer') {
-            return ['asset', 'liabilities'];
+            return ['asset'];
         }
         // withdrawal (default)
-        return fieldContext === 'source' ? ['asset', 'liabilities'] : ['expense'];
-    }
+        return fieldContext === 'source' ? ['asset', 'liabilities'] : ['expense', 'liabilities'];
+    }   
     window.FFPWA.getAccountTypesForField = getAccountTypesForField;
 
 
@@ -65,7 +65,9 @@
                         type: account.attributes.type,
                         active: account.attributes.active !== undefined ? account.attributes.active : true,
                         currency_code: account.attributes.currency_code || null,
-                        currency_decimal_places: account.attributes.currency_decimal_places || 2
+                        currency_decimal_places: account.attributes.currency_decimal_places || 2,
+                        liability_type: account.attributes.liability_type || null,
+                        liability_direction: account.attributes.liability_direction || null
                     }));
 
                     console.log('✅ [API]: ' + __('resource.accounts_loaded', { count: cleanAccounts.length }));
