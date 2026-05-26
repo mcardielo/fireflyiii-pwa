@@ -147,6 +147,10 @@
                                                 '<span class="tab-icon">' + Icons.wallet + '</span>' +
                         '<span class="tab-label" data-i18n="nav.accounts">Cuentas</span>' +
                     '</button>' +
+                    '<button class="tab-btn" data-screen="history">' +
+                                                '<span class="tab-icon">' + Icons.clock + '</span>' +
+                        '<span class="tab-label" data-i18n="nav.history">Historial</span>' +
+                    '</button>' +
                 '</div>'
             );
 
@@ -183,7 +187,10 @@
             };
 
             /* ─── Lock Screen ─── */
-            function showLockScreen() {
+            var pendingScreen = null;
+
+            function showLockScreen(screen) {
+                pendingScreen = screen || 'accounts';
                 window.mountScreen('screen-lock');
                 $('#lock-container').removeClass('hidden');
                 $('#accounts-container').addClass('hidden');
@@ -211,19 +218,29 @@
 
             function hideLockScreen() {
                 $('#lock-container').addClass('hidden');
+                pendingScreen = null;
             }
 
             function handleUnlockSuccess() {
+                var target = pendingScreen || 'accounts';
                 hideLockScreen();
                 window.FFPWA.auth.unlocked = true;
-                $('#accounts-container').removeClass('hidden');
+                pendingScreen = null;
+
+                if (target === 'accounts') {
+                    $('#accounts-container').removeClass('hidden');
+                    if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
+                } else if (target === 'history') {
+                    $('#history-container').removeClass('hidden');
+                    if (window.FFPWA.showHistoryScreen) window.FFPWA.showHistoryScreen();
+                }
+
                 $('#tab-bar').removeClass('hidden');
-                if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
             }
 
             /* ─── Tab switching ─── */
             function switchTab(screen) {
-                var hidden = '#setup-container, #default-account-container, #dashboard-container, #accounts-container, #lock-container';
+                var hidden = '#setup-container, #default-account-container, #dashboard-container, #accounts-container, #history-container, #lock-container';
                 $(hidden).addClass('hidden');
 
                 if (screen === 'record') {
@@ -231,10 +248,18 @@
                 } else if (screen === 'accounts') {
                     window.mountScreen('screen-accounts');
                     if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {
-                        showLockScreen();
+                        showLockScreen('accounts');
                     } else {
                         $('#accounts-container').removeClass('hidden');
                         if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
+                    }
+                } else if (screen === 'history') {
+                    window.mountScreen('screen-history');
+                    if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {
+                        showLockScreen('history');
+                    } else {
+                        $('#history-container').removeClass('hidden');
+                        if (window.FFPWA.showHistoryScreen) window.FFPWA.showHistoryScreen();
                     }
                 }
 

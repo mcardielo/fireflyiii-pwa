@@ -340,7 +340,7 @@
     window.initConfig = checkConfiguration;
 
     // Config button: re-open default account picker
-    $(document).on('click', '#config-btn, #accounts-config-btn', function() {
+    $(document).on('click', '#config-btn, #accounts-config-btn, #history-config-btn', function() {
         showDefaultAccountPicker();
     });
 

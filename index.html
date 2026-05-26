@@ -301,7 +301,7 @@
         </div>
     </template>
 
-    <!-- ── (Próximamente) Historial de Transacciones ── -->
+    <!-- ── Historial de Transacciones ── -->
     <template id="screen-history">
         <div id="history-container" class="screen screen-stack hidden">
             <header class="nav-bar">
@@ -309,11 +309,135 @@
                 <div class="flex items-center gap-4">
                     <button class="theme-toggle" onclick="FFPWA.theme.cycle()" title="Cambiar tema"><span class="theme-icon" data-icon="moon"></span></button>
                     <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
+                    <button id="history-config-btn" class="text-sm font-semibold text-ios-blue" data-i18n="nav.config">Config</button>
                     <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
                 </div>
             </header>
-            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4">
-                <p class="text-ios-text-secondary text-center mt-10" data-i18n="history.placeholder">Próximamente: historial de transacciones</p>
+            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4 ios-scroll">
+                <!-- List view -->
+                <div id="history-list-view">
+                    <div id="history-loading" class="text-center py-8">
+                        <div class="spinner mx-auto mb-2"></div>
+                        <p class="text-sm text-ios-text-secondary" data-i18n="history.loading">Cargando historial...</p>
+                    </div>
+                    <div id="history-error" class="ios-status error hidden"></div>
+                    <div id="history-list"></div>
+                    <div id="history-load-more-wrap" class="text-center mt-4">
+                        <button id="history-load-more" class="ios-btn-primary hidden">
+                            <span data-i18n="detail.load_more">Cargar 50 más</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Detail / Edit view -->
+                <div id="history-detail" class="hidden">
+                    <button id="history-detail-back" class="text-sm font-semibold text-ios-blue mb-4">
+                        <span data-i18n="history.back">← Historial</span>
+                    </button>
+
+                    <!-- Transaction summary -->
+                    <div id="history-detail-summary" class="field-card mb-4 p-4"></div>
+
+                    <!-- Edit form -->
+                    <form id="history-edit-form">
+                        <p class="section-label mb-2" data-i18n="history.edit_title">Editar Transacción</p>
+                        <div class="field-card mb-4">
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="transaction.description_label">Concepto</span>
+                                <div class="field-value">
+                                    <input type="text" id="edit-description" required class="ios-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="section-label mb-2" data-i18n="transaction.source_section">Cuenta Origen</p>
+                        <div class="field-card mb-4">
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="transaction.source_label">Origen</span>
+                                <div class="field-value">
+                                    <div class="relative flex-1">
+                                        <input type="text" id="edit-source-account" required autocomplete="off" class="ios-input">
+                                        <div id="edit-source-autocomplete" class="autocomplete-dropdown hidden"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="edit-source-account-id">
+                            <input type="hidden" id="edit-source-account-name">
+                        </div>
+
+                        <p class="section-label mb-2" data-i18n="transaction.dest_section">Cuenta Destino</p>
+                        <div class="field-card mb-4">
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="transaction.dest_label">Destino</span>
+                                <div class="field-value">
+                                    <div class="relative flex-1">
+                                        <input type="text" id="edit-dest-account" required autocomplete="off" class="ios-input">
+                                        <div id="edit-dest-autocomplete" class="autocomplete-dropdown hidden"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="edit-dest-account-id">
+                            <input type="hidden" id="edit-dest-account-name">
+                        </div>
+
+                        <p class="section-label mb-2" data-i18n="transaction.details_section">Detalles</p>
+                        <div class="field-card mb-4">
+                            <div class="field-row">
+                                <span class="field-label"><span data-i18n="history.date">Fecha</span></span>
+                                <div class="field-value">
+                                    <input type="date" id="edit-date" class="ios-input" style="text-align:right;width:auto;">
+                                </div>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label"><span data-i18n="history.time">Hora</span></span>
+                                <div class="field-value">
+                                    <input type="time" id="edit-time" class="ios-input" style="text-align:right;width:auto;">
+                                </div>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="transaction.amount_label">Importe</span>
+                                <div class="field-value" style="gap:8px;">
+                                    <input type="number" step="0.01" min="0" id="edit-amount" required class="ios-input" style="text-align:right;">
+                                    <span id="edit-currency-code" class="text-[13px] font-medium text-ios-text-secondary flex-shrink-0"></span>
+                                </div>
+                            </div>
+                            <div class="field-row" id="edit-foreign-row">
+                                <span class="field-label" data-i18n="history.foreign_amount">Importe Extranjero</span>
+                                <div class="field-value" style="gap:4px;">
+                                    <input type="number" step="0.01" min="0" id="edit-foreign-amount" class="ios-input" style="text-align:right;">
+                                    <input type="text" id="edit-foreign-currency" placeholder="USD" class="ios-input" style="text-align:right;width:60px;" maxlength="3">
+                                </div>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="history.budget">Presupuesto</span>
+                                <div class="field-value">
+                                    <div class="ios-input">
+                                        <select id="edit-budget" class="ios-select" style="direction:rtl;">
+                                            <option value="">—</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="history.category">Categoría</span>
+                                <div class="field-value">
+                                    <div class="ios-input">
+                                        <input type="text" id="edit-category" class="ios-input" placeholder="—" autocomplete="off">
+                                        <div id="edit-category-autocomplete" class="autocomplete-dropdown hidden"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="edit-status-message" class="ios-status hidden"></div>
+
+                        <div class="sticky-footer" style="padding-left:0;padding-right:0;">
+                            <button type="submit" id="history-save-btn" class="ios-btn-primary">
+                                <span data-i18n="history.save">Guardar Cambios</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </main>
         </div>
     </template>
@@ -357,6 +481,8 @@
     <script src="js/config.js"></script>
     <script src="js/accounts.js"></script>
     <script src="js/currencies.js"></script>
+    <script src="js/transactions-history.js"></script>
+    <script src="js/transaction-edit.js"></script>
     <script src="js/transactions.js"></script>
     <script src="js/accounts-screen.js"></script>
     <script src="js/app.js"></script>
