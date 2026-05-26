@@ -26,9 +26,19 @@ Firefly Ledger is a **PWA (Progressive Web App)** that runs entirely in your bro
 
 ### Accounts & Balances
 - Browse all your **Asset accounts** with current balances, currency codes, and colored role badges (Checking, Savings, Credit Card, Cash, Shared).
-- **Transaction history** per account — tap any account to see its last 50 transactions.
-- Pagination: "Load 50 more" to scroll through older entries.
-- Filters out future-dated transactions automatically.
+- **Liability accounts** shown in a separate "Credit & Loans" section with type badges (Loan/Debt). Section auto-hides when no liabilities exist.
+- **Transaction history** per account — tap any account to see its transactions.
+- **Click any transaction** to open the detail/edit view directly.
+- Filters out future-dated transactions.
+
+### Transactions History
+- Dedicated **History** tab showing the transactions across all accounts.
+- **Edit** unreconciled single transactions (not part of split groups) directly from the history list.
+- **Read-only detail** view for reconciled transactions.
+
+### Security & Privacy
+- Optional **biometric authentication** (Face ID / fingerprint via WebAuthn) and **PIN code** to protect the Accounts and History tabs.
+- Lock screen with biometric + PIN fallback.
 
 ### Offline-First
 - Service Worker caches all static assets on first visit — the app loads instantly even without internet.
@@ -38,10 +48,6 @@ Firefly Ledger is a **PWA (Progressive Web App)** that runs entirely in your bro
 ### Multi-Language
 - English and Spanish built-in.
 - Switch languages on the fly with the EN/ES button in the nav bar — no reload needed.
-
-### iOS-Style Design
-- Native-feeling iOS interface with blurred nav bars, segmented controls, sticky footers, and a bottom tab bar.
-- Installable on your home screen (iOS / Android / Desktop) like a native app.
 
 ## Requirements
 
@@ -55,6 +61,7 @@ Firefly Ledger is a **PWA (Progressive Web App)** that runs entirely in your bro
 2. **Configure** — enter your Firefly III URL and Personal Access Token.
 3. **Select a default account** — pick an Asset account to pre-fill when recording transactions.
 4. **Start transacting** — record withdrawals, deposits, and transfers. Everything works offline.
+5. **Browse your history** — tap the History tab to see all transactions, or tap Accounts to explore per-account.
 
 ### Run Locally
 
