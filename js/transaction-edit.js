@@ -1,7 +1,5 @@
 /**
  * transaction-edit.js — Detail / edit view for a single transaction
- * Read-only for reconciled, editable for unreconciled single transactions
- * Uses Firefly III PUT /api/v1/transactions/{id}
  */
 (function() {
     'use strict';
@@ -426,11 +424,26 @@
     /* ─── Go back to list ─── */
 
     function goBackToList(refresh) {
-        $('#history-detail').addClass('hidden');
-        $('#history-list-view').removeClass('hidden');
+        var origin = window.FFPWA._editOrigin || 'history';
+        window.FFPWA._editOrigin = null;
 
-        if (refresh && window.FFPWA.showHistoryScreen) {
-            window.FFPWA.showHistoryScreen();
+        if (origin === 'accounts') {
+            // Volver al detalle de cuenta específico
+            $('#history-detail').addClass('hidden');
+            $('#history-list-view').removeClass('hidden');
+            $('#history-container').addClass('hidden');
+            $('#accounts-container').removeClass('hidden');
+            $('#accounts-list').addClass('hidden');
+            $('#account-detail').removeClass('hidden');
+            $('#tab-bar .tab-btn').removeClass('active');
+            $('#tab-bar .tab-btn[data-screen="accounts"]').addClass('active');
+        } else {
+            // Volver al listado del historial
+            $('#history-detail').addClass('hidden');
+            $('#history-list-view').removeClass('hidden');
+            if (refresh && window.FFPWA.showHistoryScreen) {
+                window.FFPWA.showHistoryScreen();
+            }
         }
     }
 

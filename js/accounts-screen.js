@@ -382,7 +382,11 @@
             var sign = isNegative ? '-' : '+';
             var colorClass = isNegative ? 'text-ios-red' : 'text-ios-green';
 
-            html += '<div class="field-card mb-2">' +
+            html += '<div class="field-card mb-2 tx-card" ' +
+                'data-group-id="' + tx.id + '" ' +
+                'data-group-title="' + escapeHtml(attrs.group_title || '') + '" ' +
+                'data-reconciled="' + (subTx.reconciled ? 'true' : 'false') + '" ' +
+                'style="cursor:pointer;">' +
                 '<div class="field-row" style="justify-content:space-between;padding:10px 14px;">' +
                     '<div style="flex:1;min-width:0;">' +
                         '<p class="text-[13px] text-ios-text-secondary">' + escapeHtml(displayDate) + '</p>' +
@@ -486,6 +490,28 @@
             if (accountData) {
                 showAccountDetail(id, accountData);
             }
+        });
+
+        // Click on transaction card → open edit/detail
+        $(document).on('click', '.tx-card', function() {
+            var groupId = $(this).data('group-id');
+            var groupTitle = $(this).data('group-title') || '';
+            var reconciled = $(this).data('reconciled') === true || $(this).data('reconciled') === 'true';
+
+            // Back to accounts list
+            $('#account-detail').addClass('hidden');
+            $('#accounts-list').removeClass('hidden');
+
+            // Switch to history tab
+            window.FFPWA._editOrigin = 'accounts';
+            window.switchTab('history');
+
+            // Open transaction edit after DOM settles
+            setTimeout(function() {
+                if (window.FFPWA.showTransactionEdit) {
+                    window.FFPWA.showTransactionEdit(groupId, 0, groupTitle, reconciled);
+                }
+            }, 100);
         });
 
         // Back button from detail → show accounts list
