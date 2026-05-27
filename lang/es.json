@@ -34,9 +34,7 @@
   "account.found": "{count} cuenta(s) Asset encontrada(s). Selecciona la default.",
   "account.error": "Error al cargar cuentas.",
   "account.not_selected": "Por favor, selecciona una cuenta.",
-  "account.auto_fill_asset": "Se requiere al menos una cuenta Asset. Configúrala en Firefly III primero.",
 
-  "nav.dashboard": "Registro",
   "nav.config": "Config",
   "nav.online": "● Online",
   "nav.offline": "● Offline",
@@ -47,20 +45,15 @@
   "transaction.withdrawal": "Gasto",
   "transaction.deposit": "Depósito",
   "transaction.transfer": "Transferencia",
-  "transaction.type_withdrawal_icon": "💸",
-  "transaction.type_deposit_icon": "💰",
-  "transaction.type_transfer_icon": "🔄",
 
   "transaction.source_section": "Cuenta Origen",
   "transaction.source_label": "Origen",
   "transaction.source_placeholder": "Selecciona...",
   "transaction.source_hint_asset": "(Asset)",
-  "transaction.source_hint_revenue": "(Revenue)",
 
   "transaction.dest_section": "Cuenta Destino",
   "transaction.dest_label": "Destino",
   "transaction.dest_placeholder": "Buscar cuenta...",
-  "transaction.dest_hint_asset": "(Asset)",
   "transaction.dest_hint_expense": "(Expense)",
 
   "transaction.details_section": "Detalles",
@@ -106,7 +99,6 @@
   "currency.error_fetch": "Error al cargar monedas",
   "currency.error_no_connection": " (sin conexión)",
   "currency.default_name_mxn": "Peso Mexicano",
-  "currency.default_name_usd": "Dólar Estadounidense",
 
   "resource.accounts_loaded": "Cuentas cargadas exitosamente: {count}",
   "resource.accounts_cached": "Cuentas cacheadas exitosamente en localStorage.",
@@ -134,11 +126,9 @@
 
   "nav.accounts": "Cuentas",
   "nav.record": "Registro",
-  "nav.back_record": "Volver a Registro",
   "nav.history": "Historial",
 
   "accounts.title": "Cuentas",
-  "accounts.total_balance": "Balance Total",
   "accounts.loading": "Cargando cuentas...",
   "accounts.no_accounts": "No se encontraron cuentas Asset.",
   "accounts.unnamed": "Cuenta sin nombre",
@@ -155,8 +145,6 @@
   "accounts.liability_type_loan": "Préstamo",
   "accounts.liability_type_debt": "Deuda",
   "accounts.liability_type_credit": "Crédito",
-  "accounts.liability_direction_debit": "Debes esta deuda",
-  "accounts.liability_direction_credit": "Te deben esta deuda",
 
   "detail.back": "← Cuentas",
   "detail.loading": "Cargando transacciones...",
@@ -167,8 +155,6 @@
 
   "loading.message": "Cargando...",
 
-  "config.title": "Configuración",
-  "history.placeholder": "Próximamente: historial de transacciones",
   "history.loading": "Cargando historial...",
   "history.error_fetch": "Error al cargar historial.",
   "history.back": "← Historial",
@@ -184,18 +170,13 @@
   "history.edit_saved": "Transacción actualizada correctamente.",
   "history.edit_error": "Error al actualizar transacción.",
   "history.edit_no_group": "No se puede editar una transacción que pertenece a un grupo (split).",
-  "history.edit_reconciled": "No se puede editar una transacción reconciliada.",
   "history.edit_no_data": "No se encontraron datos de la transacción.",
   "history.reconciled": "Conciliada",
   "history.readonly": "Conciliado",
 
-  "config.save": "Guardar",
-  "config.cancel": "Cancelar",
-  "config.reset": "Reiniciar",
 
   "security.section": "Seguridad",
   "security.auth_label": "Autenticación para cuentas",
-  "security.method_label": "Método",
   "security.method": "Usar biometría",
   "security.pin_label": "PIN",
   "security.hint": "La biometría usa Face ID / huella del dispositivo. Si no está disponible, puedes configurar un PIN.",

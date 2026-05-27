@@ -34,9 +34,7 @@
   "account.found": "{count} Asset account(s) found. Select the default.",
   "account.error": "Error loading accounts.",
   "account.not_selected": "Please select an account.",
-  "account.auto_fill_asset": "At least one Asset account is required. Please configure it in Firefly III first.",
 
-  "nav.dashboard": "Transactions",
   "nav.config": "Config",
   "nav.online": "● Online",
   "nav.offline": "● Offline",
@@ -47,20 +45,15 @@
   "transaction.withdrawal": "Withdrawal",
   "transaction.deposit": "Deposit",
   "transaction.transfer": "Transfer",
-  "transaction.type_withdrawal_icon": "💸",
-  "transaction.type_deposit_icon": "💰",
-  "transaction.type_transfer_icon": "🔄",
 
   "transaction.source_section": "Source Account",
   "transaction.source_label": "Source",
   "transaction.source_placeholder": "Search account...",
   "transaction.source_hint_asset": "(Asset)",
-  "transaction.source_hint_revenue": "(Revenue)",
 
   "transaction.dest_section": "Destination Account",
   "transaction.dest_label": "Destination",
   "transaction.dest_placeholder": "Search account...",
-  "transaction.dest_hint_asset": "(Asset)",
   "transaction.dest_hint_expense": "(Expense)",
 
   "transaction.details_section": "Details",
@@ -106,7 +99,6 @@
   "currency.error_fetch": "Error loading currencies",
   "currency.error_no_connection": " (no connection)",
   "currency.default_name_mxn": "Mexican Peso",
-  "currency.default_name_usd": "US Dollar",
 
   "resource.accounts_loaded": "Accounts loaded successfully: {count}",
   "resource.accounts_cached": "Accounts cached successfully in localStorage.",
@@ -134,11 +126,9 @@
 
   "nav.accounts": "Accounts",
   "nav.record": "Record",
-  "nav.back_record": "Back to Record",
   "nav.history": "History",
 
   "accounts.title": "Accounts",
-  "accounts.total_balance": "Total Balance",
   "accounts.loading": "Loading accounts...",
   "accounts.no_accounts": "No asset accounts found.",
   "accounts.unnamed": "Unnamed account",
@@ -155,8 +145,6 @@
   "accounts.liability_type_loan": "Loan",
   "accounts.liability_type_debt": "Debt",
   "accounts.liability_type_credit": "Credit",
-  "accounts.liability_direction_debit": "I owe this debt",
-  "accounts.liability_direction_credit": "I am owed this debt",
 
   "detail.back": "← Accounts",
   "detail.loading": "Loading transactions...",
@@ -167,8 +155,6 @@
 
   "loading.message": "Loading...",
 
-  "config.title": "Configuration",
-  "history.placeholder": "Coming soon: transaction history",
   "history.loading": "Loading history...",
   "history.error_fetch": "Error loading history.",
   "history.back": "← History",
@@ -184,18 +170,13 @@
   "history.edit_saved": "Transaction updated successfully.",
   "history.edit_error": "Error updating transaction.",
   "history.edit_no_group": "Cannot edit a transaction that belongs to a group (split).",
-  "history.edit_reconciled": "Cannot edit a reconciled transaction.",
   "history.edit_no_data": "No transaction data found.",
   "history.reconciled": "Reconciled",
   "history.readonly": "Reconciled",
 
-  "config.save": "Save",
-  "config.cancel": "Cancel",
-  "config.reset": "Reset",
 
   "security.section": "Security",
   "security.auth_label": "Account authentication",
-  "security.method_label": "Method",
   "security.method": "Use biometrics",
   "security.pin_label": "PIN",
   "security.hint": "Biometrics uses Face ID / fingerprint. If unavailable, you can set a PIN.",

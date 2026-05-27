@@ -68,12 +68,22 @@
         var $badges = $('.online-status');
         if (state === 'offline') {
             $badges
-                .removeClass('text-ios-green bg-ios-green-bg')
+                .removeClass('text-ios-green bg-ios-green-bg text-ios-red')
                 .addClass('text-ios-orange bg-ios-orange-bg')
                 .text(t('nav.offline', '● Offline'));
+        } else if (state === 'server_down') {
+            $badges
+                .removeClass('text-ios-green bg-ios-green-bg text-ios-orange bg-ios-orange-bg')
+                .addClass('text-ios-red bg-ios-orange-bg')
+                .text(t('nav.server_down', '🔶 Servidor no disponible'));
+        } else if (state === 'checking') {
+            $badges
+                .removeClass('text-ios-green bg-ios-green-bg text-ios-red')
+                .addClass('text-ios-orange bg-ios-orange-bg')
+                .text(t('nav.server_checking', '🔶 Verificando...'));
         } else {
             $badges
-                .removeClass('text-ios-orange bg-ios-orange-bg')
+                .removeClass('text-ios-orange bg-ios-orange-bg text-ios-red')
                 .addClass('text-ios-green bg-ios-green-bg')
                 .text(t('nav.online', '● Online'));
         }
@@ -82,20 +92,6 @@
     // Registrar SW inmediatamente (no esperar DOMReady)
     registerServiceWorker();
     setupConnectivityListeners();
-
-    /* 
-     *  Montar templates que no estén ya montados (en caso de que scripts se carguen en <head> y #app no exista aún).
-     */
-    (function mountTemplatesSync() {
-        if (typeof $ === 'undefined') return;
-        var $app = $('#app');
-        if (!$app.length) return; // #app no existe (scripts en <head>)
-
-        ['screen-setup', 'screen-account-picker', 'screen-record'].forEach(function(id) {
-            var tpl = document.getElementById(id);
-            if (tpl) $app.append(tpl.content.cloneNode(true));
-        });
-    })();
 
     /*
      *  Boot de la app: montar UI restante, configurar pantallas, handlers.

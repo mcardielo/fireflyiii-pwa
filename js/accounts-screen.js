@@ -40,22 +40,12 @@
     /* ─── Liability labels ─── */
 
     var LIABILITY_TYPE_LABELS = {};
-    var LIABILITY_DIRECTION_LABELS = {};
-
-    var LIABILITY_DIRECTION_ICONS = {
-        'debit':  '🔴',
-        'credit': '🟢'
-    };
 
     function buildLiabilityLabels() {
         LIABILITY_TYPE_LABELS = {
             'loan':   __('accounts.liability_type_loan'),
             'debt':   __('accounts.liability_type_debt'),
             'credit': __('accounts.liability_type_credit')
-        };
-        LIABILITY_DIRECTION_LABELS = {
-            'debit':  __('accounts.liability_direction_debit'),
-            'credit': __('accounts.liability_direction_credit')
         };
     }
 
