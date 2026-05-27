@@ -24,18 +24,6 @@
         });
 
         $dropdown.removeClass('hidden').addClass('visible');
-
-        // Re-posicionar después de que el teclado termine de abrirse (móvil)
-        setTimeout(function() {
-            if ($dropdown.hasClass('visible') && $input.is(':focus')) {
-                var r2 = $input[0].getBoundingClientRect();
-                $dropdown.css({
-                    top: (r2.bottom + 4) + 'px',
-                    left: r2.left + 'px',
-                    width: r2.width + 'px'
-                });
-            }
-        }, 300);
     }
 
     /**
@@ -177,8 +165,8 @@
             account.name.toLowerCase().includes(query)
         );
 
-        // Crear nueva cuenta: solo si NO hay asset ni liabilities (cuentas predefinidas)
-        const hasPredefined = targetTypes.some(t => t === 'asset' || t === 'liabilities');
+        // Crear nueva cuenta: solo si NO hay SOLO asset ni liabilities (cuentas predefinidas)
+        const hasPredefined = targetTypes.every(t => t === 'asset' || t === 'liabilities');
         const results = filteredAccounts.slice();
         if (!hasPredefined) {
             results.push({

@@ -547,7 +547,7 @@
     }
 
     $(document).ready(function() {
-        $('#transaction-form').on('submit', handleTransactionSubmit);
+        $(document).on('submit', '#transaction-form', handleTransactionSubmit);
 
         // Network connectivity detection
         window.addEventListener('online', () => {

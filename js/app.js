@@ -102,24 +102,45 @@
             var $dropdown = $(this);
             var $input = $dropdown.closest('.relative').find('input');
             if ($input.length === 0) {
-                // Fallback: buscar el input cuyo id coincida con el dropdown
                 var inputId = this.id.replace('-autocomplete', '');
                 $input = $('#' + inputId);
             }
-            if ($input.length && $input.is(':focus')) {
+            if ($input.length) {
                 var rect = $input[0].getBoundingClientRect();
-                $dropdown.css({
-                    top: (rect.bottom + 4) + 'px',
-                    left: rect.left + 'px',
-                    width: rect.width + 'px'
-                });
+                // Solo reposicionar si el input está visible en el viewport
+                if (rect.width > 0 && rect.height > 0) {
+                    $dropdown.css({
+                        top: (rect.bottom + 4) + 'px',
+                        left: rect.left + 'px',
+                        width: rect.width + 'px'
+                    });
+                }
             }
         });
     }
 
-    // Reposicionar en scroll y resize (keyboard open/close en móvil)
-    $(window).on('resize', repositionAutocompleteDropdowns);
-    $(document).on('scroll', '.ios-scroll', repositionAutocompleteDropdowns);
+    // Usar visualViewport si está disponible (mejor precisión con teclado en móvil)
+    var vv = window.visualViewport;
+    if (vv) {
+        vv.addEventListener('resize', function() {
+            requestAnimationFrame(repositionAutocompleteDropdowns);
+        });
+        vv.addEventListener('scroll', function() {
+            requestAnimationFrame(repositionAutocompleteDropdowns);
+        });
+    }
+
+    // Reposicionar en resize y scroll de cualquier contenedor
+    $(window).on('resize', function() {
+        requestAnimationFrame(repositionAutocompleteDropdowns);
+    });
+    $(document).on('scroll', function() {
+        requestAnimationFrame(repositionAutocompleteDropdowns);
+    });
+    // Reposicionar también al enfocar un input
+    $(document).on('focusin', function() {
+        requestAnimationFrame(repositionAutocompleteDropdowns);
+    });
 
     /*
      *  Boot de la app: montar UI restante, configurar pantallas, handlers.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'firefly-pwa-v2.10';
+const CACHE_NAME = 'firefly-pwa-v2.11';
 const ASSETS_TO_CACHE = [
     './',
     'index.html',
