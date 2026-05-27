@@ -545,6 +545,20 @@
                 width: rect.width + 'px'
             });
             dropdown.removeClass('hidden').addClass('visible');
+
+            // Re-posicionar después de que el teclado termine de abrirse (móvil)
+            var $inp = $(input);
+            var $dd = dropdown;
+            setTimeout(function() {
+                if ($dd.hasClass('visible') && $inp.is(':focus')) {
+                    var r2 = input.getBoundingClientRect();
+                    $dd.css({
+                        top: (r2.bottom + 4) + 'px',
+                        left: r2.left + 'px',
+                        width: r2.width + 'px'
+                    });
+                }
+            }, 300);
         }
 
         function doCategoryFilter(input, dropdown) {

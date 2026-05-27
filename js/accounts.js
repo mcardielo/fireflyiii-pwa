@@ -24,6 +24,18 @@
         });
 
         $dropdown.removeClass('hidden').addClass('visible');
+
+        // Re-posicionar después de que el teclado termine de abrirse (móvil)
+        setTimeout(function() {
+            if ($dropdown.hasClass('visible') && $input.is(':focus')) {
+                var r2 = $input[0].getBoundingClientRect();
+                $dropdown.css({
+                    top: (r2.bottom + 4) + 'px',
+                    left: r2.left + 'px',
+                    width: r2.width + 'px'
+                });
+            }
+        }, 300);
     }
 
     /**

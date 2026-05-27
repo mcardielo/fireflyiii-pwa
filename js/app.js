@@ -93,6 +93,34 @@
     registerServiceWorker();
     setupConnectivityListeners();
 
+    /**
+     * Reposiciona los dropdowns de autocomplete visibles.
+     * Útil cuando el teclado del móvil abre/cierra (resize) o el usuario scrollea.
+     */
+    function repositionAutocompleteDropdowns() {
+        $('.autocomplete-dropdown.visible').each(function() {
+            var $dropdown = $(this);
+            var $input = $dropdown.closest('.relative').find('input');
+            if ($input.length === 0) {
+                // Fallback: buscar el input cuyo id coincida con el dropdown
+                var inputId = this.id.replace('-autocomplete', '');
+                $input = $('#' + inputId);
+            }
+            if ($input.length && $input.is(':focus')) {
+                var rect = $input[0].getBoundingClientRect();
+                $dropdown.css({
+                    top: (rect.bottom + 4) + 'px',
+                    left: rect.left + 'px',
+                    width: rect.width + 'px'
+                });
+            }
+        });
+    }
+
+    // Reposicionar en scroll y resize (keyboard open/close en móvil)
+    $(window).on('resize', repositionAutocompleteDropdowns);
+    $(document).on('scroll', '.ios-scroll', repositionAutocompleteDropdowns);
+
     /*
      *  Boot de la app: montar UI restante, configurar pantallas, handlers.
      */
