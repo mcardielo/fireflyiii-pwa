@@ -181,6 +181,9 @@
                 $app.append(document.getElementById('screen-record').content.cloneNode(true));
             }
 
+            // Inyectar iconos en los templates recién montados
+            if (window.injectIcons) window.injectIcons();
+
             // ── Montar tab bar ──
             $app.append(
                 '<div id="tab-bar" class="hidden">' +
