@@ -4,6 +4,7 @@
     const QUEUE_STORAGE_KEY = 'firefly_transaction_queue';
     const MAX_QUEUE_SIZE = 100;
     const HEALTH_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutos
+    const HEALTH_CHECK_INTERVAL_ACTIVE = 60 * 1000; // 1 minuto (cola con items pendientes)
 
     window.FFPWA = window.FFPWA || {};
 
@@ -404,6 +405,9 @@
         // Si la cola quedó vacía, detener health check
         if (remaining.length === 0 && healthCheckIntervalId) {
             stopFireflyHealthCheck();
+        } else if (remaining.length > 0) {
+            // Si quedaron items pendientes, asegurar health check activo para reintentar
+            startFireflyHealthCheck();
         }
     }
     window.FFPWA.syncQueue = syncQueue;
@@ -456,18 +460,30 @@
     window.FFPWA.checkFireflyHealth = checkFireflyHealth;
 
     /**
-     * Inicia el health check periódico (cada 5 minutos).
-     * No crea intervalos duplicados si ya está corriendo.
+     * Inicia el health check periódico.
+     * - Si hay items en cola: cada 1 minuto.
+     * - Sin items en cola: cada 5 minutos.
+     * Si ya está corriendo con el intervalo lento y hay items pendientes, lo reinicia.
      */
     function startFireflyHealthCheck() {
+        const pendingCount = getQueue().length;
+        const targetInterval = pendingCount > 0 ? HEALTH_CHECK_INTERVAL_ACTIVE : HEALTH_CHECK_INTERVAL;
+
+        // Si ya está corriendo, solo reiniciar si hay items pendientes y el intervalo es el lento
         if (healthCheckIntervalId) {
-            console.log('[HEALTH] Health check ya estaba corriendo.');
-            return;
+            if (pendingCount > 0) {
+                console.log('[HEALTH] Items pendientes, cambiando a intervalo rápido (' + (targetInterval / 1000) + 's).');
+                stopFireflyHealthCheck();
+            } else {
+                console.log('[HEALTH] Health check ya estaba corriendo.');
+                return;
+            }
         }
-        console.log('[HEALTH] Iniciando health check cada 5 minutos.');
+
+        console.log('[HEALTH] Iniciando health check cada ' + (targetInterval / 1000) + 's. Pendientes: ' + pendingCount);
         // Hacer una verificación inmediata primero
         checkFireflyHealth();
-        healthCheckIntervalId = setInterval(checkFireflyHealth, HEALTH_CHECK_INTERVAL);
+        healthCheckIntervalId = setInterval(checkFireflyHealth, targetInterval);
     }
     window.FFPWA.startFireflyHealthCheck = startFireflyHealthCheck;
 
@@ -572,6 +588,19 @@
                 window.FFPWA.updateStatus('offline');
             }
         }, 15000);
+
+        // Al volver a la PWA (tab activo), hacer health check inmediato si hay cola pendiente
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && getQueue().length > 0) {
+                console.log('[HEALTH] Usuario volvió a la PWA. Verificando servidor...');
+                if (fireflyServerAvailable) {
+                    syncQueue();
+                } else {
+                    window.FFPWA.updateStatus('checking');
+                    checkFireflyHealth();
+                }
+            }
+        });
 
         // Escuchar mensajes del Service Worker (Background Sync)
         if ('serviceWorker' in navigator) {
