@@ -449,9 +449,11 @@
                 error: function(xhr) {
                     if (fireflyServerAvailable) {
                         console.warn('[HEALTH] ❌ Servidor Firefly no disponible.');
-                        window.FFPWA.updateStatus('server_down');
                         fireflyServerAvailable = false;
                     }
+                    // Siempre actualizar badge, incluso si ya estaba marcado como caído
+                    // (el badge pudo haber sido sobrescrito por online event o init)
+                    window.FFPWA.updateStatus('server_down');
                     resolve(false);
                 }
             });
@@ -568,13 +570,18 @@
         // Network connectivity detection
         window.addEventListener('online', () => {
             console.log('[NETWORK]: Online. Verificando servidor...');
-            if (fireflyServerAvailable) {
-                window.FFPWA.updateStatus('online');
-                syncQueue();
-            } else {
-                window.FFPWA.updateStatus('checking');
-                checkFireflyHealth();
-            }
+            // Siempre verificar el servidor antes de marcar como online
+            window.FFPWA.updateStatus('checking');
+            checkFireflyHealth().then(function(available) {
+                if (available) {
+                    window.FFPWA.updateStatus('online');
+                    fireflyServerAvailable = true;
+                    syncQueue();
+                } else {
+                    window.FFPWA.updateStatus('server_down');
+                    fireflyServerAvailable = false;
+                }
+            });
         });
 
         window.addEventListener('offline', () => {
@@ -593,12 +600,16 @@
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && getQueue().length > 0) {
                 console.log('[HEALTH] Usuario volvió a la PWA. Verificando servidor...');
-                if (fireflyServerAvailable) {
-                    syncQueue();
-                } else {
-                    window.FFPWA.updateStatus('checking');
-                    checkFireflyHealth();
-                }
+                window.FFPWA.updateStatus('checking');
+                checkFireflyHealth().then(function(available) {
+                    if (available) {
+                        fireflyServerAvailable = true;
+                        syncQueue();
+                    } else {
+                        fireflyServerAvailable = false;
+                        window.FFPWA.updateStatus('server_down');
+                    }
+                });
             }
         });
 
@@ -606,13 +617,13 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', (event) => {
                 if (event.data && event.data.type === 'BACKGROUND_SYNC') {
-                    console.log(`[CLIENT] Recibido BACKGROUND_SYNC del SW (tag: ${event.data.tag}). Ejecutando syncQueue...`);
-                    // Primero verificar que el servidor esté disponible
-                    if (fireflyServerAvailable) {
-                        syncQueue();
-                    } else {
-                        checkFireflyHealth();
-                    }
+                    console.log(`[CLIENT] Recibido BACKGROUND_SYNC del SW (tag: ${event.data.tag}). Verificando servidor...`);
+                    window.FFPWA.updateStatus('checking');
+                    checkFireflyHealth().then(function(available) {
+                        if (available) {
+                            syncQueue();
+                        }
+                    });
                 }
             });
         }
