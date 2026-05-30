@@ -276,29 +276,29 @@
                 pendingScreen = null;
 
                 if (target === 'accounts') {
-                    $('#accounts-container').removeClass('hidden');
+                    $('#accounts-container').css('display', 'flex').removeClass('hidden');
                     if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
                 } else if (target === 'history') {
-                    $('#history-container').removeClass('hidden');
+                    $('#history-container').css('display', 'flex').removeClass('hidden');
                     if (window.FFPWA.showHistoryScreen) window.FFPWA.showHistoryScreen();
                 }
 
-                $('#tab-bar').removeClass('hidden');
+                $('#tab-bar').css('display', 'flex').removeClass('hidden');
             }
 
             /* ─── Tab switching ─── */
             function switchTab(screen) {
-                var hidden = '#setup-container, #default-account-container, #dashboard-container, #accounts-container, #history-container, #lock-container';
-                $(hidden).addClass('hidden');
+                // Forzar ocultar todas las pantallas con .hide() para máxima especificidad
+                $('#setup-container, #default-account-container, #dashboard-container, #accounts-container, #history-container, #lock-container').hide();
 
                 if (screen === 'record') {
-                    $('#dashboard-container').removeClass('hidden');
+                    $('#dashboard-container').css('display', 'flex').removeClass('hidden');
                 } else if (screen === 'accounts') {
                     window.mountScreen('screen-accounts');
                     if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {
                         showLockScreen('accounts');
                     } else {
-                        $('#accounts-container').removeClass('hidden');
+                        $('#accounts-container').css('display', 'flex').removeClass('hidden');
                         if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
                     }
                 } else if (screen === 'history') {
@@ -306,14 +306,14 @@
                     if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {
                         showLockScreen('history');
                     } else {
-                        $('#history-container').removeClass('hidden');
+                        $('#history-container').css('display', 'flex').removeClass('hidden');
                         if (window.FFPWA.showHistoryScreen) window.FFPWA.showHistoryScreen();
                     }
                 }
 
                 $('#tab-bar .tab-btn').removeClass('active');
                 $('#tab-bar .tab-btn[data-screen="' + screen + '"]').addClass('active');
-                $('#tab-bar').removeClass('hidden');
+                $('#tab-bar').css('display', 'flex').removeClass('hidden');
 
                 if (!navigator.onLine) {
                     window.FFPWA.updateStatus('offline');

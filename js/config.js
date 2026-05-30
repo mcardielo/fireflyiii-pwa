@@ -88,11 +88,11 @@
         var returnTab = window.FFPWA._returnToTab || 'record';
         window.FFPWA._returnToTab = null;
 
-        $('#default-account-container').addClass('hidden');
+        $('#default-account-container').hide();
         if (returnTab === 'record') {
-            $('#dashboard-container').removeClass('hidden');
+            $('#dashboard-container').removeClass('hidden').css('display', 'flex');
         }
-        $('#tab-bar').removeClass('hidden');
+        $('#tab-bar').removeClass('hidden').css('display', 'flex');
         $('#tab-bar .tab-btn').removeClass('active');
         $('#tab-bar .tab-btn[data-screen="' + returnTab + '"]').addClass('active');
 
@@ -108,11 +108,13 @@
      * Muestra el selector de cuenta default y carga las cuentas.
      */
     function showDefaultAccountPicker() {
-        $('#setup-container').addClass('hidden');
-        $('#default-account-container').removeClass('hidden');
-        $('#dashboard-container').addClass('hidden');
-        $('#accounts-container').addClass('hidden');
-        $('#tab-bar').addClass('hidden');
+        // Forzar ocultar todas las pantallas con .hide() para máxima especificidad
+        $('#setup-container').hide();
+        $('#dashboard-container').hide();
+        $('#accounts-container').hide();
+        $('#history-container').hide();
+        $('#tab-bar').hide();
+        $('#default-account-container').removeClass('hidden').css('display', 'flex');
 
         $('#save-default-account-btn').off('click').on('click', handleDefaultAccountSave);
         loadAssetAccountsForPicker();
@@ -126,11 +128,12 @@
      * Transiciona directamente al dashboard (ya hay cuenta default guardada).
      */
     function showDashboard() {
-        $('#setup-container').addClass('hidden');
-        $('#default-account-container').addClass('hidden');
-        $('#accounts-container').addClass('hidden');
-        $('#dashboard-container').removeClass('hidden');
-        $('#tab-bar').removeClass('hidden');
+        $('#setup-container').hide();
+        $('#default-account-container').hide();
+        $('#accounts-container').hide();
+        $('#history-container').hide();
+        $('#dashboard-container').removeClass('hidden').css('display', 'flex');
+        $('#tab-bar').removeClass('hidden').css('display', 'flex');
         $('#tab-bar .tab-btn').removeClass('active');
         $('#tab-bar .tab-btn[data-screen="record"]').addClass('active');
         $(window).trigger('configLoaded');
