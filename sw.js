@@ -1,4 +1,4 @@
-const CACHE_NAME = 'firefly-pwa-v2.14';
+const CACHE_NAME = 'firefly-pwa-v2.15';
 const ASSETS_TO_CACHE = [
     './',
     'index.html',
@@ -19,7 +19,10 @@ const ASSETS_TO_CACHE = [
     'js/jquery-3.6.0.min.js',
     'lang/en.json',
     'lang/es.json',
-    'manifest.json'
+    'manifest.json',
+    'favicon.ico',
+    'icons/favicon-16x16.png',
+    'icons/favicon-32x32.png'
 ];
 
 /**
