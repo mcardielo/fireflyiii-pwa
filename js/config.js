@@ -62,7 +62,7 @@
     }
 
     /**
-     * Guarda la cuenta default seleccionada y regresa a la pantalla anterior.
+     * Guarda la cuenta default seleccionada.
      */
     function handleDefaultAccountSave() {
         var $select = $('#default-account-select');
@@ -84,21 +84,19 @@
         localStorage.setItem(DEFAULT_ACCOUNT_KEY, JSON.stringify(defaultAccount));
         window.FFPWA.config.defaultSourceAccount = defaultAccount;
 
-        // Regresar a la pantalla donde estaba el usuario (o Record por default)
-        var returnTab = window.FFPWA._returnToTab || 'record';
-        window.FFPWA._returnToTab = null;
-
-        $('#default-account-container').hide();
-        if (returnTab === 'record') {
-            $('#dashboard-container').removeClass('hidden').css('display', 'flex');
-        }
-        $('#tab-bar').removeClass('hidden').css('display', 'flex');
-        $('#tab-bar .tab-btn').removeClass('active');
-        $('#tab-bar .tab-btn[data-screen="' + returnTab + '"]').addClass('active');
-
-        // Si no es record, hacer switch al tab correcto
-        if (returnTab !== 'record' && window.switchTab) {
-            window.switchTab(returnTab);
+        var isConfigTab = $('#tab-bar .tab-btn[data-screen="config"]').hasClass('active');
+        if (!isConfigTab) {
+            // Setup inicial
+            $('#default-account-container').hide();
+            $('#dashboard-container').css('display', 'flex').removeClass('hidden');
+            $('#tab-bar').css('display', 'flex').removeClass('hidden');
+            $('#tab-bar .tab-btn').removeClass('active');
+            $('#tab-bar .tab-btn[data-screen="record"]').addClass('active');
+        } else {
+            // Desde tab Config: regresar a Record
+            if (window.switchTab) {
+                window.switchTab('record');
+            }
         }
 
         $(window).trigger('configLoaded');
@@ -106,15 +104,15 @@
 
     /**
      * Muestra el selector de cuenta default y carga las cuentas.
+     * Cuando viene del tab Config, el tab-bar debe permanecer visible.
      */
     function showDefaultAccountPicker() {
-        // Forzar ocultar todas las pantallas con .hide() para máxima especificidad
+        // Ocultar otras pantallas pero NO el tab-bar
         $('#setup-container').hide();
         $('#dashboard-container').hide();
         $('#accounts-container').hide();
         $('#history-container').hide();
-        $('#tab-bar').hide();
-        $('#default-account-container').removeClass('hidden').css('display', 'flex');
+        $('#default-account-container').css('display', 'flex').removeClass('hidden');
 
         $('#save-default-account-btn').off('click').on('click', handleDefaultAccountSave);
         loadAssetAccountsForPicker();
@@ -352,12 +350,6 @@
     }
 
     window.initConfig = checkConfiguration;
-
-    // Config button: save current tab, then re-open account picker
-    $(document).on('click', '#config-btn, #accounts-config-btn, #history-config-btn', function() {
-        var $activeTab = $('#tab-bar .tab-btn.active');
-        window.FFPWA._returnToTab = $activeTab.length ? $activeTab.data('screen') : 'record';
-        showDefaultAccountPicker();
-    });
+    window.showDefaultAccountPicker = showDefaultAccountPicker;
 
 })();

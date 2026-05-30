@@ -199,6 +199,10 @@
                                                 '<span class="tab-icon">' + Icons.clock + '</span>' +
                         '<span class="tab-label" data-i18n="nav.history">Historial</span>' +
                     '</button>' +
+                    '<button class="tab-btn" data-screen="config">' +
+                                                '<span class="tab-icon">' + Icons.cogTab + '</span>' +
+                        '<span class="tab-label" data-i18n="nav.config">Config</span>' +
+                    '</button>' +
                 '</div>'
             );
 
@@ -281,9 +285,15 @@
                 } else if (target === 'history') {
                     $('#history-container').css('display', 'flex').removeClass('hidden');
                     if (window.FFPWA.showHistoryScreen) window.FFPWA.showHistoryScreen();
+                } else if (target === 'config') {
+                    $('#default-account-container').css('display', 'flex').removeClass('hidden');
+                    window.showDefaultAccountPicker();
+                    $('#tab-bar .tab-btn').removeClass('active');
+                    $('#tab-bar .tab-btn[data-screen="config"]').addClass('active');
                 }
 
                 $('#tab-bar').css('display', 'flex').removeClass('hidden');
+                updateLangBtn(window.getLocale());
             }
 
             /* ─── Tab switching ─── */
@@ -309,6 +319,18 @@
                         $('#history-container').css('display', 'flex').removeClass('hidden');
                         if (window.FFPWA.showHistoryScreen) window.FFPWA.showHistoryScreen();
                     }
+                } else if (screen === 'config') {
+                    if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {
+                        showLockScreen('config');
+                    } else {
+                        $('#default-account-container').css('display', 'flex').removeClass('hidden');
+                        window.showDefaultAccountPicker();
+                        $('#tab-bar').css('display', 'flex').removeClass('hidden');
+                        $('#tab-bar .tab-btn').removeClass('active');
+                        $('#tab-bar .tab-btn[data-screen="config"]').addClass('active');
+                        updateLangBtn(window.getLocale());
+                        return;
+                    }
                 }
 
                 $('#tab-bar .tab-btn').removeClass('active');
@@ -318,6 +340,7 @@
                 if (!navigator.onLine) {
                     window.FFPWA.updateStatus('offline');
                 }
+                updateLangBtn(window.getLocale());
                 if (window.i18nTranslateDOM) window.i18nTranslateDOM();
             }
 
