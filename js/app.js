@@ -240,7 +240,7 @@
             function showLockScreen(screen) {
                 pendingScreen = screen || 'accounts';
                 window.mountScreen('screen-lock');
-                $('#lock-container').removeClass('hidden');
+                $('#lock-container').css('display', 'flex').removeClass('hidden');
                 $('#accounts-container').addClass('hidden');
                 $('#tab-bar').addClass('hidden');
 
@@ -265,7 +265,7 @@
             }
 
             function hideLockScreen() {
-                $('#lock-container').addClass('hidden');
+                $('#lock-container').hide();
                 pendingScreen = null;
             }
 
