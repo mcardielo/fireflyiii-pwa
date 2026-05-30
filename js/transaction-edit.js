@@ -124,19 +124,19 @@
         var summaryHtml =
             '<div class="flex items-center justify-between" style="margin-bottom:12px;">' +
                 '<span class="text-[12px] font-semibold uppercase tracking-wide text-ios-text-secondary flex items-center" style="gap:6px;">' +
-                    typeIconHtml + '<span>' + escapeHtml(typeLabel) + '</span>' +
+                    typeIconHtml + '<span>' + window.FFPWA.escapeHtml(typeLabel) + '</span>' +
                 '</span>' +
                 '<span class="text-[12px] text-ios-orange font-medium flex items-center" style="gap:4px;">' +
                     Icons.checkCheck + ' <span data-i18n="history.readonly">Conciliado</span>' +
                 '</span>' +
             '</div>' +
             '<div style="height:1px;background:var(--ios-separator);margin:0 0 14px 0;"></div>' +
-            '<p class="text-[17px] font-semibold text-ios-text">' + escapeHtml(description) + '</p>' +
+            '<p class="text-[17px] font-semibold text-ios-text">' + window.FFPWA.escapeHtml(description) + '</p>' +
             '<p class="text-[28px] font-bold ' + colorClass + '">' +
-                sign + ' ' + formatMoney(Math.abs(amount), symbol, decimals) +
+                sign + ' ' + window.FFPWA.formatMoney(Math.abs(amount), symbol, decimals) +
             '</p>' +
             '<p class="text-[13px] text-ios-text-secondary">' +
-                escapeHtml(formatDate(dateStr)) + ' · ' + escapeHtml(sourceName) + ' → ' + escapeHtml(destName) +
+                window.FFPWA.escapeHtml(window.FFPWA.formatDate(dateStr)) + ' · ' + window.FFPWA.escapeHtml(sourceName) + ' → ' + window.FFPWA.escapeHtml(destName) +
             '</p>';
 
         $('#history-detail-summary').html(summaryHtml);
@@ -166,19 +166,19 @@
         var summaryHtml =
             '<div class="flex items-center justify-between" style="margin-bottom:12px;">' +
                 '<span class="text-[12px] font-semibold uppercase tracking-wide text-ios-text-secondary flex items-center" style="gap:6px;">' +
-                    typeIconHtml + '<span>' + escapeHtml(typeLabel) + '</span>' +
+                    typeIconHtml + '<span>' + window.FFPWA.escapeHtml(typeLabel) + '</span>' +
                 '</span>' +
                 '<span class="text-[12px] text-ios-green font-medium flex items-center" style="gap:4px;">' +
                     Icons.pencil + ' <span data-i18n="history.editable">Editable</span>' +
                 '</span>' +
             '</div>' +
             '<div style="height:1px;background:var(--ios-separator);margin:0 0 14px 0;"></div>' +
-            '<p class="text-[17px] font-semibold text-ios-text">' + escapeHtml(description) + '</p>' +
+            '<p class="text-[17px] font-semibold text-ios-text">' + window.FFPWA.escapeHtml(description) + '</p>' +
             '<p class="text-[28px] font-bold ' + colorClass + '">' +
-                sign + ' ' + formatMoney(Math.abs(amount), symbol, decimals) +
+                sign + ' ' + window.FFPWA.formatMoney(Math.abs(amount), symbol, decimals) +
             '</p>' +
             '<p class="text-[13px] text-ios-text-secondary">' +
-                escapeHtml(formatDate(dateStr)) + ' · ' + escapeHtml(sourceName) + ' → ' + escapeHtml(destName) +
+                window.FFPWA.escapeHtml(window.FFPWA.formatDate(dateStr)) + ' · ' + window.FFPWA.escapeHtml(sourceName) + ' → ' + window.FFPWA.escapeHtml(destName) +
             '</p>';
 
         $('#history-detail-summary').html(summaryHtml);
@@ -207,7 +207,7 @@
         var $select = $('#edit-budget');
         $select.empty().append('<option value="">—</option>');
         editBudgets.forEach(function(b) {
-            $select.append('<option value="' + escapeHtml(String(b.id)) + '">' + escapeHtml(b.name) + '</option>');
+            $select.append('<option value="' + window.FFPWA.escapeHtml(String(b.id)) + '">' + window.FFPWA.escapeHtml(b.name) + '</option>');
         });
     }
 
@@ -229,7 +229,7 @@
         if ($('#edit-budget option').length <= 1 && tx.budget_name) {
             $('#edit-budget').empty()
                 .append('<option value="">—</option>')
-                .append('<option value="' + escapeHtml(String(tx.budget_id || '')) + '" selected>' + escapeHtml(tx.budget_name) + '</option>');
+                .append('<option value="' + window.FFPWA.escapeHtml(String(tx.budget_id || '')) + '" selected>' + window.FFPWA.escapeHtml(tx.budget_name) + '</option>');
         }
 
         $('#history-edit-form .ios-input, #history-edit-form .ios-select').prop('disabled', true).css('opacity', '0.7');
@@ -447,53 +447,21 @@
         }
     }
 
-    /* ─── Helpers ─── */
-
-    function formatDate(dateStr) {
-        if (!dateStr) return '';
-        var d = new Date(dateStr);
-        if (isNaN(d.getTime())) return dateStr;
-        var locale = window.getLocale ? window.getLocale() : 'es';
-        try {
-            return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
-        } catch(e) {
-            return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
-        }
-    }
-
-    function formatMoney(amount, symbol, decimals) {
-        if (amount === undefined || amount === null) amount = 0;
-        var formatted = Number(amount).toFixed(decimals);
-        var parts = formatted.split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return symbol + ' ' + parts.join('.');
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
     /* ─── Autocomplete for edit form (accounts + categories) ─── */
 
     function isLiabilityType(accountType) {
-        return accountType === 'liability' || accountType === 'liabilities';
+        return accountType === 'liabilities';
     }
 
     function getAccountTypeFilter(transactionType, fieldContext) {
         if (transactionType === 'deposit') {
-            return fieldContext === 'source' ? ['revenue'] : ['asset', 'liability', 'liabilities'];
+            return fieldContext === 'source' ? ['revenue'] : ['asset', 'liabilities'];
         }
         if (transactionType === 'transfer') {
-            return ['asset', 'liability', 'liabilities'];
+            return ['asset', 'liabilities'];
         }
         // withdrawal
-        return fieldContext === 'source' ? ['asset', 'liability', 'liabilities'] : ['expense'];
+        return fieldContext === 'source' ? ['asset', 'liabilities'] : ['expense'];
     }
 
     function setupEditAutocomplete() {
@@ -531,9 +499,9 @@
 
             var html = '';
             matches.forEach(function(a) {
-                html += '<li class="autocomplete-item" data-account-id="' + escapeHtml(String(a.id)) + '" ' +
-                    'data-account-name="' + escapeHtml(a.name) + '">' +
-                    '<span>' + escapeHtml(a.name) + '</span>' +
+                html += '<li class="autocomplete-item" data-account-id="' + window.FFPWA.escapeHtml(String(a.id)) + '" ' +
+                    'data-account-name="' + window.FFPWA.escapeHtml(a.name) + '">' +
+                    '<span>' + window.FFPWA.escapeHtml(a.name) + '</span>' +
                 '</li>';
             });
             dropdown.html(html);
@@ -565,9 +533,9 @@
 
             var html = '';
             matches.forEach(function(c) {
-                html += '<li class="autocomplete-item" data-category-id="' + escapeHtml(String(c.id)) + '" ' +
-                    'data-category-name="' + escapeHtml(c.name) + '">' +
-                    '<span>' + escapeHtml(c.name) + '</span>' +
+                html += '<li class="autocomplete-item" data-category-id="' + window.FFPWA.escapeHtml(String(c.id)) + '" ' +
+                    'data-category-name="' + window.FFPWA.escapeHtml(c.name) + '">' +
+                    '<span>' + window.FFPWA.escapeHtml(c.name) + '</span>' +
                 '</li>';
             });
             dropdown.html(html);

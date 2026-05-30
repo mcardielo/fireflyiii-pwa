@@ -183,16 +183,6 @@
     /**
      * Renderiza el dropdown de sugerencias.
      */
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
     function renderAutocomplete(dropdownEl, results) {
         dropdownEl.empty();
 
@@ -200,6 +190,7 @@
 
         results.forEach(item => {
             const isNew = item.isNew || false;
+            var escapeHtml = window.FFPWA.escapeHtml;
             const escapedName = escapeHtml(item.name);
             const escapedId = item.id !== undefined ? escapeHtml(String(item.id)) : '';
             const dataAttributes = `data-account-id="${escapedId}" data-account-name="${escapeHtml(item.name)}" data-is-new="${isNew}"`;
@@ -240,19 +231,40 @@
     /**
      * Inicializa el autocompletado para origen y destino.
      */
+    /**
+     * Simple debounce utility.
+     */
+    function debounce(fn, delay) {
+        var timer;
+        return function() {
+            var context = this;
+            var args = arguments;
+            clearTimeout(timer);
+            timer = setTimeout(function() { fn.apply(context, args); }, delay);
+        };
+    }
+
     function initAutocomplete(sourceInputId, sourceDropdownId, destInputId, destDropdownId, accountsCache) {
         const sourceInput = $(`#${sourceInputId}`);
         const sourceDropdown = $(`#${sourceDropdownId}`);
         const destInput = $(`#${destInputId}`);
         const destDropdown = $(`#${destDropdownId}`);
 
-        // Listener para el campo fuente
-        sourceInput.on('keyup change', function(e) {
+        var filterDebounced = debounce(function(e, input, dropdown, context) {
+            filterAndDisplayAccounts(e, input, dropdown, context, accountsCache);
+        }, 150);
+
+        // Listener para el campo fuente (debounced en keyup, inmediato en change)
+        sourceInput.on('keyup', function(e) {
+            filterDebounced(e, this, sourceDropdown, 'source');
+        }).on('change', function(e) {
             filterAndDisplayAccounts(e, this, sourceDropdown, 'source', accountsCache);
         });
 
-        // Listener para el campo destino
-        destInput.on('keyup change', function(e) {
+        // Listener para el campo destino (debounced en keyup, inmediato en change)
+        destInput.on('keyup', function(e) {
+            filterDebounced(e, this, destDropdown, 'destination');
+        }).on('change', function(e) {
             filterAndDisplayAccounts(e, this, destDropdown, 'destination', accountsCache);
         });
 

@@ -1,9 +1,10 @@
-const CACHE_NAME = 'firefly-pwa-v2.13';
+const CACHE_NAME = 'firefly-pwa-v2.14';
 const ASSETS_TO_CACHE = [
     './',
     'index.html',
     'css/style.css',
     'js/config.js',
+    'js/utils.js',
     'js/accounts.js',
     'js/currencies.js',
     'js/transactions.js',

@@ -202,9 +202,24 @@
         return bytes.buffer;
     }
 
+    function getDeviceSalt() {
+        var SALT_KEY = 'ffpwa_device_salt';
+        var stored = localStorage.getItem(SALT_KEY);
+        if (stored) return stored;
+        // Generate a random 32-char salt per device
+        var salt = '';
+        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        for (var i = 0; i < 32; i++) {
+            salt += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        localStorage.setItem(SALT_KEY, salt);
+        return salt;
+    }
+
     function hashPin(pin) {
         var encoder = new TextEncoder();
-        var data = encoder.encode(pin + 'ffpwa_salt');
+        var salt = getDeviceSalt();
+        var data = encoder.encode(pin + ':' + salt);
         return crypto.subtle.digest('SHA-256', data).then(function(buffer) {
             var hex = '';
             var bytes = new Uint8Array(buffer);

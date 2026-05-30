@@ -38,8 +38,8 @@
   "nav.config": "Config",
   "nav.online": "● Online",
   "nav.offline": "● Offline",
-  "nav.server_down": "🔶 Server unavailable",
-  "nav.server_checking": "🔶 Server unavailable (checking...)",
+  "nav.server_down": "● Server unavailable",
+  "nav.server_checking": "(checking...)",
 
   "transaction.type": "Transaction Type",
   "transaction.withdrawal": "Withdrawal",

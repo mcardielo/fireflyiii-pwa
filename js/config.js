@@ -62,13 +62,13 @@
     }
 
     /**
-     * Guarda la cuenta default seleccionada y transiciona al dashboard.
+     * Guarda la cuenta default seleccionada y regresa a la pantalla anterior.
      */
     function handleDefaultAccountSave() {
-        const $select = $('#default-account-select');
-        const $msg = $('#default-account-message');
-        const selectedId = $select.val();
-        const selectedText = $select.find('option:selected').text();
+        var $select = $('#default-account-select');
+        var $msg = $('#default-account-message');
+        var selectedId = $select.val();
+        var selectedText = $select.find('option:selected').text();
 
         if (!selectedId) {
             $msg.removeClass('hidden success warning').addClass('error');
@@ -76,7 +76,7 @@
             return;
         }
 
-        const defaultAccount = {
+        var defaultAccount = {
             id: selectedId,
             name: $select.find('option:selected').data('name') || selectedText
         };
@@ -84,12 +84,23 @@
         localStorage.setItem(DEFAULT_ACCOUNT_KEY, JSON.stringify(defaultAccount));
         window.FFPWA.config.defaultSourceAccount = defaultAccount;
 
-        // Transicionar al dashboard
+        // Regresar a la pantalla donde estaba el usuario (o Record por default)
+        var returnTab = window.FFPWA._returnToTab || 'record';
+        window.FFPWA._returnToTab = null;
+
         $('#default-account-container').addClass('hidden');
-        $('#dashboard-container').removeClass('hidden');
+        if (returnTab === 'record') {
+            $('#dashboard-container').removeClass('hidden');
+        }
         $('#tab-bar').removeClass('hidden');
         $('#tab-bar .tab-btn').removeClass('active');
-        $('#tab-bar .tab-btn[data-screen="record"]').addClass('active');
+        $('#tab-bar .tab-btn[data-screen="' + returnTab + '"]').addClass('active');
+
+        // Si no es record, hacer switch al tab correcto
+        if (returnTab !== 'record' && window.switchTab) {
+            window.switchTab(returnTab);
+        }
+
         $(window).trigger('configLoaded');
     }
 
@@ -339,8 +350,10 @@
 
     window.initConfig = checkConfiguration;
 
-    // Config button: re-open default account picker
+    // Config button: save current tab, then re-open account picker
     $(document).on('click', '#config-btn, #accounts-config-btn, #history-config-btn', function() {
+        var $activeTab = $('#tab-bar .tab-btn.active');
+        window.FFPWA._returnToTab = $activeTab.length ? $activeTab.data('screen') : 'record';
         showDefaultAccountPicker();
     });
 

@@ -98,7 +98,7 @@
                 var budgetName = tx.budget_name || '';
                 var tags = tx.tags || [];
 
-                var displayDate = formatDate(txDateISO);
+                var displayDate = window.FFPWA.formatDate(txDateISO);
 
                 // Determinar color y signo según tipo
                 var isNegative = (type === 'withdrawal');
@@ -110,7 +110,7 @@
                 }
 
                 // Mostrar contraparte según tipo
-                var sourceDestStr = escapeHtml(sourceName) + ' → ' + escapeHtml(destName);
+                var sourceDestStr = window.FFPWA.escapeHtml(sourceName) + ' → ' + window.FFPWA.escapeHtml(destName);
 
                 // Indicador de reconciliada
                 var reconciledBadge = tx.reconciled ?
@@ -119,24 +119,24 @@
 
                 html += '<div class="field-card mb-2 history-tx-card" ' +
                     'data-group-id="' + group.id + '" data-tx-idx="' + txIdx + '" ' +
-                    'data-group-title="' + escapeHtml(groupTitle || '') + '" ' +
+                    'data-group-title="' + window.FFPWA.escapeHtml(groupTitle || '') + '" ' +
                     'data-reconciled="' + (tx.reconciled ? 'true' : 'false') + '" ' +
                     'style="cursor:pointer;">' +
                     '<div class="field-row" style="justify-content:space-between;padding:10px 14px;">' +
                         '<div style="flex:1;min-width:0;">' +
                             '<p class="text-[11px] text-ios-text-secondary">' +
-                                escapeHtml(displayDate) + reconciledBadge +
+                                window.FFPWA.escapeHtml(displayDate) + reconciledBadge +
                             '</p>' +
-                            (groupTitle ? '<p class="text-[11px] font-medium text-ios-blue truncate">📦 ' + escapeHtml(groupTitle) + '</p>' : '') +
-                            '<p class="text-[14px] font-medium text-ios-text truncate">' + escapeHtml(description) + '</p>' +
+                            (groupTitle ? '<p class="text-[11px] font-medium text-ios-blue truncate">📦 ' + window.FFPWA.escapeHtml(groupTitle) + '</p>' : '') +
+                            '<p class="text-[14px] font-medium text-ios-text truncate">' + window.FFPWA.escapeHtml(description) + '</p>' +
                             '<p class="text-[12px] text-ios-text-secondary truncate">' + sourceDestStr + '</p>' +
-                            (categoryName ? '<p class="text-[11px] text-ios-blue mt-0.5">📂 ' + escapeHtml(categoryName) + '</p>' : '') +
+                            (categoryName ? '<p class="text-[11px] text-ios-blue mt-0.5">📂 ' + window.FFPWA.escapeHtml(categoryName) + '</p>' : '') +
                         '</div>' +
                         '<div class="text-right ml-3 flex-shrink-0">' +
                             '<p class="text-[15px] font-semibold ' + colorClass + '">' +
-                                sign + ' ' + formatMoney(Math.abs(amount), symbol, decimals) +
+                                sign + ' ' + window.FFPWA.formatMoney(Math.abs(amount), symbol, decimals) +
                             '</p>' +
-                            '<p class="text-[10px] text-ios-text-secondary mt-0.5">' + escapeHtml(code) + '</p>' +
+                            '<p class="text-[10px] text-ios-text-secondary mt-0.5">' + window.FFPWA.escapeHtml(code) + '</p>' +
                         '</div>' +
                     '</div>' +
                 '</div>';
@@ -197,38 +197,6 @@
             $('#history-error').removeClass('hidden').text('❌ ' + err.message);
         });
     };
-
-    /* ─── Helpers ─── */
-
-    function formatDate(dateStr) {
-        if (!dateStr) return '';
-        var d = new Date(dateStr);
-        if (isNaN(d.getTime())) return dateStr;
-        var locale = window.getLocale ? window.getLocale() : 'es';
-        try {
-            return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
-        } catch(e) {
-            return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
-        }
-    }
-
-    function formatMoney(amount, symbol, decimals) {
-        if (amount === undefined || amount === null) amount = 0;
-        var formatted = Number(amount).toFixed(decimals);
-        var parts = formatted.split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return symbol + ' ' + parts.join('.');
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
 
     /* ─── Event wiring ─── */
 

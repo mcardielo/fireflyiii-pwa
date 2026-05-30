@@ -193,19 +193,19 @@
             html += '<div class="field-card mb-3 account-card" data-account-id="' + id + '">' +
                 '<div class="field-row" style="justify-content:space-between;padding:14px 16px;cursor:pointer;">' +
                     '<div>' +
-                        '<p class="text-[15px] font-medium text-ios-text">' + escapeHtml(name) + '</p>' +
+                        '<p class="text-[15px] font-medium text-ios-text">' + window.FFPWA.escapeHtml(name) + '</p>' +
                         '<p class="mt-1">' +
                             '<span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full" ' +
                                   'style="color:' + roleColor + ';background:' + roleBg + ';">' +
-                                escapeHtml(roleLabel) +
+                                window.FFPWA.escapeHtml(roleLabel) +
                             '</span>' +
                         '</p>' +
                     '</div>' +
                     '<div class="text-right ml-4 flex-shrink-0">' +
                         '<p class="text-[17px] font-semibold ' + (balance < 0 ? 'text-ios-red' : 'text-ios-text') + '">' +
-                            formatMoney(balance, symbol, decimals) +
+                            window.FFPWA.formatMoney(balance, symbol, decimals) +
                         '</p>' +
-                        '<p class="text-[11px] text-ios-text-secondary mt-0.5">' + escapeHtml(code) + '</p>' +
+                        '<p class="text-[11px] text-ios-text-secondary mt-0.5">' + window.FFPWA.escapeHtml(code) + '</p>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -241,19 +241,19 @@
             html += '<div class="field-card mb-3 account-card" data-account-id="' + id + '">' +
                 '<div class="field-row" style="justify-content:space-between;padding:14px 16px;cursor:pointer;">' +
                     '<div>' +
-                        '<p class="text-[15px] font-medium text-ios-text">' + escapeHtml(name) + '</p>' +
+                        '<p class="text-[15px] font-medium text-ios-text">' + window.FFPWA.escapeHtml(name) + '</p>' +
                         '<p class="mt-1">' +
                             '<span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full" ' +
                                   'style="color:var(--ios-text-secondary);background:var(--ios-segmented-bg);">' +
-                                escapeHtml(typeLabel) +
+                                window.FFPWA.escapeHtml(typeLabel) +
                             '</span>' +
                         '</p>' +
                     '</div>' +
                     '<div class="text-right ml-4 flex-shrink-0">' +
                         '<p class="text-[17px] font-semibold ' + (balance < 0 ? 'text-ios-red' : 'text-ios-text') + '">' +
-                            formatMoney(balance, symbol, decimals) +
+                            window.FFPWA.formatMoney(balance, symbol, decimals) +
                         '</p>' +
-                        '<p class="text-[11px] text-ios-text-secondary mt-0.5">' + escapeHtml(code) + '</p>' +
+                        '<p class="text-[11px] text-ios-text-secondary mt-0.5">' + window.FFPWA.escapeHtml(code) + '</p>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -285,14 +285,14 @@
         $('#account-detail').removeClass('hidden');
 
         // Fill summary
-        $('#detail-account-name').text(escapeHtml(name));
-        $('#detail-account-balance').text(formatMoney(balance, symbol, decimals))
-            .removeClass('text-[#ff3b30] text-[#1c1c1e]')
-            .addClass(balance < 0 ? 'text-[#ff3b30]' : 'text-[#1c1c1e]');
+        $('#detail-account-name').text(window.FFPWA.escapeHtml(name));
+        $('#detail-account-balance').text(window.FFPWA.formatMoney(balance, symbol, decimals))
+            .removeClass('text-ios-red text-ios-text')
+            .addClass(balance < 0 ? 'text-ios-red' : 'text-ios-text');
         $('#detail-account-role').html(
             '<span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full" ' +
             'style="color:' + roleColor + ';background:' + roleBg + ';">' +
-            escapeHtml(roleLabel) + '</span>'
+            window.FFPWA.escapeHtml(roleLabel) + '</span>'
         );
 
         // Clear previous data, show loading
@@ -354,7 +354,7 @@
             var sourceName = subTx.source_name || '';
             var destName = subTx.destination_name || '';
 
-            var displayDate = formatDate(dateStr);
+            var displayDate = window.FFPWA.formatDate(dateStr);
             var categoryName = subTx.category_name || '';
 
             // Determine display direction and other party
@@ -362,11 +362,11 @@
             var otherParty = '';
 
             if (type === 'transfer') {
-                otherParty = escapeHtml(sourceName) + ' → ' + escapeHtml(destName);
+                otherParty = window.FFPWA.escapeHtml(sourceName) + ' → ' + window.FFPWA.escapeHtml(destName);
             } else if (isNegative) {
-                otherParty = escapeHtml(destName);
+                otherParty = window.FFPWA.escapeHtml(destName);
             } else {
-                otherParty = escapeHtml(sourceName);
+                otherParty = window.FFPWA.escapeHtml(sourceName);
             }
 
             var sign = isNegative ? '-' : '+';
@@ -374,19 +374,19 @@
 
             html += '<div class="field-card mb-2 tx-card" ' +
                 'data-group-id="' + tx.id + '" ' +
-                'data-group-title="' + escapeHtml(attrs.group_title || '') + '" ' +
+                'data-group-title="' + window.FFPWA.escapeHtml(attrs.group_title || '') + '" ' +
                 'data-reconciled="' + (subTx.reconciled ? 'true' : 'false') + '" ' +
                 'style="cursor:pointer;">' +
                 '<div class="field-row" style="justify-content:space-between;padding:10px 14px;">' +
                     '<div style="flex:1;min-width:0;">' +
-                        '<p class="text-[13px] text-ios-text-secondary">' + escapeHtml(displayDate) + '</p>' +
-                        '<p class="text-[15px] font-medium text-ios-text truncate">' + escapeHtml(description) + '</p>' +
+                        '<p class="text-[13px] text-ios-text-secondary">' + window.FFPWA.escapeHtml(displayDate) + '</p>' +
+                        '<p class="text-[15px] font-medium text-ios-text truncate">' + window.FFPWA.escapeHtml(description) + '</p>' +
                         (otherParty ? '<p class="text-[12px] text-ios-text-secondary truncate">' + otherParty + '</p>' : '') +
-                        (categoryName ? '<p class="text-[11px] text-ios-blue mt-0.5">📂 ' + escapeHtml(categoryName) + '</p>' : '') +
+                        (categoryName ? '<p class="text-[11px] text-ios-blue mt-0.5">📂 ' + window.FFPWA.escapeHtml(categoryName) + '</p>' : '') +
                     '</div>' +
                     '<div class="text-right ml-3 flex-shrink-0">' +
-                        '<p class="text-[15px] font-semibold ' + colorClass + '">' + sign + formatMoney(amount, symbol, decimals) + '</p>' +
-                        '<p class="text-[10px] text-ios-text-secondary mt-0.5">' + escapeHtml(code) + '</p>' +
+                        '<p class="text-[15px] font-semibold ' + colorClass + '">' + sign + window.FFPWA.formatMoney(amount, symbol, decimals) + '</p>' +
+                        '<p class="text-[10px] text-ios-text-secondary mt-0.5">' + window.FFPWA.escapeHtml(code) + '</p>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -436,39 +436,6 @@
             $('#accounts-error').removeClass('hidden').text('❌ ' + err.message);
         });
     };
-
-    /* ─── Helpers ─── */
-
-    function formatMoney(amount, symbol, decimals) {
-        var negative = amount < 0;
-        var abs = Math.abs(amount);
-        var formatted = abs.toFixed(decimals);
-        var parts = formatted.split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return (negative ? '-' : '') + symbol + ' ' + parts.join('.');
-    }
-
-    function formatDate(dateStr) {
-        if (!dateStr) return '';
-        var d = new Date(dateStr);
-        if (isNaN(d.getTime())) return dateStr;
-        var locale = window.getLocale ? window.getLocale() : 'es';
-        try {
-            return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
-        } catch(e) {
-            return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
-        }
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
 
     /* ─── Event wiring ─── */
 
