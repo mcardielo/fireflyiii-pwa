@@ -140,31 +140,55 @@
 
     /**
      * Obtiene la tasa de cambio de fromCurrency a toCurrency (1 from = X to).
-     * Primero revisa caché, si no hay o está vieja, consulta Frankfurter API.
+     * Cache-first: si hay tasa del día de hoy, la usa,
+     * si no hay o está vieja, consulta Frankfurter.
+     * Deduplica requests en vuelo para el mismo par.
      * @param {string} fromCurrency - Código de moneda origen (ej: USD)
      * @param {string} toCurrency - Código de moneda destino (ej: MXN)
      * @returns {Promise<{rate: number, date: string}>}
      */
+    var _pendingRateRequests = {};
+
     function getExchangeRate(fromCurrency, toCurrency) {
         if (fromCurrency === toCurrency) {
             return Promise.resolve({ rate: 1, date: new Date().toISOString().split('T')[0] });
         }
 
-        // Intentar fetch siempre (Fí­sica online)
-        return fetchExchangeRateFromFrankfurter(fromCurrency, toCurrency)
-            .then(rateInfo => {
+        var pairKey = fromCurrency + '_' + toCurrency;
+
+        // Dedup: si ya hay un request en vuelo para este par, devolver esa misma promesa
+        if (_pendingRateRequests[pairKey]) {
+            console.log('[RATES] Dedup: usando request en vuelo para ' + fromCurrency + '→' + toCurrency);
+            return _pendingRateRequests[pairKey];
+        }
+
+        // Cache-first: si tenemos tasa fresca de hoy, usarla
+        var cached = getCachedRate(fromCurrency, toCurrency);
+        var today = new Date().toISOString().split('T')[0];
+        if (cached && cached.date === today) {
+            console.log('[RATES] Cache-fresh: ' + fromCurrency + '→' + toCurrency + ' = ' + cached.rate + ' (' + cached.date + ')');
+            return Promise.resolve({ rate: cached.rate, date: cached.date });
+        }
+
+        // Fetch de la API
+        var request = fetchExchangeRateFromFrankfurter(fromCurrency, toCurrency)
+            .then(function(rateInfo) {
                 cacheRate(fromCurrency, toCurrency, rateInfo);
+                delete _pendingRateRequests[pairKey];
                 return rateInfo;
             })
-            .catch(() => {
-                // Fallback: usar caché si existe
-                const cached = getCachedRate(fromCurrency, toCurrency);
+            .catch(function(err) {
+                delete _pendingRateRequests[pairKey];
+                // Fallback: cualquier tasa cacheada (aunque vieja)
                 if (cached) {
-                    console.warn(`[RATES] Usando tasa cacheada ${fromCurrency}→${toCurrency} del ${cached.date}`);
+                    console.warn('[RATES] Usando tasa cacheada vieja ' + fromCurrency + '→' + toCurrency + ' del ' + cached.date);
                     return { rate: cached.rate, date: cached.date };
                 }
-                throw new Error(__('currency.error_rate_unavailable', { from: fromCurrency, to: toCurrency }));
+                throw err;
             });
+
+        _pendingRateRequests[pairKey] = request;
+        return request;
     }
     window.FFPWA.getExchangeRate = getExchangeRate;
 
@@ -252,8 +276,14 @@
     }
 
     function setupCurrencyChangeHandler() {
+        var _rateDebounceTimer;
         $(document).on('change', '#currency-select', function() {
-            updateRateDisplay();
+            // Debounce 400ms: si el usuario cambia rápido de moneda,
+            // solo se dispara una llamada a la API
+            clearTimeout(_rateDebounceTimer);
+            _rateDebounceTimer = setTimeout(function() {
+                updateRateDisplay();
+            }, 400);
         });
 
         $(document).on('input', '#amount', function() {

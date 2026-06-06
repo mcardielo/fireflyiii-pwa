@@ -422,6 +422,22 @@
         if (accounts) {
             console.log('[INIT]: ' + __('resource.currencies_cache'));
             setupAccountSystem(accounts);
+
+            // ── Stale-while-revalidate: fetch solo si cargamos de caché ──
+            fetchAccounts(window.FFPWA.config.url, window.FFPWA.config.token)
+                .then(function(freshAccounts) {
+                    cacheAccounts(freshAccounts);
+                    var current = window.FFPWA.accountsCache;
+                    if (!current || current.length !== freshAccounts.length) {
+                        console.log('[DEBUG] Cache actualizado: ' + freshAccounts.length + ' cuentas (era ' + (current ? current.length : 0) + ')');
+                        setupAccountSystem(freshAccounts);
+                    } else {
+                        console.log('[DEBUG] Cuentas sin cambios (' + freshAccounts.length + ')');
+                    }
+                })
+                .catch(function(err) {
+                    console.warn('[DEBUG] Fetch silencioso falló:', err.message);
+                });
         } else {
             console.log('[INIT]: Sin caché, cargando desde backend...');
             fetchAccounts(window.FFPWA.config.url, window.FFPWA.config.token)
@@ -433,25 +449,6 @@
                     setupAccountSystem(null);
                 });
         }
-
-        // ── Stale-while-revalidate: fetch silencioso en background ──
-        // Siempre actualiza el caché desde el backend.
-        // Si hay cambios, reemplaza el cache en memoria automáticamente.
-        fetchAccounts(window.FFPWA.config.url, window.FFPWA.config.token)
-            .then(function(freshAccounts) {
-                cacheAccounts(freshAccounts);
-                // Solo actualizar en memoria si es distinto
-                var current = window.FFPWA.accountsCache;
-                if (!current || current.length !== freshAccounts.length) {
-                    console.log('[DEBUG] Cache actualizado: ' + freshAccounts.length + ' cuentas (era ' + (current ? current.length : 0) + ')');
-                    setupAccountSystem(freshAccounts);
-                } else {
-                    console.log('[DEBUG] Cuentas sin cambios (' + freshAccounts.length + ')');
-                }
-            })
-            .catch(function(err) {
-                console.warn('[DEBUG] Fetch silencioso falló:', err.message);
-            });
     });
 
 })();
