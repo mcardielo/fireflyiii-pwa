@@ -21,6 +21,19 @@
             return;
         }
 
+        // Immediately show loading state so old data doesn't linger
+        $('#history-list-view').addClass('hidden');
+        $('#history-detail').removeClass('hidden');
+        $('#history-detail-summary').html(
+            '<div class="text-center py-8">' +
+                '<div class="spinner mx-auto mb-2"></div>' +
+                '<p class="text-sm text-ios-text-secondary">' + __('history.loading_tx') + '</p>' +
+            '</div>'
+        );
+        // Clear form to prevent old data flash
+        $('#history-edit-form')[0].reset();
+        $('#history-edit-form').addClass('hidden');
+
         fetchTransactionGroup(groupId).then(function(groupData) {
             var tx = groupData.transactions && groupData.transactions[txIdx];
             if (!tx) {
@@ -141,6 +154,7 @@
 
         $('#history-detail-summary').html(summaryHtml);
 
+        $('#history-edit-form').removeClass('hidden');
         populateFormReadOnly(tx);
         if (window.i18nTranslateDOM) window.i18nTranslateDOM();
     }
@@ -183,6 +197,7 @@
 
         $('#history-detail-summary').html(summaryHtml);
 
+        $('#history-edit-form').removeClass('hidden');
         // Fetch budgets and categories for the form
         Promise.all([fetchBudgets(), fetchCategories()]).then(function(results) {
             editBudgets = results[0] || [];

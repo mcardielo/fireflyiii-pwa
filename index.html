@@ -48,7 +48,10 @@
     <!-- ── Configuración (URL + Token) ── -->
     <template id="screen-setup">
         <div id="setup-container" class="screen screen-stack hidden">
-            <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll">
+            <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll relative">
+                <div class="absolute top-4 right-4">
+                    <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
+                </div>
                 <div class="text-center mb-10">
                     <span data-icon="cog" class="w-16 h-16 bg-ios-blue-bg rounded-2xl flex items-center justify-center mx-auto mb-4"></span>
                     <h1 class="text-[28px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="setup.title">Configuración</h1>
@@ -90,7 +93,10 @@
     <!-- ── Selección de Cuenta Default ── -->
     <template id="screen-account-picker">
         <div id="default-account-container" class="screen screen-stack hidden">
-            <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll">
+            <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll relative">
+                <div class="absolute top-4 right-4">
+                    <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
+                </div>
                 <div class="text-center mb-10">
                     <span data-icon="creditCard" class="w-16 h-16 bg-ios-blue-bg rounded-2xl flex items-center justify-center mx-auto mb-4"></span>
                     <h1 class="text-[28px] font-bold text-ios-text tracking-[-0.5px]" data-i18n="account.title">Cuenta Default</h1>

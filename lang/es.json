@@ -156,6 +156,7 @@
   "loading.message": "Cargando...",
 
   "history.loading": "Cargando historial...",
+  "history.loading_tx": "Cargando transacción...",
   "history.error_fetch": "Error al cargar historial.",
   "history.back": "← Historial",
   "history.edit_title": "Editar Transacción",

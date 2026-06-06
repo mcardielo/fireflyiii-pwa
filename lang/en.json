@@ -156,6 +156,7 @@
   "loading.message": "Loading...",
 
   "history.loading": "Loading history...",
+  "history.loading_tx": "Loading transaction...",
   "history.error_fetch": "Error loading history.",
   "history.back": "← History",
   "history.edit_title": "Edit Transaction",
