@@ -13,14 +13,19 @@
     let healthCheckIntervalId = null;
 
     /**
-     * Muestra un mensaje temporal en la interfaz.
+     * Muestra un toast temporal estilo, fixed overlay, sin afectar el layout.
      * @param {string} message - Texto del mensaje
      * @param {string} type - 'success' | 'warning' | 'error'
      */
     function showStatusMessage(message, type) {
         const $status = $('#status-message');
-        // Limpiar todas las clases de estado y mostrar
-        $status.removeClass('hidden success warning error');
+
+        // Cancelar timeout y animación previos
+        if (window.FFPWA._statusTimeout) clearTimeout(window.FFPWA._statusTimeout);
+
+        // Reset: quitar hidden y done-class, forzar repaint para que la transición se dispare
+        $status.removeClass('hidden ios-status-done success warning error');
+        void $status[0].offsetHeight;
 
         if (type === 'success') {
             $status.addClass('success');
@@ -31,11 +36,13 @@
         }
         $status.text(message);
 
-        // Auto-ocultar después de 6s (más tiempo para warnings/errores)
+        // Auto-ocultar: primero animar hacia arriba, luego display:none
         const delay = type === 'success' ? 5000 : 8000;
-        if (window.FFPWA._statusTimeout) clearTimeout(window.FFPWA._statusTimeout);
-        window.FFPWA._statusTimeout = setTimeout(() => {
-            $status.addClass('hidden');
+        window.FFPWA._statusTimeout = setTimeout(function() {
+            $status.addClass('hidden'); // dispara la animación de salida
+            setTimeout(function() {
+                $status.addClass('ios-status-done');
+            }, 360);
         }, delay);
     }
     window.FFPWA.showStatusMessage = showStatusMessage;
@@ -300,6 +307,7 @@
                 error: function(xhr, textStatus) {
                     var status = xhr.status || 0;
                     var errorMsg;
+                    var responseMsg = (xhr.responseJSON && xhr.responseJSON.message) || '';
 
                     // Timeout (servidor no responde) o error de conexión
                     if (textStatus === 'timeout' || status === 0) {
@@ -309,10 +317,29 @@
                         return;
                     }
 
+                    // 422 con "Duplicate" → la transacción ya fue registrada exitosamente.
+                    // Tratar como éxito para que syncQueue la elimine de la cola.
+                    if (status === 422 && /duplicate/i.test(responseMsg)) {
+                        console.log("[DEBUG]: Transacción duplicada, eliminando de la cola.");
+                        resolve(true);
+                        return;
+                    }
+
+                    // Errores de autenticación: no son reintentables
+                    if (status === 401 || status === 403) {
+                        errorMsg = __('transaction.submit_error_auth');
+                        if (responseMsg) {
+                            errorMsg += ' ' + responseMsg;
+                        }
+                        console.error("[DEBUG]: Error de autenticación:", errorMsg, `(HTTP ${status})`);
+                        reject({ message: errorMsg, status: status, authError: true });
+                        return;
+                    }
+
                     // HTTP error real (4xx, 5xx)
                     errorMsg = __('transaction.submit_error_prefix') + ' ' + xhr.statusText + '.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg += ' ' + __('transaction.submit_error_details') + ' ' + xhr.responseJSON.message;
+                    if (responseMsg) {
+                        errorMsg += ' ' + __('transaction.submit_error_details') + ' ' + responseMsg;
                     }
                     console.error("❌ Error de envío:", errorMsg, `(HTTP ${status})`);
                     reject({ message: errorMsg, status: status });
@@ -357,7 +384,8 @@
 
     /**
      * Procesa la cola de sincronización.
-     * No se rompe en el primer error: las falladas se quedan para reintento.
+     * No se rompe en el primer error: las transitorias se quedan para reintento,
+     * las de autenticación se descartan (no son recuperables sin cambio de token).
      */
     async function syncQueue() {
         const queue = getQueue();
@@ -376,13 +404,22 @@
         const remaining = [];
         let successfulSends = 0;
         let failedSends = 0;
+        let authBlocked = false;
 
         for (let i = 0; i < queue.length; i++) {
             try {
                 await sendTransaction(queue[i]);
                 successfulSends++;
             } catch (e) {
-                console.error(`❌ Falló tx #${i + 1}:`, e.message);
+                // Errores de autenticación: no reintentables, descartar de la cola
+                if (e.authError) {
+                    console.error(`[DEBUG]: Auth error en tx #${i + 1}:`, e.message);
+                    authBlocked = true;
+                    failedSends++;
+                    // No se agrega a remaining — se descarta
+                    continue;
+                }
+                console.error(`[DEBUG]: Falló tx #${i + 1}:`, e.message);
                 remaining.push(queue[i]);
                 failedSends++;
             }
@@ -391,6 +428,11 @@
         localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(remaining));
 
         let message = '';
+        if (authBlocked) {
+            message += '🔐 Error de autenticación. Verifica el token en Config. ';
+            window.FFPWA.updateStatus('server_down');
+            fireflyServerAvailable = false;
+        }
         if (successfulSends > 0) {
             message += __('sync.sent', { count: successfulSends }) + ' ';
         }
@@ -434,10 +476,13 @@
                 },
                 timeout: 10000,
                 success: function() {
-                    if (!fireflyServerAvailable) {
+                    const wasDown = !fireflyServerAvailable;
+                    fireflyServerAvailable = true;
+                    // Siempre actualizar el badge — si estaba en 'checking' (por visibilitychange,
+                    // BACKGROUND_SYNC, etc.) necesita restaurarse a 'online'.
+                    window.FFPWA.updateStatus('online');
+                    if (wasDown) {
                         console.log('[HEALTH] ✅ Servidor Firefly disponible de nuevo.');
-                        window.FFPWA.updateStatus('online');
-                        fireflyServerAvailable = true;
                         syncQueue();
                     }
                     // Si la cola está vacía, no necesitamos seguir monitoreando
@@ -503,10 +548,8 @@
 
     /**
      * Maneja el envío del formulario de transacción.
-     * - Online + servidor responde → envía directo ✅
-     * - Online + servidor caído → encola + inicia health check 🟡
-     * - Offline → encola 💾
-     * - Auth errors (401/403) → muestra error, no encola 🔴
+     * Siempre encola la transacción y libera la UI de inmediato.
+     * El envío al servidor ocurre en background vía syncQueue.
      */
     async function handleTransactionSubmit(e) {
         e.preventDefault();
@@ -522,45 +565,17 @@
         const $btn = $('#submit-transaction-btn');
         $btn.prop('disabled', true).text(__('transaction.submit_sending'));
 
-        if (navigator.onLine) {
-            sendTransaction(transactionPayload)
-                .then(() => {
-                    showStatusMessage('✅ ' + __('transaction.submit_success'), 'success');
-                    resetTransactionForm();
-                    // Si el servidor estaba marcado como caído, restaurar estado
-                    if (!fireflyServerAvailable) {
-                        fireflyServerAvailable = true;
-                        window.FFPWA.updateStatus('online');
-                        stopFireflyHealthCheck();
-                    }
-                })
-                .catch(error => {
-                    const status = error.status || 0;
+        // Siempre encolar — la UI se libera al instante.
+        queueTransaction(transactionPayload);
+        resetTransactionForm();
+        $btn.prop('disabled', false).text(__('transaction.submit_btn'));
 
-                    // Errores de autenticación o autorización: no son recuperables
-                    if (status === 401 || status === 403) {
-                        showStatusMessage('🛑 ' + error.message, 'error');
-                        window.FFPWA.updateStatus('server_down');
-                        fireflyServerAvailable = false;
-                        startFireflyHealthCheck();
-                    }
-                    // Errores temporales: servidor caído (timeout, conexión rechazada), 5xx
-                    else {
-                        showStatusMessage('🟡 ' + error.message, 'warning');
-                        queueTransaction(transactionPayload);
-                        resetTransactionForm();
-                        window.FFPWA.updateStatus('server_down');
-                        fireflyServerAvailable = false;
-                        startFireflyHealthCheck();
-                    }
-                })
-                .finally(() => {
-                    $btn.prop('disabled', false).text(__('transaction.submit_btn'));
-                });
-        } else {
-            queueTransaction(transactionPayload);
-            resetTransactionForm();
-            $btn.prop('disabled', false).text(__('transaction.submit_btn'));
+        // Disparar sync en background si hay conexión.
+        if (navigator.onLine) {
+            // Pequeño delay para que el status message del queue se muestre primero
+            setTimeout(function() {
+                syncQueue();
+            }, 300);
         }
     }
 
