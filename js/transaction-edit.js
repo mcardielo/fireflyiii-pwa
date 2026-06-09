@@ -119,6 +119,7 @@
     function showReadOnlyDetail(groupData, tx, txIdx) {
         $('#history-list-view').addClass('hidden');
         $('#history-detail').removeClass('hidden');
+        $('#history-delete-btn').addClass('hidden');
 
         var type = tx.type || 'withdrawal';
         var amount = parseFloat(tx.amount) || 0;
@@ -162,6 +163,7 @@
     function showDetailView(groupData, tx, txIdx) {
         $('#history-list-view').addClass('hidden');
         $('#history-detail').removeClass('hidden');
+        $('#history-delete-btn').removeClass('hidden');
 
         var type = tx.type || 'withdrawal';
         var amount = parseFloat(tx.amount) || 0;
@@ -436,6 +438,91 @@
         });
     }
 
+    /* ─── Delete handler ─── */
+
+    function deleteTransaction() {
+        if (!currentEditGroupId) return;
+
+        var $overlay = $('#delete-confirm-overlay');
+        if (!$overlay.length) {
+            // Create confirmation overlay on-demand
+            $('body').append(
+                '<div id="delete-confirm-overlay" class="fixed inset-0 z-[200] flex items-end justify-center" style="background:rgba(0,0,0,0.4);">' +
+                    '<div class="w-full rounded-t-[20px] p-6" style="background:var(--ios-card);padding-bottom:calc(24px + env(safe-area-inset-bottom));">' +
+                        '<h3 class="text-[17px] font-semibold text-center text-ios-text mb-2" data-i18n="history.delete_confirm_title">' + __('history.delete_confirm_title') + '</h3>' +
+                        '<p class="text-[13px] text-center text-ios-red mb-6" data-i18n="history.delete_confirm_body">' + __('history.delete_confirm_body') + '</p>' +
+                        '<button id="delete-confirm-cancel" class="ios-btn-primary mb-2">' + __('history.delete_confirm_cancel') + '</button>' +
+                        '<button id="delete-confirm-ok" class="ios-btn-danger">' + __('history.delete_confirm_ok') + '</button>' +
+                    '</div>' +
+                '</div>'
+            );
+            $overlay = $('#delete-confirm-overlay');
+
+            // Cancel button
+            $overlay.on('click', '#delete-confirm-cancel', function() {
+                $overlay.remove();
+            });
+
+            // Click outside
+            $overlay.on('click', function(e) {
+                if (e.target === this) {
+                    $(this).remove();
+                }
+            });
+
+            // Confirm button
+            $overlay.on('click', '#delete-confirm-ok', function() {
+                $overlay.remove();
+                executeDelete();
+            });
+        }
+    }
+
+    function executeDelete() {
+        var $btn = $('#history-delete-btn');
+        var $status = $('#edit-status-message');
+        $btn.prop('disabled', true).text(__('transaction.submit_sending'));
+        $status.addClass('hidden');
+
+        var url = window.FFPWA.config.url;
+        var token = window.FFPWA.config.token;
+
+        $.ajax({
+            url: url + '/api/v1/transactions/' + currentEditGroupId,
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Content-Type': 'application/json'
+            },
+            timeout: 15000,
+            success: function() {
+                $status.removeClass('hidden error').addClass('success')
+                    .html('🗑️ ' + __('history.delete_success'));
+                currentEditTxData = null;
+                currentEditGroupId = null;
+
+                setTimeout(function() {
+                    goBackToList(true);
+                }, 1500);
+            },
+            error: function(xhr) {
+                var msg = __('history.delete_error');
+                if (xhr.status === 401 || xhr.status === 403) {
+                    msg += ' ' + __('transaction.submit_error_auth');
+                } else if (xhr.status === 404) {
+                    msg += ' ' + __('history.delete_error_404');
+                } else if (xhr.status === 0) {
+                    msg += ' ' + __('setup.no_connection');
+                } else {
+                    msg += ' (HTTP ' + xhr.status + ')';
+                }
+                $status.removeClass('hidden success').addClass('error')
+                    .html('❌ ' + msg);
+                $btn.prop('disabled', false).html(__('history.delete_btn'));
+            }
+        });
+    }
+
     /* ─── Go back to list ─── */
 
     function goBackToList(refresh) {
@@ -621,6 +708,10 @@
 
         $(document).on('submit', '#history-edit-form', function(e) {
             saveTransaction(e);
+        });
+
+        $(document).on('click', '#history-delete-btn', function() {
+            deleteTransaction();
         });
     });
 

@@ -318,6 +318,27 @@
         opacity: 0.5;
     }
 
+    .ios-btn-danger {
+        width: 100%;
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid var(--ios-red);
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--ios-red);
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .ios-btn-danger:active {
+        opacity: 0.6;
+        background: rgba(255, 59, 48, 0.08);
+    }
+    .ios-btn-danger:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
     /* ─── Status Toast (fixed overlay, no layout shift) ─── */
     .ios-status {
         position: fixed;

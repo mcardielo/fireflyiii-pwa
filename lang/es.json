@@ -174,6 +174,14 @@
   "history.edit_no_data": "No se encontraron datos de la transacción.",
   "history.reconciled": "Conciliada",
   "history.readonly": "Conciliado",
+  "history.delete_btn": "Eliminar Transacción",
+  "history.delete_confirm_title": "¿Eliminar transacción?",
+  "history.delete_confirm_body": "Esta acción no se puede deshacer.",
+  "history.delete_confirm_cancel": "Cancelar",
+  "history.delete_confirm_ok": "Eliminar",
+  "history.delete_success": "Transacción eliminada.",
+  "history.delete_error": "Error al eliminar transacción.",
+  "history.delete_error_404": "Transacción no encontrada (puede que ya haya sido eliminada).",
 
 
   "security.section": "Seguridad",
