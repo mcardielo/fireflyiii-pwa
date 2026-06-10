@@ -87,6 +87,7 @@
   "sync.queue_empty": "Cola de sincronización vacía.",
   "sync.queue_full": "Cola llena. Reintenta más tarde.",
   "sync.fail_no_connection": "Intento de sincronización fallido: No hay conexión.",
+  "sync.auth_blocked": "Token inválido o expirado. Actualiza tu token en ⚙️ Config para enviar las transacciones pendientes.",
 
   "status.new_account_warning": "⚠️ Atención: Se ha seleccionado la opción de crear una nueva cuenta ({field}).",
   "status.accounts_system_ok": "✅ Sistema de cuentas activo. Cuentas cargadas: {count}.",

@@ -384,8 +384,6 @@
 
     /**
      * Procesa la cola de sincronización.
-     * No se rompe en el primer error: las transitorias se quedan para reintento,
-     * las de autenticación se descartan (no son recuperables sin cambio de token).
      */
     async function syncQueue() {
         const queue = getQueue();
@@ -411,13 +409,18 @@
                 await sendTransaction(queue[i]);
                 successfulSends++;
             } catch (e) {
-                // Errores de autenticación: no reintentables, descartar de la cola
+                // Errores de autenticación: conservar en la cola y cortar el loop.
+                // Cuando el usuario actualice el token en Config, se reintentarán.
                 if (e.authError) {
                     console.error(`[DEBUG]: Auth error en tx #${i + 1}:`, e.message);
                     authBlocked = true;
-                    failedSends++;
-                    // No se agrega a remaining — se descarta
-                    continue;
+                    // Conservar esta transacción y todas las restantes sin intentar
+                    remaining.push(queue[i]);
+                    for (let j = i + 1; j < queue.length; j++) {
+                        remaining.push(queue[j]);
+                    }
+                    failedSends = queue.length - successfulSends;
+                    break;
                 }
                 console.error(`[DEBUG]: Falló tx #${i + 1}:`, e.message);
                 remaining.push(queue[i]);
@@ -429,15 +432,17 @@
 
         let message = '';
         if (authBlocked) {
-            message += '🔐 Error de autenticación. Verifica el token en Config. ';
+            message += '🔐 ' + __('sync.auth_blocked') + ' ';
             window.FFPWA.updateStatus('server_down');
             fireflyServerAvailable = false;
         }
         if (successfulSends > 0) {
             message += __('sync.sent', { count: successfulSends }) + ' ';
         }
-        if (failedSends > 0) {
+        if (failedSends > 0 && !authBlocked) {
             message += __('sync.failed', { count: failedSends });
+            showStatusMessage(message, 'warning');
+        } else if (authBlocked) {
             showStatusMessage(message, 'warning');
         } else {
             message = message || __('sync.complete');

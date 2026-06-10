@@ -87,6 +87,7 @@
   "sync.queue_empty": "Sync queue is empty.",
   "sync.queue_full": "Queue full. Try again later.",
   "sync.fail_no_connection": "Sync failed: No connection.",
+  "sync.auth_blocked": "Invalid or expired token. Update your token in ⚙️ Settings to send pending transactions.",
 
   "status.new_account_warning": "⚠️ Warning: The option to create a new account ({field}) has been selected.",
   "status.accounts_system_ok": "✅ Account system active. Accounts loaded: {count}.",
