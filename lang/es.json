@@ -184,6 +184,15 @@
   "history.delete_error": "Error al eliminar transacción.",
   "history.delete_error_404": "Transacción no encontrada (puede que ya haya sido eliminada).",
 
+  "history.filter_all": "Todos",
+  "history.filter_account_label": "Cuenta",
+  "history.filter_account_placeholder": "Buscar cuenta...",
+  "history.filter_search_label": "Buscar",
+  "history.filter_search_btn": "Buscar",
+  "history.filter_search_placeholder": "Descripción...",
+  "history.filter_clear": "Limpiar filtros",
+  "history.filter_no_results": "No se encontraron transacciones con esos filtros.",
+
 
   "security.section": "Seguridad",
   "security.auth_label": "Autenticación para cuentas",

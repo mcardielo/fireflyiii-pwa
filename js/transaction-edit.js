@@ -22,6 +22,7 @@
         }
 
         // Immediately show loading state so old data doesn't linger
+        $('#history-filters').addClass('hidden');
         $('#history-list-view').addClass('hidden');
         $('#history-detail').removeClass('hidden');
         $('#history-detail-summary').html(
@@ -541,6 +542,7 @@
             $('#tab-bar .tab-btn[data-screen="accounts"]').addClass('active');
         } else {
             // Volver al listado del historial
+            $('#history-filters').removeClass('hidden');
             $('#history-detail').addClass('hidden');
             $('#history-list-view').removeClass('hidden');
             if (refresh && window.FFPWA.showHistoryScreen) {

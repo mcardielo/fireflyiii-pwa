@@ -321,6 +321,48 @@
                     <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
                 </div>
             </header>
+            <!-- Filter bar -->
+            <div id="history-filters" class="px-4 pt-2 pb-1">
+                <!-- Transaction type segmented control -->
+                <div class="segmented-control mb-3" role="radiogroup" id="history-type-filter">
+                    <button type="button" role="radio" aria-checked="true" data-type="" class="segmented-btn active"><span data-icon="listFilter"></span> <span data-i18n="history.filter_all">Todos</span></button>
+                    <button type="button" role="radio" aria-checked="false" data-type="withdrawal" class="segmented-btn"><span data-icon="banknoteArrowUp"></span> <span data-i18n="transaction.withdrawal">Gasto</span></button>
+                    <button type="button" role="radio" aria-checked="false" data-type="deposit" class="segmented-btn"><span data-icon="banknoteArrowDown"></span> <span data-i18n="transaction.deposit">Depósito</span></button>
+                    <button type="button" role="radio" aria-checked="false" data-type="transfer" class="segmented-btn"><span data-icon="arrowLeftRight"></span> <span data-i18n="transaction.transfer">Transferencia</span></button>
+                </div>
+                <!-- Expense account filter -->
+                <div class="field-card mb-2" id="history-account-filter-wrap">
+                    <div class="field-row">
+                        <span class="field-label"><span data-i18n="history.filter_account_label">Cuenta</span></span>
+                        <div class="field-value">
+                            <div class="relative flex-1">
+                                <input type="text" id="history-account-filter" class="ios-input"
+                                       data-i18n-placeholder="history.filter_account_placeholder"
+                                       placeholder="Buscar cuenta..." autocomplete="off">
+                                <ul id="history-account-dropdown" class="autocomplete-dropdown hidden"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Search by description -->
+                <div class="field-card mb-2">
+                    <div class="field-row">
+                        <span class="field-label"><span data-i18n="history.filter_search_label">Buscar</span></span>
+                        <div class="field-value">
+                            <input type="text" id="history-search" class="ios-input flex-1"
+                                   data-i18n-placeholder="history.filter_search_placeholder"
+                                   placeholder="Descripción..." autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+                <!-- Clear filters (right-aligned, hidden by default) -->
+                <div id="history-clear-wrap" class="text-right hidden">
+                    <button id="history-clear-filters" class="segmented-btn" style="color:var(--ios-red)">
+                        <span data-icon="trash2"></span>
+                        <span data-i18n="history.filter_clear">Limpiar filtros</span>
+                    </button>
+                </div>
+            </div>
             <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4 ios-scroll">
                 <!-- List view -->
                 <div id="history-list-view">

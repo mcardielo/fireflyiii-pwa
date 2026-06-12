@@ -184,6 +184,15 @@
   "history.delete_error": "Error deleting transaction.",
   "history.delete_error_404": "Transaction not found (may have been already deleted).",
 
+  "history.filter_all": "All",
+  "history.filter_account_label": "Account",
+  "history.filter_account_placeholder": "Search account...",
+  "history.filter_search_label": "Search",
+  "history.filter_search_btn": "Search",
+  "history.filter_search_placeholder": "Description...",
+  "history.filter_clear": "Clear filters",
+  "history.filter_no_results": "No transactions found with those filters.",
+
 
   "security.section": "Security",
   "security.auth_label": "Account authentication",
