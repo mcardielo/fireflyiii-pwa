@@ -11,6 +11,7 @@
     var currentPage = 1;
     var totalPages = 1;
     var isLoading = false;
+    var requestId = 0;
 
     // Filter state — persists across tab switches
     window.FFPWA.historyFilters = window.FFPWA.historyFilters || {
@@ -211,13 +212,17 @@
 
         isLoading = true;
         var nextPage = currentPage + 1;
+        requestId++;
+        var thisRequest = requestId;
 
         $('#history-load-more').addClass('hidden');
         $('#history-loading').removeClass('hidden');
 
         fetchTransactions(nextPage).then(function(result) {
+            if (requestId !== thisRequest) return;
             renderTransactions(result);
         }).catch(function(err) {
+            if (requestId !== thisRequest) return;
             $('#history-loading').addClass('hidden');
             $('#history-error').removeClass('hidden').text('❌ ' + err.message);
             isLoading = false;
@@ -230,6 +235,8 @@
         currentPage = 1;
         totalPages = 1;
         isLoading = false;
+        requestId++;
+        var thisRequest = requestId;
 
         $('#history-list').empty();
         $('#history-error').addClass('hidden');
@@ -239,8 +246,10 @@
         updateClearButton();
 
         fetchTransactions(1).then(function(result) {
+            if (requestId !== thisRequest) return;
             renderTransactions(result);
         }).catch(function(err) {
+            if (requestId !== thisRequest) return;
             $('#history-loading').addClass('hidden');
             $('#history-error').removeClass('hidden').text('❌ ' + err.message);
         });
@@ -358,6 +367,8 @@
         currentPage = 1;
         totalPages = 1;
         isLoading = false;
+
+        $('#history-filters').removeClass('hidden');
 
         // Restore filter UI from persistent state
         restoreFilterUI();
