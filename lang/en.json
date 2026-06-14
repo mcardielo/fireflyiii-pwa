@@ -175,7 +175,7 @@
   "history.edit_no_data": "No transaction data found.",
   "history.reconciled": "Reconciled",
   "history.readonly": "Reconciled",
-  "history.delete_btn": "Delete Transaction",
+  "history.delete_btn": "Delete",
   "history.delete_confirm_title": "Delete transaction?",
   "history.delete_confirm_body": "This action cannot be undone.",
   "history.delete_confirm_cancel": "Cancel",
@@ -183,6 +183,9 @@
   "history.delete_success": "Transaction deleted.",
   "history.delete_error": "Error deleting transaction.",
   "history.delete_error_404": "Transaction not found (may have been already deleted).",
+  "history.duplicate_btn": "Duplicate",
+  "history.duplicate_success": "Transaction duplicated successfully.",
+  "history.duplicating_hint": "Edit fields and save to create a copy.",
 
   "history.filter_all": "All",
   "history.filter_account_label": "Account",

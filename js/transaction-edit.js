@@ -12,6 +12,7 @@
     var currentEditTxData = null;
     var editBudgets = [];
     var editCategories = [];
+    var isDuplicating = false;
 
     /* ─── Public entry point ─── */
 
@@ -119,6 +120,8 @@
 
         $('#history-list-view').addClass('hidden');
         $('#history-detail').removeClass('hidden');
+        isDuplicating = false;
+
         $('#history-delete-btn').toggleClass('hidden', reconciled);
 
         var type = tx.type || 'withdrawal';
@@ -163,6 +166,10 @@
         $('#history-delete-btn')
             .prop('disabled', false)
             .html(Icons.trash2 + ' <span data-i18n="history.delete_btn">' + __('history.delete_btn') + '</span>');
+        $('#history-duplicate-btn')
+            .prop('disabled', false)
+            .removeClass('hidden')
+            .html(Icons.copy + ' <span data-i18n="history.duplicate_btn">' + __('history.duplicate_btn') + '</span>');
         $('#history-save-btn')
             .prop('disabled', false)
             .html('<span data-i18n="history.save">' + __('history.save') + '</span>');
@@ -332,7 +339,8 @@
         e.preventDefault();
 
         var tx = currentEditTxData;
-        if (!tx || !currentEditGroupId) return;
+        if (!tx) return;
+        if (!isDuplicating && !currentEditGroupId) return;
 
         var payload = buildUpdatePayload(tx);
 
@@ -344,9 +352,14 @@
         var url = window.FFPWA.config.url;
         var token = window.FFPWA.config.token;
 
+        var endpoint = isDuplicating
+            ? url + '/api/v1/transactions'
+            : url + '/api/v1/transactions/' + currentEditGroupId;
+        var method = isDuplicating ? 'POST' : 'PUT';
+
         $.ajax({
-            url: url + '/api/v1/transactions/' + currentEditGroupId,
-            method: 'PUT',
+            url: endpoint,
+            method: method,
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Content-Type': 'application/json'
@@ -355,11 +368,13 @@
             dataType: 'json',
             timeout: 30000,
             success: function() {
+                var msg = isDuplicating ? 'history.duplicate_success' : 'history.edit_saved';
                 $status.removeClass('hidden error').addClass('success')
-                    .html('✅ ' + __('history.edit_saved'));
+                    .html('✅ ' + __(msg));
                 $btn.prop('disabled', false).html(__('history.saved_btn'));
                 currentEditTxData = null;
                 currentEditGroupId = null;
+                isDuplicating = false;
 
                 setTimeout(function() {
                     goBackToList(true);
@@ -466,6 +481,36 @@
                 $btn.find('[data-i18n="history.delete_btn"]').text(__('history.delete_btn'));
             }
         });
+    }
+
+    /* ─── Duplicate handler ─── */
+
+    function duplicateTransaction() {
+        isDuplicating = true;
+
+        // Hide action buttons
+        $('#history-delete-btn').addClass('hidden');
+        $('#history-duplicate-btn').addClass('hidden');
+
+        // Update date/time to current
+        var now = new Date();
+        var datePart = now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0');
+        var timePart = String(now.getHours()).padStart(2, '0') + ':' +
+            String(now.getMinutes()).padStart(2, '0');
+        $('#edit-date').val(datePart);
+        $('#edit-time').val(timePart);
+
+        // Change save button label
+        $('#history-save-btn').html('<span data-i18n="history.duplicate_btn">' + __('history.duplicate_btn') + '</span>');
+
+        // Show hint
+        $('#edit-status-message')
+            .removeClass('hidden error').addClass('success')
+            .html('📋 ' + __('history.duplicating_hint'));
+
+        if (window.i18nTranslateDOM) window.i18nTranslateDOM();
     }
 
     /* ─── Go back to list ─── */
@@ -660,6 +705,10 @@
 
         $(document).on('click', '#history-delete-btn', function() {
             deleteTransaction();
+        });
+
+        $(document).on('click', '#history-duplicate-btn', function() {
+            duplicateTransaction();
         });
     });
 

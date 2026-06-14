@@ -175,7 +175,7 @@
   "history.edit_no_data": "No se encontraron datos de la transacción.",
   "history.reconciled": "Conciliada",
   "history.readonly": "Conciliado",
-  "history.delete_btn": "Eliminar Transacción",
+  "history.delete_btn": "Eliminar",
   "history.delete_confirm_title": "¿Eliminar transacción?",
   "history.delete_confirm_body": "Esta acción no se puede deshacer.",
   "history.delete_confirm_cancel": "Cancelar",
@@ -183,6 +183,9 @@
   "history.delete_success": "Transacción eliminada.",
   "history.delete_error": "Error al eliminar transacción.",
   "history.delete_error_404": "Transacción no encontrada (puede que ya haya sido eliminada).",
+  "history.duplicate_btn": "Duplicar",
+  "history.duplicate_success": "Transacción duplicada exitosamente.",
+  "history.duplicating_hint": "Edita los campos y guarda para crear una copia.",
 
   "history.filter_all": "Todos",
   "history.filter_account_label": "Cuenta",
