@@ -369,6 +369,7 @@
         isLoading = false;
 
         $('#history-filters').removeClass('hidden');
+        $('#history-list-view').removeClass('hidden');
 
         // Restore filter UI from persistent state
         restoreFilterUI();

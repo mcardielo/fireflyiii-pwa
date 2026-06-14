@@ -515,4 +515,15 @@
         }
     });
 
+    /* ─── Exposed: refresh current account transactions ─── */
+    window.FFPWA.refreshCurrentAccount = function() {
+        if (currentAccount && currentAccount.id) {
+            $('#detail-loading').removeClass('hidden');
+            $('#detail-list').empty();
+            $('#detail-load-more').addClass('hidden');
+            $('#detail-error').addClass('hidden');
+            fetchTransactions(currentAccount.id, 1).then(renderTransactions).catch(handleDetailError);
+        }
+    };
+
 })();

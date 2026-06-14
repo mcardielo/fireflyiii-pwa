@@ -45,11 +45,7 @@
             currentEditGroupId = groupId;
             currentEditTxData = tx;
 
-            if (reconciled) {
-                showReadOnlyDetail(groupData, tx, txIdx);
-            } else {
-                showDetailView(groupData, tx, txIdx);
-            }
+            showTransactionDetail(tx, { reconciled: reconciled });
         }).catch(function(err) {
             window.FFPWA.showStatusMessage('❌ ' + err.message, 'error');
         });
@@ -117,10 +113,13 @@
 
     /* ─── Show/hide views ─── */
 
-    function showReadOnlyDetail(groupData, tx, txIdx) {
+    function showTransactionDetail(tx, opts) {
+        opts = opts || {};
+        var reconciled = opts.reconciled === true;
+
         $('#history-list-view').addClass('hidden');
         $('#history-detail').removeClass('hidden');
-        $('#history-delete-btn').addClass('hidden');
+        $('#history-delete-btn').toggleClass('hidden', reconciled);
 
         var type = tx.type || 'withdrawal';
         var amount = parseFloat(tx.amount) || 0;
@@ -136,14 +135,18 @@
         var sign = type === 'withdrawal' ? '-' : '+';
         var colorClass = type === 'withdrawal' ? 'text-ios-red' : (type === 'deposit' ? 'text-ios-green' : 'text-ios-orange');
 
+        // Badge: "Conciliado" for reconciled, "Editable" otherwise
+        var badgeHtml = reconciled
+            ? '<span class="text-[12px] text-ios-orange font-medium flex items-center" style="gap:4px;">' +
+                Icons.checkCheck + ' <span data-i18n="history.readonly">Conciliado</span></span>'
+            : '<span class="text-[12px] text-ios-green font-medium flex items-center" style="gap:4px;">' +
+                Icons.pencil + ' <span data-i18n="history.editable">Editable</span></span>';
+
         var summaryHtml =
             '<div class="flex items-center justify-between" style="margin-bottom:12px;">' +
                 '<span class="text-[12px] font-semibold uppercase tracking-wide text-ios-text-secondary flex items-center" style="gap:6px;">' +
                     typeIconHtml + '<span>' + window.FFPWA.escapeHtml(typeLabel) + '</span>' +
-                '</span>' +
-                '<span class="text-[12px] text-ios-orange font-medium flex items-center" style="gap:4px;">' +
-                    Icons.checkCheck + ' <span data-i18n="history.readonly">Conciliado</span>' +
-                '</span>' +
+                '</span>' + badgeHtml +
             '</div>' +
             '<div style="height:1px;background:var(--ios-separator);margin:0 0 14px 0;"></div>' +
             '<p class="text-[17px] font-semibold text-ios-text">' + window.FFPWA.escapeHtml(description) + '</p>' +
@@ -156,67 +159,36 @@
 
         $('#history-detail-summary').html(summaryHtml);
 
-        $('#history-edit-form').removeClass('hidden');
-        populateFormReadOnly(tx);
-        if (window.i18nTranslateDOM) window.i18nTranslateDOM();
-    }
-
-    function showDetailView(groupData, tx, txIdx) {
-        $('#history-list-view').addClass('hidden');
-        $('#history-detail').removeClass('hidden');
-        $('#history-delete-btn').removeClass('hidden');
-
-        var type = tx.type || 'withdrawal';
-        var amount = parseFloat(tx.amount) || 0;
-        var symbol = tx.currency_symbol || '$';
-        var decimals = tx.currency_decimal_places || 2;
-        var description = tx.description || __('detail.no_description');
-        var dateStr = tx.date || '';
-        var sourceName = tx.source_name || '';
-        var destName = tx.destination_name || '';
-
-        var typeLabel = __('transaction.' + type);
-        var typeIconHtml = type === 'withdrawal' ? Icons.banknoteArrowUp : (type === 'deposit' ? Icons.banknoteArrowDown : Icons.arrowLeftRight);
-        var sign = type === 'withdrawal' ? '-' : '+';
-        var colorClass = type === 'withdrawal' ? 'text-ios-red' : (type === 'deposit' ? 'text-ios-green' : 'text-ios-orange');
-
-        var summaryHtml =
-            '<div class="flex items-center justify-between" style="margin-bottom:12px;">' +
-                '<span class="text-[12px] font-semibold uppercase tracking-wide text-ios-text-secondary flex items-center" style="gap:6px;">' +
-                    typeIconHtml + '<span>' + window.FFPWA.escapeHtml(typeLabel) + '</span>' +
-                '</span>' +
-                '<span class="text-[12px] text-ios-green font-medium flex items-center" style="gap:4px;">' +
-                    Icons.pencil + ' <span data-i18n="history.editable">Editable</span>' +
-                '</span>' +
-            '</div>' +
-            '<div style="height:1px;background:var(--ios-separator);margin:0 0 14px 0;"></div>' +
-            '<p class="text-[17px] font-semibold text-ios-text">' + window.FFPWA.escapeHtml(description) + '</p>' +
-            '<p class="text-[28px] font-bold ' + colorClass + '">' +
-                sign + ' ' + window.FFPWA.formatMoney(Math.abs(amount), symbol, decimals) +
-            '</p>' +
-            '<p class="text-[13px] text-ios-text-secondary">' +
-                window.FFPWA.escapeHtml(window.FFPWA.formatDate(dateStr)) + ' · ' + window.FFPWA.escapeHtml(sourceName) + ' → ' + window.FFPWA.escapeHtml(destName) +
-            '</p>';
-
-        $('#history-detail-summary').html(summaryHtml);
+        // Restore delete and save buttons to clean state
+        $('#history-delete-btn')
+            .prop('disabled', false)
+            .html(Icons.trash2 + ' <span data-i18n="history.delete_btn">' + __('history.delete_btn') + '</span>');
+        $('#history-save-btn')
+            .prop('disabled', false)
+            .html('<span data-i18n="history.save">' + __('history.save') + '</span>');
 
         $('#history-edit-form').removeClass('hidden');
-        // Fetch budgets and categories for the form
-        Promise.all([fetchBudgets(), fetchCategories()]).then(function(results) {
-            editBudgets = results[0] || [];
-            editCategories = results[1] || [];
-            populateBudgetDropdown();
-            populateForm(tx);
-            setupEditAutocomplete();
-        }).catch(function() {
-            // If fetch fails, still show form with empty dropdowns
-            editBudgets = [];
-            editCategories = [];
-            populateForm(tx);
-            setupEditAutocomplete();
-        });
+        $('#edit-status-message').addClass('hidden');
 
-        if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+        if (reconciled) {
+            populateForm(tx, { readOnly: true });
+            if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+        } else {
+            Promise.all([fetchBudgets(), fetchCategories()]).then(function(results) {
+                editBudgets = results[0] || [];
+                editCategories = results[1] || [];
+                populateBudgetDropdown();
+                populateForm(tx, { readOnly: false });
+                setupEditAutocomplete();
+                if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+            }).catch(function() {
+                editBudgets = [];
+                editCategories = [];
+                populateForm(tx, { readOnly: false });
+                setupEditAutocomplete();
+                if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+            });
+        }
     }
 
     /* ─── Budget dropdown ─── */
@@ -229,9 +201,12 @@
         });
     }
 
-    /* ─── Populate form (read-only) ─── */
+    /* ─── Populate form ─── */
 
-    function populateFormReadOnly(tx) {
+    function populateForm(tx, opts) {
+        opts = opts || {};
+        var readOnly = opts.readOnly === true;
+
         var dateStr = tx.date || '';
         var datePart = dateStr.split('T')[0] || '';
         var timePart = '';
@@ -243,53 +218,19 @@
         var amount = parseFloat(tx.amount) || 0;
         var foreignAmt = parseFloat(tx.foreign_amount);
 
-        // Ensure budget dropdown has some data (may be empty in readonly if fetch didn't run)
-        if ($('#edit-budget option').length <= 1 && tx.budget_name) {
+        // Readonly: ensure budget dropdown has data from tx data
+        if (readOnly && $('#edit-budget option').length <= 1 && tx.budget_name) {
             $('#edit-budget').empty()
                 .append('<option value="">—</option>')
                 .append('<option value="' + window.FFPWA.escapeHtml(String(tx.budget_id || '')) + '" selected>' + window.FFPWA.escapeHtml(tx.budget_name) + '</option>');
         }
 
-        $('#history-edit-form .ios-input, #history-edit-form .ios-select').prop('disabled', true).css('opacity', '0.7');
-        $('#edit-description').val(tx.description || '');
-        $('#edit-source-account').val(tx.source_name || '');
-        $('#edit-source-account-id').val(tx.source_id || '');
-        $('#edit-dest-account').val(tx.destination_name || '');
-        $('#edit-dest-account-id').val(tx.destination_id || '');
-        $('#edit-date').val(datePart);
-        $('#edit-time').val(timePart);
-        $('#edit-amount').val(Math.abs(amount));
-        $('#edit-currency-code').text(tx.currency_code || '');
-        $('#edit-foreign-amount').val(!isNaN(foreignAmt) && foreignAmt !== 0 ? Math.abs(foreignAmt) : '').prop('disabled', true);
-        $('#edit-foreign-currency').val(tx.foreign_currency_code || '').prop('disabled', true);
-        $('#edit-budget').val(tx.budget_id || '');
-        $('#edit-category').val(tx.category_name || '');
+        // Set disabled state on all form inputs
+        $('#history-edit-form .ios-input, #history-edit-form .ios-select')
+            .prop('disabled', readOnly)
+            .css('opacity', readOnly ? '0.7' : '1');
 
-        if (tx.foreign_amount || tx.foreign_currency_code) {
-            $('#edit-foreign-row').removeClass('hidden');
-        } else {
-            $('#edit-foreign-row').addClass('hidden');
-        }
-
-        $('#history-save-btn').addClass('hidden');
-        $('#edit-status-message').addClass('hidden');
-        $('#history-edit-form .ios-input').css('opacity', '0.7');
-    }
-
-    /* ─── Populate form (edit mode) ─── */
-
-    function populateForm(tx) {
-        var dateStr = tx.date || '';
-        var datePart = dateStr.split('T')[0] || '';
-        var timePart = '';
-        if (dateStr.indexOf('T') !== -1) {
-            var timeMatch = dateStr.split('T')[1];
-            if (timeMatch) timePart = timeMatch.substring(0, 5);
-        }
-
-        // Enable all inputs
-        $('#history-edit-form .ios-input, #history-edit-form .ios-select').prop('disabled', false).css('opacity', '1');
-
+        // Fill all fields
         $('#edit-description').val(tx.description || '');
         $('#edit-source-account').val(tx.source_name || '');
         $('#edit-source-account-id').val(tx.source_id || '');
@@ -300,35 +241,36 @@
         $('#edit-date').val(datePart);
         $('#edit-time').val(timePart);
 
-        var amount = parseFloat(tx.amount) || 0;
         $('#edit-amount').val(Math.abs(amount));
         $('#edit-currency-code').text(tx.currency_code || '');
 
-        var foreignAmount = parseFloat(tx.foreign_amount);
-        if (!isNaN(foreignAmount) && foreignAmount !== 0) {
-            $('#edit-foreign-amount').val(Math.abs(foreignAmount));
+        // Foreign amount
+        if (!isNaN(foreignAmt) && foreignAmt !== 0) {
+            $('#edit-foreign-amount').val(Math.abs(foreignAmt));
         } else {
             $('#edit-foreign-amount').val('');
         }
         $('#edit-foreign-currency').val(tx.foreign_currency_code || '');
 
-        // Budget dropdown: select current value
+        // Budget
         if (tx.budget_id) {
             $('#edit-budget').val(tx.budget_id);
         } else {
             $('#edit-budget').val('');
         }
 
-        // Category (autocomplete input, populated with name)
+        // Category
         $('#edit-category').val(tx.category_name || '');
 
+        // Foreign row visibility
         if (tx.foreign_amount || tx.foreign_currency_code) {
             $('#edit-foreign-row').removeClass('hidden');
         } else {
             $('#edit-foreign-row').addClass('hidden');
         }
 
-        $('#history-save-btn').removeClass('hidden');
+        // Save button and status
+        $('#history-save-btn').toggleClass('hidden', readOnly);
         $('#edit-status-message').addClass('hidden');
     }
 
@@ -482,7 +424,8 @@
     function executeDelete() {
         var $btn = $('#history-delete-btn');
         var $status = $('#edit-status-message');
-        $btn.prop('disabled', true).text(__('transaction.submit_sending'));
+        $btn.prop('disabled', true);
+        $btn.find('[data-i18n="history.delete_btn"]').text(__('transaction.submit_sending'));
         $status.addClass('hidden');
 
         var url = window.FFPWA.config.url;
@@ -519,7 +462,8 @@
                 }
                 $status.removeClass('hidden success').addClass('error')
                     .html('❌ ' + msg);
-                $btn.prop('disabled', false).html(__('history.delete_btn'));
+                $btn.prop('disabled', false);
+                $btn.find('[data-i18n="history.delete_btn"]').text(__('history.delete_btn'));
             }
         });
     }
@@ -533,13 +477,15 @@
         if (origin === 'accounts') {
             // Volver al detalle de cuenta específico
             $('#history-detail').addClass('hidden');
-            $('#history-list-view').removeClass('hidden');
-            $('#history-container').addClass('hidden');
-            $('#accounts-container').removeClass('hidden');
+            $('#history-container').hide();
+            $('#accounts-container').show().removeClass('hidden');
             $('#accounts-list').addClass('hidden');
             $('#account-detail').removeClass('hidden');
             $('#tab-bar .tab-btn').removeClass('active');
             $('#tab-bar .tab-btn[data-screen="accounts"]').addClass('active');
+            if (refresh && window.FFPWA.refreshCurrentAccount) {
+                window.FFPWA.refreshCurrentAccount();
+            }
         } else {
             // Volver al listado del historial
             $('#history-filters').removeClass('hidden');

@@ -159,7 +159,7 @@
   "history.loading": "Loading history...",
   "history.loading_tx": "Loading transaction...",
   "history.error_fetch": "Error loading history.",
-  "history.back": "← History",
+  "history.back": "← Back",
   "history.edit_title": "Edit Transaction",
   "history.editable": "Editable",
   "history.date": "Date",
