@@ -370,6 +370,7 @@
 
         $('#history-filters').removeClass('hidden');
         $('#history-list-view').removeClass('hidden');
+        $('#history-detail').addClass('hidden');
 
         // Restore filter UI from persistent state
         restoreFilterUI();
