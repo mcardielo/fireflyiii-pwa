@@ -249,6 +249,13 @@
         // destination_name siempre se incluye
         transaction.destination_name = dest.name;
 
+        // ── GPS location ──
+        if (window.FFPWA.config.gpsEnabled && window.FFPWA.lastLocation) {
+            transaction.latitude = window.FFPWA.lastLocation.latitude;
+            transaction.longitude = window.FFPWA.lastLocation.longitude;
+            transaction.zoom_level = window.FFPWA.lastLocation.zoom_level;
+        }
+
         return {
             "error_if_duplicate_hash": true,
             "apply_rules": true,

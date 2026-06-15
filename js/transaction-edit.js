@@ -32,6 +32,16 @@
                 '<p class="text-sm text-ios-text-secondary">' + __('history.loading_tx') + '</p>' +
             '</div>'
         );
+
+        // Reset background por si venía de otra tx con mapa
+        $('#history-detail-summary').css({
+            'background-image': '',
+            'background-size': '',
+            'background-position': '',
+            'border-radius': '',
+            'padding': ''
+        });
+
         // Clear form to prevent old data flash
         $('#history-edit-form')[0].reset();
         $('#history-edit-form').addClass('hidden');
@@ -161,6 +171,32 @@
             '</p>';
 
         $('#history-detail-summary').html(summaryHtml);
+
+        // ── Mapa de fondo si la transacción tiene ubicación GPS ──
+        if (tx.latitude && tx.longitude) {
+            // Convertir lat/lon a tile de OpenStreetMap
+            // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+            var bgZoom = 15;
+            var n = Math.pow(2, bgZoom);
+            var tileX = Math.floor((tx.longitude + 180) / 360 * n);
+            var latRad = tx.latitude * Math.PI / 180;
+            var tileY = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
+
+            var tileUrl = 'https://tile.openstreetmap.org/' + bgZoom + '/' + tileX + '/' + tileY + '.png';
+
+            var isDark = window.FFPWA.theme && window.FFPWA.theme.getCurrent() === 'dark';
+            var overlayColor = isDark ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.6)';
+
+            $('#history-detail-summary').css({
+                'background-image': 'linear-gradient(' + overlayColor + ', ' + overlayColor + '), url(' + tileUrl + ')',
+                'background-size': 'cover',
+                'background-position': 'center',
+                'border-radius': '14px',
+                'padding': '16px',
+                'position': 'relative'
+            });
+            console.log('🗺️ Mapa de fondo aplicado (OSM tile):', tx.latitude, tx.longitude, 'zoom', bgZoom);
+        }
 
         // Restore delete and save buttons to clean state
         $('#history-delete-btn')
@@ -328,6 +364,13 @@
 
         if (categoryName) {
             transaction.category_name = categoryName;
+        }
+
+        // ── GPS location ──
+        if (window.FFPWA.config.gpsEnabled && window.FFPWA.lastLocation) {
+            transaction.latitude = window.FFPWA.lastLocation.latitude;
+            transaction.longitude = window.FFPWA.lastLocation.longitude;
+            transaction.zoom_level = window.FFPWA.lastLocation.zoom_level;
         }
 
         return { "transactions": [transaction] };

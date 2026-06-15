@@ -156,6 +156,22 @@
                     <div id="security-message-2" class="ios-status hidden mt-4"></div>
                 </div>
 
+                <!-- ── Ubicación GPS ── -->
+                <p class="section-label" data-i18n="config.gps_section">Ubicación</p>
+                <div class="field-card mb-6">
+                    <div class="field-row">
+                        <span class="field-label field-label--tight" data-i18n="config.gps_label">Guardar ubicación GPS en transacciones</span>
+                        <div class="field-value">
+                            <label class="ios-switch">
+                                <input type="checkbox" id="gps-toggle">
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-ios-text-secondary px-1 mb-6" data-i18n="config.gps_hint">Se usará tu ubicación actual al registrar nuevas transacciones o duplicar existentes.</p>
+                <div id="gps-message" class="ios-status hidden"></div>
+
             </div>
             <footer class="sticky-footer">
                 <button id="save-default-account-btn" class="ios-btn-primary">

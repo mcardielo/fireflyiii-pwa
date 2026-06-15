@@ -2,12 +2,14 @@
     'use strict';
 
     const DEFAULT_ACCOUNT_KEY = 'FIREFLY_DEFAULT_SOURCE_ACCOUNT';
+    const GPS_ENABLED_KEY = 'FIREFLY_GPS_ENABLED';
 
     window.FFPWA = window.FFPWA || {};
     window.FFPWA.config = {
         url: null,
         token: null,
-        defaultSourceAccount: null
+        defaultSourceAccount: null,
+        gpsEnabled: false
     };
 
     /**
@@ -118,6 +120,7 @@
         loadAssetAccountsForPicker();
         setTimeout(function() {
             initSecurityUI('-2');
+            initGPSToggle();
             if (window.i18nTranslateDOM) window.i18nTranslateDOM();
         }, 100);
     }
@@ -243,6 +246,16 @@
         window.FFPWA.config.url = storedUrl;
         window.FFPWA.config.token = storedToken;
 
+        // Cargar preferencia GPS
+        var gpsEnabled = localStorage.getItem(GPS_ENABLED_KEY);
+        window.FFPWA.config.gpsEnabled = gpsEnabled === 'true';
+        if (window.FFPWA.config.gpsEnabled) {
+            console.log('📍 GPS enabled, capturando ubicación inicial...');
+            window.FFPWA.getLocation().then(function(loc) {
+                window.FFPWA.lastLocation = loc;
+            });
+        }
+
         if (storedDefault) {
             window.FFPWA.config.defaultSourceAccount = JSON.parse(storedDefault);
             console.log('Cuenta default encontrada:', window.FFPWA.config.defaultSourceAccount.name);
@@ -253,6 +266,36 @@
         }
 
         return true;
+    }
+
+    /* ─── GPS Toggle ─── */
+
+    function initGPSToggle() {
+        var $toggle = $('#gps-toggle');
+        var $msg = $('#gps-message');
+        if (!$toggle.length) return;
+
+        var enabled = window.FFPWA.config.gpsEnabled === true;
+        $toggle.prop('checked', enabled);
+
+        $toggle.off('change').on('change', function() {
+            var on = $(this).is(':checked');
+            localStorage.setItem(GPS_ENABLED_KEY, on ? 'true' : 'false');
+            window.FFPWA.config.gpsEnabled = on;
+
+            if (on) {
+                window.FFPWA.getLocation().then(function(loc) {
+                    window.FFPWA.lastLocation = loc;
+                });
+                $msg.removeClass('hidden success error').addClass('success')
+                    .text('✅ ' + (window.__ && window.__('config.gps_enabled') || 'Ubicación activada'));
+            } else {
+                window.FFPWA.lastLocation = null;
+                $msg.removeClass('hidden success error').addClass('warning')
+                    .text('🔕 ' + (window.__ && window.__('config.gps_disabled') || 'Ubicación desactivada'));
+            }
+            setTimeout(function() { $msg.addClass('hidden'); }, 2000);
+        });
     }
 
     /* ─── Security UI ─── */

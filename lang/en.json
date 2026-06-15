@@ -212,5 +212,11 @@
   "lock.pin_label": "Or enter your PIN",
   "lock.pin_error": "Incorrect PIN",
   "lock.verifying": "Verifying...",
-  "lock.cancel": "Cancel"
+  "lock.cancel": "Cancel",
+
+  "config.gps_section": "Location",
+  "config.gps_label": "Save GPS location in transactions",
+  "config.gps_hint": "Your current location will be saved when recording new transactions or duplicating existing ones.",
+  "config.gps_enabled": "Location enabled",
+  "config.gps_disabled": "Location disabled"
 }
