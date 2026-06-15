@@ -141,7 +141,7 @@
         // Badge: "Conciliado" for reconciled, "Editable" otherwise
         var badgeHtml = reconciled
             ? '<span class="text-[12px] text-ios-orange font-medium flex items-center" style="gap:4px;">' +
-                Icons.checkCheck + ' <span data-i18n="history.readonly">Conciliado</span></span>'
+                Icons.checkCheck + ' <span data-i18n="history.reconciled">Conciliado</span></span>'
             : '<span class="text-[12px] text-ios-green font-medium flex items-center" style="gap:4px;">' +
                 Icons.pencil + ' <span data-i18n="history.editable">Editable</span></span>';
 

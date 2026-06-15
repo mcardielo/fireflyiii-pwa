@@ -174,7 +174,6 @@
   "history.edit_no_group": "Cannot edit a transaction that belongs to a group (split).",
   "history.edit_no_data": "No transaction data found.",
   "history.reconciled": "Reconciled",
-  "history.readonly": "Reconciled",
   "history.delete_btn": "Delete",
   "history.delete_confirm_title": "Delete transaction?",
   "history.delete_confirm_body": "This action cannot be undone.",

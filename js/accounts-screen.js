@@ -357,6 +357,11 @@
             var displayDate = window.FFPWA.formatDate(dateStr);
             var categoryName = subTx.category_name || '';
 
+            // Indicador de reconciliada
+            var reconciledBadge = subTx.reconciled ?
+                '<span class="text-[10px] text-ios-green font-medium ml-1">✓ ' + __('history.reconciled') + '</span>' :
+                '';
+
             // Determine display direction and other party
             var isNegative = (type === 'withdrawal');
             var otherParty = '';
@@ -379,7 +384,7 @@
                 'style="cursor:pointer;">' +
                 '<div class="field-row" style="justify-content:space-between;padding:10px 14px;">' +
                     '<div style="flex:1;min-width:0;">' +
-                        '<p class="text-[13px] text-ios-text-secondary">' + window.FFPWA.escapeHtml(displayDate) + '</p>' +
+                        '<p class="text-[13px] text-ios-text-secondary">' + window.FFPWA.escapeHtml(displayDate) + reconciledBadge + '</p>' +
                         '<p class="text-[15px] font-medium text-ios-text truncate">' + window.FFPWA.escapeHtml(description) + '</p>' +
                         (otherParty ? '<p class="text-[12px] text-ios-text-secondary truncate">' + otherParty + '</p>' : '') +
                         (categoryName ? '<p class="text-[11px] text-ios-blue mt-0.5">📂 ' + window.FFPWA.escapeHtml(categoryName) + '</p>' : '') +

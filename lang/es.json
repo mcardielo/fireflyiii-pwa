@@ -174,7 +174,6 @@
   "history.edit_no_group": "No se puede editar una transacción que pertenece a un grupo (split).",
   "history.edit_no_data": "No se encontraron datos de la transacción.",
   "history.reconciled": "Conciliada",
-  "history.readonly": "Conciliado",
   "history.delete_btn": "Eliminar",
   "history.delete_confirm_title": "¿Eliminar transacción?",
   "history.delete_confirm_body": "Esta acción no se puede deshacer.",
