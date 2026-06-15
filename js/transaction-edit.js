@@ -488,6 +488,11 @@
     function duplicateTransaction() {
         isDuplicating = true;
 
+        // Enable form fields (may be disabled for reconciled transactions)
+        $('#history-edit-form .ios-input, #history-edit-form .ios-select')
+            .prop('disabled', false).css('opacity', '1');
+        $('#history-save-btn').removeClass('hidden');
+
         // Hide action buttons
         $('#history-delete-btn').addClass('hidden');
         $('#history-duplicate-btn').addClass('hidden');
@@ -504,6 +509,18 @@
 
         // Change save button label
         $('#history-save-btn').html('<span data-i18n="history.duplicate_btn">' + __('history.duplicate_btn') + '</span>');
+
+        // Ensure autocomplete + budgets are loaded (reconciled tx skip these)
+        if (!editBudgets.length && !editCategories.length) {
+            Promise.all([fetchBudgets(), fetchCategories()]).then(function(results) {
+                editBudgets = results[0] || [];
+                editCategories = results[1] || [];
+                populateBudgetDropdown();
+                setupEditAutocomplete();
+            }).catch(function() {
+                setupEditAutocomplete();
+            });
+        }
 
         // Show hint
         $('#edit-status-message')
