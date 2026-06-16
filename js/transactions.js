@@ -623,8 +623,9 @@
             }
         }, 15000);
 
-        // Al volver a la PWA (tab activo), hacer health check inmediato si hay cola pendiente
+        // Al volver a la PWA (tab activo).
         document.addEventListener('visibilitychange', () => {
+            // hacer health check inmediato si hay cola pendiente
             if (!document.hidden && getQueue().length > 0) {
                 console.log('[HEALTH] Usuario volvió a la PWA. Verificando servidor...');
                 window.FFPWA.updateStatus('checking');
@@ -636,6 +637,13 @@
                         fireflyServerAvailable = false;
                         window.FFPWA.updateStatus('server_down');
                     }
+                });
+            }
+
+            // refrescar ubicación GPS
+            if (!document.hidden && window.FFPWA.config && window.FFPWA.config.gpsEnabled) {
+                window.FFPWA.getLocation().then(function(loc) {
+                    if (loc) window.FFPWA.lastLocation = loc;
                 });
             }
         });

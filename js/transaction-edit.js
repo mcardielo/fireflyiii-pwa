@@ -366,8 +366,8 @@
             transaction.category_name = categoryName;
         }
 
-        // ── GPS location ──
-        if (window.FFPWA.config.gpsEnabled && window.FFPWA.lastLocation) {
+        // ── GPS location (solo en duplicación, no en edición) ──
+        if (window.FFPWA.config.gpsEnabled && window.FFPWA.lastLocation && isDuplicating) {
             transaction.latitude = window.FFPWA.lastLocation.latitude;
             transaction.longitude = window.FFPWA.lastLocation.longitude;
             transaction.zoom_level = window.FFPWA.lastLocation.zoom_level;
