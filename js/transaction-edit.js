@@ -34,6 +34,7 @@
         );
 
         // Reset background por si venía de otra tx con mapa
+        $('#map-open-btn-container').addClass('hidden');
         $('#history-detail-summary').css({
             'background-image': '',
             'background-size': '',
@@ -162,6 +163,11 @@
                 '</span>' + badgeHtml +
             '</div>' +
             '<div style="height:1px;background:var(--ios-separator);margin:0 0 14px 0;"></div>' +
+            '<div id="map-open-btn-container" class="hidden" style="margin-bottom:10px;text-align:-webkit-right;">' +
+                '<button id="map-open-btn" class="flex items-center ios-link-btn" style="gap:5px;font-size:13px;background:transparent;color: var(--ios-text);border:1px solid var(--ios-text);border-radius:8px;padding:6px 14px;cursor:pointer;">' +
+                    Icons.mapPin + ' <span data-i18n="history.open_in_maps">' + __('history.open_in_maps') + '</span>' +
+                '</button>' +
+            '</div>' +
             '<p class="text-[17px] font-semibold text-ios-text">' + window.FFPWA.escapeHtml(description) + '</p>' +
             '<p class="text-[28px] font-bold ' + colorClass + '">' +
                 sign + ' ' + window.FFPWA.formatMoney(Math.abs(amount), symbol, decimals) +
@@ -195,6 +201,15 @@
                 'padding': '16px',
                 'position': 'relative'
             });
+            
+            // Mostrar botón para abrir en Maps
+            $('#map-open-btn-container').removeClass('hidden');
+            $('#map-open-btn').off('click').on('click', function(e) {
+                e.stopPropagation();
+                var mapsUrl = 'https://www.openstreetmap.org/?mlat=' + tx.latitude + '&mlon=' + tx.longitude + '&zoom=' + tx.zoom_level;
+                window.open(mapsUrl, '_blank');
+            });
+
             console.log('🗺️ Mapa de fondo aplicado (OSM tile):', tx.latitude, tx.longitude, 'zoom', bgZoom);
         }
 

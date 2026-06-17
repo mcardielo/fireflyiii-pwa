@@ -185,6 +185,7 @@
   "history.duplicate_btn": "Duplicate",
   "history.duplicate_success": "Transaction duplicated successfully.",
   "history.duplicating_hint": "Edit fields and save to create a copy.",
+  "history.open_in_maps": "Open in Maps",
 
   "history.filter_all": "All",
   "history.filter_account_label": "Account",
