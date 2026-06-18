@@ -84,37 +84,34 @@
             };
         }
 
-        // Para depósitos: la cuenta default (asset) va en destino
-        if (transactionType === 'deposit' && field === 'destination') {
-            if (defaultAccount && defaultAccount.id) {
-                return { id: String(defaultAccount.id), name: defaultAccount.name };
-            }
-        }
-
-        // Para retiros y transferencias: la cuenta default va en origen
-        if (transactionType !== 'deposit' && field === 'source') {
-            if (defaultAccount && defaultAccount.id) {
-                return { id: String(defaultAccount.id), name: defaultAccount.name };
-            }
+        // La cuenta default va en el campo que dicta según tipo de transacción
+        const { target } = window.FFPWA.getDefaultField(transactionType);
+        if (field === target && defaultAccount && defaultAccount.id) {
+            return { id: String(defaultAccount.id), name: defaultAccount.name };
         }
 
         return { id: null, name: null };
     }
 
     /**
+     * Busca una cuenta por ID en el caché global.
+     */
+    function getAccountById(accountId) {
+        const cache = window.FFPWA.accountsCache;
+        if (!cache || !accountId) return null;
+        return cache.find(a => String(a.id) === String(accountId)) || null;
+    }
+
+    /**
      * Busca la moneda de una cuenta en el caché global.
      */
     function getAccountCurrency(accountId) {
-        const cache = window.FFPWA.accountsCache;
-        if (!cache || !accountId) return null;
-        const account = cache.find(a => String(a.id) === String(accountId));
+        const account = getAccountById(accountId);
         return account ? (account.currency_code || null) : null;
     }
 
     function getAccountDecimalPlaces(accountId) {
-        const cache = window.FFPWA.accountsCache;
-        if (!cache || !accountId) return null;
-        const account = cache.find(a => String(a.id) === String(accountId));
+        const account = getAccountById(accountId);
         return account ? (account.currency_decimal_places || 2) : null;
     }
 
@@ -148,20 +145,16 @@
 
         // withdrawal/deposit no pueden tener liabilities en ambos lados
         if (transactionType === 'withdrawal' || transactionType === 'deposit') {
-            var sourceIsLiability = false;
-            var destIsLiability = false;
+            let sourceIsLiability = false;
+            let destIsLiability = false;
 
             if (source.id) {
-                var srcAccount = window.FFPWA.accountsCache && window.FFPWA.accountsCache.find(function(a) {
-                    return String(a.id) === String(source.id);
-                });
+                const srcAccount = getAccountById(source.id);
                 sourceIsLiability = srcAccount && srcAccount.type === 'liabilities';
             }
 
             if (dest.id) {
-                var dstAccount = window.FFPWA.accountsCache && window.FFPWA.accountsCache.find(function(a) {
-                    return String(a.id) === String(dest.id);
-                });
+                const dstAccount = getAccountById(dest.id);
                 destIsLiability = dstAccount && dstAccount.type === 'liabilities';
             }
 
@@ -171,8 +164,6 @@
         }
 
         const amount = validateAndFormatAmount();
-        const selectedCurrency = $('#currency-select').val();
-        const primaryCurrency = window.FFPWA.currencies && window.FFPWA.currencies.primary;
 
         // Construir la transacción dinámicamente:
         // - Si hay ID, enviarlo (cuenta existente seleccionada)
@@ -211,29 +202,37 @@
                 transaction.amount = amount;
             }
         }
-        // ── Withdrawal / Deposit: usar lógica del dropdown ──
-        else if (primaryCurrency && selectedCurrency && selectedCurrency !== primaryCurrency.code) {
-            let rateInfo;
-            try {
-                // Intentar fresh de Frankfurter, fallback a caché
-                rateInfo = await window.FFPWA.getExchangeRate(selectedCurrency, primaryCurrency.code);
-            } catch (_) {
-                rateInfo = window.FFPWA.getCachedRate(selectedCurrency, primaryCurrency.code);
+        // ── Withdrawal / Deposit: moneda la dicta la cuenta ──
+        else {
+            // Cuenta dictante: source para withdrawal, destination para deposit
+            const dictatingId = transactionType === 'deposit' ? dest.id : source.id;
+            const accountCurrency = dictatingId ? getAccountCurrency(dictatingId) : null;
+            const selectedCurrency = $('#currency-select').val();
+
+            if (accountCurrency && selectedCurrency && selectedCurrency !== accountCurrency) {
+                // El usuario pagó en moneda distinta a la de la cuenta → convertir
+                console.log(`💱 ${transactionType}: ${selectedCurrency} → ${accountCurrency} (cuenta)`);
+                try {
+                    const rateInfo = await window.FFPWA.getExchangeRate(selectedCurrency, accountCurrency);
+                    const decimalPlaces = getAccountDecimalPlaces(dictatingId) || 2;
+                    const converted = (parseFloat(amount) * rateInfo.rate).toFixed(decimalPlaces);
+                    transaction.amount = converted;
+                    transaction.currency_code = accountCurrency;
+                    transaction.foreign_amount = amount;
+                    transaction.foreign_currency_code = selectedCurrency;
+                    console.log(`💱 Conversión: ${amount} ${selectedCurrency} → ${converted} ${accountCurrency} (tasa: ${rateInfo.rate})`);
+                } catch (e) {
+                    throw new Error(__('transaction.error.rate_unavailable', {
+                        from: selectedCurrency,
+                        to: accountCurrency
+                    }));
+                }
+            } else {
+                transaction.amount = amount;
+                if (accountCurrency) {
+                    transaction.currency_code = accountCurrency;
+                }
             }
-            if (!rateInfo) {
-                throw new Error(__('transaction.error.rate_missing', {
-                    from: selectedCurrency,
-                    to: primaryCurrency.code
-                }));
-            }
-            const converted = (parseFloat(amount) * rateInfo.rate).toFixed(primaryCurrency.decimal_places || 2);
-            transaction.amount = converted;
-            transaction.foreign_amount = amount;
-            transaction.foreign_currency_code = selectedCurrency;
-            console.log(`💱 Conversión: ${amount} ${selectedCurrency} → ${converted} ${primaryCurrency.code} (tasa: ${rateInfo.rate})`);
-        } else {
-            // Moneda primaria o sin datos de monedas — flujo normal
-            transaction.amount = amount;
         }
 
         // Solo incluir source_id si existe (cuenta existente)
@@ -277,11 +276,10 @@
         // Restaurar placeholder default según tipo
         const defaultAccount = window.FFPWA.config.defaultSourceAccount;
         if (defaultAccount && defaultAccount.id) {
-            const isDeposit = transactionType === 'deposit';
-            const targetField = isDeposit ? 'destination' : 'source';
-            $(`#${targetField}-account`).val('').attr('placeholder', __('accounts.placeholder_default', { name: defaultAccount.name }));
-            $(`#${targetField}-account-id`).val(defaultAccount.id);
-            $(`#${targetField}-account-name`).val(defaultAccount.name);
+            const { target } = window.FFPWA.getDefaultField(transactionType);
+            $(`#${target}-account`).val('').attr('placeholder', __('accounts.placeholder_default', { name: defaultAccount.name }));
+            $(`#${target}-account-id`).val(defaultAccount.id);
+            $(`#${target}-account-name`).val(defaultAccount.name);
         }
     }
 

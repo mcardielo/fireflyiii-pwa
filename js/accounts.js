@@ -99,22 +99,60 @@
     }
 
     /**
+     * Helper: setea los campos del formulario para source/destination.
+     */
+    function setAccountFields(field, name, id) {
+        const prefix = field;
+        $(`#${prefix}-account`).val(name);
+        $(`#${prefix}-account-name`).val(name);
+        $(`#${prefix}-account-id`).val(id !== undefined && id !== null ? id : '');
+    }
+
+    /**
+     * Devuelve qué campo dicta la moneda según el tipo de transacción.
+     * - withdrawal/transfer: source
+     * - deposit: destination
+     * @returns {{ target: 'source'|'destination', other: 'source'|'destination' }}
+     */
+    window.FFPWA.getDefaultField = function(transactionType) {
+        const isDeposit = transactionType === 'deposit';
+        return {
+            target: isDeposit ? 'destination' : 'source',
+            other: isDeposit ? 'source' : 'destination'
+        };
+    };
+
+    /**
+     * Ajusta automáticamente el dropdown de moneda según la cuenta seleccionada.
+     * Solo actúa si el field es el lado que dicta moneda para el tipo actual.
+     */
+    function autoSetCurrencyFromAccount(accountId, field, transactionType) {
+        if (!accountId) return;
+        const cache = window.FFPWA.accountsCache;
+        if (!cache) return;
+        const account = cache.find(a => String(a.id) === String(accountId));
+        if (!account || !account.currency_code) return;
+
+        const { target } = window.FFPWA.getDefaultField(transactionType);
+        if (field !== target) return;
+
+        const $select = $('#currency-select');
+        if ($select.val() !== account.currency_code) {
+            $select.val(account.currency_code).trigger('change');
+        }
+    }
+
+    /**
      * Selecciona una cuenta existente y actualiza los campos del formulario.
      */
     function selectExistingAccount(account, field) {
-        // Validar que el ID sea numérico válido
-         const id = (account.id !== undefined && account.id !== null && !isNaN(account.id))
-             ? account.id : '';
-             
-        if (field === 'source') {
-            $('#source-account').val(account.name);
-            $('#source-account-id').val(id);
-            $('#source-account-name').val(account.name);
-        } else {
-            $('#destination-account').val(account.name);
-            $('#destination-account-id').val(id);
-            $('#destination-account-name').val(account.name);
-        }
+        const id = (account.id !== undefined && account.id !== null && !isNaN(account.id))
+            ? account.id : '';
+
+        setAccountFields(field, account.name, id);
+
+        const transactionType = $('#transaction-type').val() || 'withdrawal';
+        autoSetCurrencyFromAccount(id, field, transactionType);
 
         hideDropdown('#source-autocomplete');
         hideDropdown('#destination-autocomplete');
@@ -124,17 +162,7 @@
      * Selecciona la opción para crear una cuenta nueva.
      */
     function selectNewAccount(newAccount, field) {
-        const name = newAccount.name;
-
-        if (field === 'source') {
-            $('#source-account').val(name);
-            $('#source-account-name').val(name);
-            $('#source-account-id').val('');
-        } else {
-            $('#destination-account').val(name);
-            $('#destination-account-name').val(name);
-            $('#destination-account-id').val('');
-        }
+        setAccountFields(field, newAccount.name, '');
 
         window.FFPWA.showStatusMessage(__('status.new_account_warning', { field: field }), 'warning');
 
@@ -157,7 +185,7 @@
         const transactionType = $('#transaction-type').val();
         const targetTypes = getAccountTypesForField(transactionType, fieldContext);
 
-        let accountsToFilter = cache.filter(account =>
+        const accountsToFilter = cache.filter(account =>
             targetTypes.includes(account.type) && account.active !== false
         );
 
@@ -190,7 +218,7 @@
 
         results.forEach(item => {
             const isNew = item.isNew || false;
-            var escapeHtml = window.FFPWA.escapeHtml;
+            const escapeHtml = window.FFPWA.escapeHtml;
             const escapedName = escapeHtml(item.name);
             const escapedId = item.id !== undefined ? escapeHtml(String(item.id)) : '';
             const dataAttributes = `data-account-id="${escapedId}" data-account-name="${escapeHtml(item.name)}" data-is-new="${isNew}"`;
@@ -235,10 +263,10 @@
      * Simple debounce utility.
      */
     function debounce(fn, delay) {
-        var timer;
+        let timer;
         return function() {
-            var context = this;
-            var args = arguments;
+            const context = this;
+            const args = arguments;
             clearTimeout(timer);
             timer = setTimeout(function() { fn.apply(context, args); }, delay);
         };
@@ -250,7 +278,7 @@
         const destInput = $(`#${destInputId}`);
         const destDropdown = $(`#${destDropdownId}`);
 
-        var filterDebounced = debounce(function(e, input, dropdown, context) {
+        const filterDebounced = debounce(function(e, input, dropdown, context) {
             filterAndDisplayAccounts(e, input, dropdown, context, accountsCache);
         }, 150);
 
@@ -294,21 +322,22 @@
         const match = accountsCache.find(a => String(a.id) === String(defaultAccount.id));
         if (!match) return;
 
-        const isDeposit = transactionType === 'deposit';
-        const targetField = isDeposit ? 'destination' : 'source';
-        const otherField = isDeposit ? 'source' : 'destination';
+        const { target, other } = window.FFPWA.getDefaultField(transactionType);
 
         // Limpiar el otro campo
-        $(`#${otherField}-account`).val('').attr('placeholder', __('accounts.placeholder_search', { field: otherField }));
-        $(`#${otherField}-account-id`).val('');
-        $(`#${otherField}-account-name`).val('');
+        $(`#${other}-account`).val('').attr('placeholder', __('accounts.placeholder_search', { field: other }));
+        $(`#${other}-account-id`).val('');
+        $(`#${other}-account-name`).val('');
 
         // Poner default en targetField
-        $(`#${targetField}-account`).val('').attr('placeholder', __('accounts.placeholder_default', { name: match.name }));
-        $(`#${targetField}-account-id`).val(match.id);
-        $(`#${targetField}-account-name`).val(match.name);
+        $(`#${target}-account`).val('').attr('placeholder', __('accounts.placeholder_default', { name: match.name }));
+        $(`#${target}-account-id`).val(match.id);
+        $(`#${target}-account-name`).val(match.name);
 
-        console.log(`[DEFAULT] ${targetField} placeholder: ${match.name}`);
+        // Auto-ajustar moneda según cuenta default
+        autoSetCurrencyFromAccount(match.id, target, transactionType);
+
+        console.log(`[DEFAULT] ${target} placeholder: ${match.name}`);
     }
 
     /**
