@@ -513,11 +513,11 @@
         });
     });
 
-    $(window).on('localeChanged', function() {
+    window.FFPWA._onLocaleHistory = function() {
         if (!$('#history-container').hasClass('hidden') && window.FFPWA.showHistoryScreen) {
             window.FFPWA.showHistoryScreen();
             if (window.i18nTranslateDOM) window.i18nTranslateDOM();
         }
-    });
+    };
 
 })();

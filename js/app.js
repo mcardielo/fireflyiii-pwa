@@ -37,23 +37,6 @@
     }
 
     /**
-     * Detectar cambios en conectividad y propagarlos a la UI.
-     */
-    function setupConnectivityListeners() {
-        if (!window.FFPWA) window.FFPWA = {};
-
-        window.addEventListener('online', function() {
-            console.log('🌐 Conexión restablecida.');
-            window.FFPWA.updateStatus && window.FFPWA.updateStatus('online');
-        });
-
-        window.addEventListener('offline', function() {
-            console.log('📡 Sin conexión. Usando caché local.');
-            window.FFPWA.updateStatus && window.FFPWA.updateStatus('offline');
-        });
-    }
-
-    /**
      * Actualiza el badge de estado online/offline en todas las pantallas.
      */
     window.FFPWA.updateStatus = function(state) {
@@ -91,7 +74,6 @@
 
     // Registrar SW inmediatamente (no esperar DOMReady)
     registerServiceWorker();
-    setupConnectivityListeners();
 
     /**
      * Reposiciona los dropdowns de autocomplete visibles.
@@ -164,6 +146,37 @@
                     '  <p style="font-size:14px">Conéctate a internet y vuelve a abrir la app.</p>' +
                     '</div>';
             }
+        }
+
+        // ── Consolidated global event listeners ──
+        function setupGlobalListeners() {
+            // configLoaded: disparar init en módulos de datos
+            $(window).on('configLoaded', function() {
+                if (window.FFPWA._initAccountsOnConfigLoaded) window.FFPWA._initAccountsOnConfigLoaded();
+                if (window.FFPWA._initCurrenciesOnConfigLoaded) window.FFPWA._initCurrenciesOnConfigLoaded();
+                if (window.FFPWA._updateGPSToggleVisibility) window.FFPWA._updateGPSToggleVisibility();
+            });
+
+            // localeChanged: traducir módulos
+            $(window).on('localeChanged', function() {
+                if (window.FFPWA._onLocaleAccounts) window.FFPWA._onLocaleAccounts();
+                if (window.FFPWA._onLocaleAccountsScreen) window.FFPWA._onLocaleAccountsScreen();
+                if (window.FFPWA._onLocaleHistory) window.FFPWA._onLocaleHistory();
+                if (window.FFPWA._onLocaleEdit) window.FFPWA._onLocaleEdit();
+            });
+
+            // online / offline: health-check + sync
+            window.addEventListener('online', function() {
+                if (window.FFPWA._onOnline) window.FFPWA._onOnline();
+            });
+            window.addEventListener('offline', function() {
+                if (window.FFPWA._onOffline) window.FFPWA._onOffline();
+            });
+
+            // visibilitychange: health-check + GPS refresh
+            document.addEventListener('visibilitychange', function() {
+                if (window.FFPWA._onVisibilityChange) window.FFPWA._onVisibilityChange();
+            });
         }
 
         function boot() {
@@ -419,6 +432,9 @@
             window.FFPWA.updateStatus && window.FFPWA.updateStatus(
                 navigator.onLine ? 'online' : 'offline'
             );
+
+            // ── Consolidated global event listeners ──
+            setupGlobalListeners();
         }
 
         boot();

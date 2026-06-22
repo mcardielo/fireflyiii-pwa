@@ -610,10 +610,9 @@
     $(document).ready(function() {
         $(document).on('submit', '#transaction-form', handleTransactionSubmit);
 
-        // Network connectivity detection
-        window.addEventListener('online', () => {
+        // ── Network / visibility handlers ──
+        window.FFPWA._onOnline = function() {
             console.log('[NETWORK]: Online. Verificando servidor...');
-            // Siempre verificar el servidor antes de marcar como online
             window.FFPWA.updateStatus('checking');
             checkFireflyHealth().then(function(available) {
                 if (available) {
@@ -625,23 +624,15 @@
                     fireflyServerAvailable = false;
                 }
             });
-        });
+        };
 
-        window.addEventListener('offline', () => {
+        window.FFPWA._onOffline = function() {
             window.FFPWA.updateStatus('offline');
             console.log('[NETWORK]: Offline. Modo desconectado.');
-        });
+        };
 
-        // Periodic network poll (events are unreliable in some PWA scenarios)
-        setInterval(function() {
-            if (!navigator.onLine) {
-                window.FFPWA.updateStatus('offline');
-            }
-        }, 15000);
-
-        // Al volver a la PWA (tab activo).
-        document.addEventListener('visibilitychange', () => {
-            // hacer health check inmediato si hay cola pendiente
+        window.FFPWA._onVisibilityChange = function() {
+            // health check inmediato si hay cola pendiente
             if (!document.hidden && getQueue().length > 0) {
                 console.log('[HEALTH] Usuario volvió a la PWA. Verificando servidor...');
                 window.FFPWA.updateStatus('checking');
@@ -662,7 +653,14 @@
                     if (loc) window.FFPWA.lastLocation = loc;
                 });
             }
-        });
+        };
+
+        // Periodic network poll (events are unreliable in some PWA scenarios)
+        setInterval(function() {
+            if (!navigator.onLine) {
+                window.FFPWA.updateStatus('offline');
+            }
+        }, 15000);
 
         // Escuchar mensajes del Service Worker (Background Sync)
         if ('serviceWorker' in navigator) {

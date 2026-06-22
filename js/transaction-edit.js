@@ -787,10 +787,10 @@
         });
     });
 
-    $(window).on('localeChanged', function() {
+    window.FFPWA._onLocaleEdit = function() {
         if ($('#history-detail').is(':visible') && window.i18nTranslateDOM) {
             window.i18nTranslateDOM();
         }
-    });
+    };
 
 })();

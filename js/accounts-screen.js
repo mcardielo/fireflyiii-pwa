@@ -499,7 +499,7 @@
 
     /* ─── Re-render on locale change ─── */
 
-    $(window).on('localeChanged', function() {
+    window.FFPWA._onLocaleAccountsScreen = function() {
         if (!$('#accounts-container').hasClass('hidden')) {
             // If in detail view, go back to list to avoid stale data
             if (!$('#account-detail').hasClass('hidden')) {
@@ -518,7 +518,7 @@
             });
             if (window.i18nTranslateDOM) window.i18nTranslateDOM();
         }
-    });
+    };
 
     /* ─── Exposed: refresh current account transactions ─── */
     window.FFPWA.refreshCurrentAccount = function() {

@@ -293,7 +293,7 @@
 
     /* ───────── Punto de entrada ───────── */
 
-    $(window).on('configLoaded', function() {
+    window.FFPWA._initCurrenciesOnConfigLoaded = function() {
         const url = window.FFPWA.config.url;
         const token = window.FFPWA.config.token;
 
@@ -324,6 +324,6 @@
                     }]);
                 }
             });
-    });
+    };
 
 })();

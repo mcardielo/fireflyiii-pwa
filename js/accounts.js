@@ -433,15 +433,14 @@
     /**
      * Punto de entrada: evento disparado por config.js
      */
-    // Re-translate dynamic content when locale changes
-    $(window).on('localeChanged', function() {
+    window.FFPWA._onLocaleAccounts = function() {
         const currentType = $('#transaction-type').val() || 'withdrawal';
         updateTypeHints(currentType);
         const cache = window.FFPWA.accountsCache;
         if (cache) prefillDefaultSource(cache, currentType);
-    });
+    };
 
-    $(window).on('configLoaded', function() {
+    window.FFPWA._initAccountsOnConfigLoaded = function() {
         console.log('================================================');
         console.log('✅ Iniciando Dashboard.');
         console.log('================================================');
@@ -478,6 +477,6 @@
                     setupAccountSystem(null);
                 });
         }
-    });
+    };
 
 })();
