@@ -121,6 +121,10 @@
   "transaction.submit_error_prefix": "Error al registrar transacción:",
   "transaction.submit_error_details": "Detalles:",
 
+  "transaction.gps_section": "Ubicación",
+  "transaction.gps_label": "Incluir ubicación GPS",
+  "transaction.gps_hint": "Tu ubicación actual se guardará con esta transacción.",
+
   "currency.error_rate_unavailable": "No hay tasa disponible para {from} → {to}",
   "currency.error_frankfurter": "Sin tasa {from}→{to} en Frankfurter",
   "currency.error_frankfurter_down": "Frankfurter API no disponible",

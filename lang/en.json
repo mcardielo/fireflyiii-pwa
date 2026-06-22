@@ -121,6 +121,10 @@
   "transaction.submit_error_prefix": "Error registering transaction:",
   "transaction.submit_error_details": "Details:",
 
+  "transaction.gps_section": "Location",
+  "transaction.gps_label": "Include GPS location",
+  "transaction.gps_hint": "Your current location will be saved with this transaction.",
+
   "currency.error_rate_unavailable": "No exchange rate available for {from} → {to}",
   "currency.error_frankfurter": "No rate for {from}→{to} in Frankfurter",
   "currency.error_frankfurter_down": "Frankfurter API unavailable",

@@ -261,6 +261,21 @@
                             <p id="amount-converted" class="text-sm font-medium text-ios-blue hidden"></p>
                         </div>
                     </div>
+                    <div id="tx-gps-row" class="mb-6 field-group hidden">
+                        <p class="section-label" data-i18n="transaction.gps_section">Ubicación</p>
+                        <div class="field-card">
+                            <div class="field-row">
+                                <span class="field-label field-label--tight" data-i18n="transaction.gps_label">Incluir ubicación GPS</span>
+                                <div class="field-value">
+                                    <label class="ios-switch">
+                                        <input type="checkbox" id="tx-gps-toggle" checked>
+                                        <span class="ios-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-ios-text-secondary px-1 mt-1" data-i18n="transaction.gps_hint">Tu ubicación actual se guardará con esta transacción.</p>
+                    </div>
                 </form>
             </main>
             <footer class="sticky-footer">

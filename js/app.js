@@ -303,6 +303,7 @@
 
                 if (screen === 'record') {
                     $('#dashboard-container').css('display', 'flex').removeClass('hidden');
+                    window.FFPWA._updateGPSToggleVisibility();
                 } else if (screen === 'accounts') {
                     window.mountScreen('screen-accounts');
                     if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {

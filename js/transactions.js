@@ -249,7 +249,8 @@
         transaction.destination_name = dest.name;
 
         // ── GPS location ──
-        if (window.FFPWA.config.gpsEnabled && window.FFPWA.lastLocation) {
+        var txGpsEnabled = window.FFPWA.config.gpsEnabled && $('#tx-gps-toggle').is(':checked');
+        if (txGpsEnabled && window.FFPWA.lastLocation) {
             transaction.latitude = window.FFPWA.lastLocation.latitude;
             transaction.longitude = window.FFPWA.lastLocation.longitude;
             transaction.zoom_level = window.FFPWA.lastLocation.zoom_level;
@@ -281,7 +282,24 @@
             $(`#${target}-account-id`).val(defaultAccount.id);
             $(`#${target}-account-name`).val(defaultAccount.name);
         }
+
+        // ── GPS toggle: update visibility ──
+        updateGPSToggleVisibility();
     }
+
+    /**
+     * Muestra u oculta el toggle GPS según config.gpsEnabled.
+     */
+    function updateGPSToggleVisibility() {
+        var $row = $('#tx-gps-row');
+        if (!$row.length) return;
+        if (window.FFPWA.config && window.FFPWA.config.gpsEnabled) {
+            $row.removeClass('hidden');
+        } else {
+            $row.addClass('hidden');
+        }
+    }
+    window.FFPWA._updateGPSToggleVisibility = updateGPSToggleVisibility;
 
     /**
      * Envía la transacción al API.

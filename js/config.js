@@ -255,6 +255,8 @@
                 window.FFPWA.lastLocation = loc;
             });
         }
+        // ── GPS toggle: update visibility ──
+        window.FFPWA._updateGPSToggleVisibility();
 
         if (storedDefault) {
             window.FFPWA.config.defaultSourceAccount = JSON.parse(storedDefault);
