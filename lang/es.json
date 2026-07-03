@@ -223,5 +223,8 @@
   "config.gps_label": "Guardar ubicación GPS en transacciones",
   "config.gps_hint": "Se usará tu ubicación actual al registrar nuevas transacciones o duplicar existentes.",
   "config.gps_enabled": "Ubicación activada",
-  "config.gps_disabled": "Ubicación desactivada"
+  "config.gps_disabled": "Ubicación desactivada",
+
+  "calc.cancel": "Cancelar",
+  "calc.use_result": "Usar resultado"
 }
