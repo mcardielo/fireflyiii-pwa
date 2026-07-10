@@ -9,7 +9,7 @@
  * Call i18nTranslateDOM() after dynamic content changes.
  *
  * Events:
- *   $(window).on('localeChanged', function(e, newLocale) { ... })
+ *   window.addEventListener('localeChanged', function(e) { ... })
  */
 (function() {
     'use strict';
@@ -61,7 +61,7 @@
             localStorage.setItem(STORAGE_KEY, locale);
             currentLocale = locale;
             i18nTranslateDOM();
-            $(window).trigger('localeChanged', [locale]);
+            window.dispatchEvent(new CustomEvent('localeChanged', { detail: { locale: locale } }));
             // Fire pending callbacks from init
             while (pendingCallbacks.length) {
                 pendingCallbacks.shift()(locale);
@@ -93,7 +93,7 @@
         return loadLocale(detected).then(function() {
             currentLocale = detected;
             i18nTranslateDOM();
-            $(window).trigger('localeChanged', [detected]);
+            window.dispatchEvent(new CustomEvent('localeChanged', { detail: { locale: detected } }));
             while (pendingCallbacks.length) {
                 pendingCallbacks.shift()(detected);
             }
@@ -109,22 +109,19 @@
      * Call after dynamically inserting HTML with data-i18n attributes.
      */
     window.i18nTranslateDOM = function i18nTranslateDOM() {
-        if (typeof $ === 'undefined') return;
-        $('[data-i18n]').each(function() {
-            var $el = $(this);
-            var key = $el.data('i18n');
+        document.querySelectorAll('[data-i18n]').forEach(function(el) {
+            var key = el.getAttribute('data-i18n');
             var text = window.__(key);
             if (text !== key) {
-                $el.text(text);
+                el.textContent = text;
             }
         });
         // Also update placeholder translations
-        $('[data-i18n-placeholder]').each(function() {
-            var $el = $(this);
-            var key = $el.data('i18n-placeholder');
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+            var key = el.getAttribute('data-i18n-placeholder');
             var text = window.__(key);
             if (text !== key) {
-                $el.attr('placeholder', text);
+                el.setAttribute('placeholder', text);
             }
         });
     };
@@ -142,15 +139,13 @@
     function loadLocale(locale) {
         var langFile = 'lang/' + locale + '.json';
         return new Promise(function(resolve, reject) {
-            $.ajax({
-                url: langFile,
-                dataType: 'json',
-                cache: true,
-                success: function(data) {
+            fetch(langFile)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
                     translations = data || {};
                     resolve();
-                },
-                error: function(xhr, status, err) {
+                })
+                .catch(function(err) {
                     console.error('[i18n] Error cargando', langFile, err);
                     // Try fallback locale if not already trying it
                     if (locale !== FALLBACK_LOCALE) {
@@ -159,8 +154,7 @@
                         translations = {};
                         reject(err);
                     }
-                }
-            });
+                });
         });
     }
 

@@ -69,7 +69,7 @@
         }
 
         return new Promise(function(resolve, reject) {
-            $.ajax({
+            window.FFPWA.http({
                 url: url + endpoint + '?' + params,
                 method: 'GET',
                 headers: {
@@ -98,24 +98,27 @@
     /* ─── Rendering ─── */
 
     function renderTransactions(result) {
-        $('#history-loading').addClass('hidden');
+        var historyLoading = document.getElementById('history-loading');
+        if (historyLoading) historyLoading.classList.add('hidden');
 
         var data = result.transactions;
         var pagination = result.pagination;
         currentPage = pagination.current_page || 1;
         totalPages = pagination.total_pages || 1;
 
+        var historyList = document.getElementById('history-list');
+        var historyLoadMore = document.getElementById('history-load-more');
+
         if (!data || data.length === 0) {
-            if (currentPage === 1) {
+            if (currentPage === 1 && historyList) {
                 var hasFilters = window.FFPWA.historyFilters.type ||
                                  window.FFPWA.historyFilters.accountId ||
                                  window.FFPWA.historyFilters.search;
                 var msg = hasFilters ? __('history.filter_no_results') : __('detail.no_transactions');
-                $('#history-list').html(
-                    '<div class="ios-status warning">' + msg + '</div>'
-                );
+                historyList.innerHTML =
+                    '<div class="ios-status warning">' + msg + '</div>';
             }
-            $('#history-load-more').addClass('hidden');
+            if (historyLoadMore) historyLoadMore.classList.add('hidden');
             return;
         }
 
@@ -192,13 +195,13 @@
             });
         });
 
-        $('#history-list').append(html);
+        if (historyList) historyList.insertAdjacentHTML('beforeend', html);
 
         // Mostrar/ocultar botón de más páginas
         if (currentPage < totalPages) {
-            $('#history-load-more').removeClass('hidden');
+            if (historyLoadMore) historyLoadMore.classList.remove('hidden');
         } else {
-            $('#history-load-more').addClass('hidden');
+            if (historyLoadMore) historyLoadMore.classList.add('hidden');
         }
 
         isLoading = false;
@@ -215,16 +218,20 @@
         requestId++;
         var thisRequest = requestId;
 
-        $('#history-load-more').addClass('hidden');
-        $('#history-loading').removeClass('hidden');
+        var historyLoadMore = document.getElementById('history-load-more');
+        var historyLoading = document.getElementById('history-loading');
+        if (historyLoadMore) historyLoadMore.classList.add('hidden');
+        if (historyLoading) historyLoading.classList.remove('hidden');
 
         fetchTransactions(nextPage).then(function(result) {
             if (requestId !== thisRequest) return;
             renderTransactions(result);
         }).catch(function(err) {
             if (requestId !== thisRequest) return;
-            $('#history-loading').addClass('hidden');
-            $('#history-error').removeClass('hidden').text('❌ ' + err.message);
+            var hl = document.getElementById('history-loading');
+            var he = document.getElementById('history-error');
+            if (hl) hl.classList.add('hidden');
+            if (he) { he.classList.remove('hidden'); he.textContent = '❌ ' + err.message; }
             isLoading = false;
         });
     }
@@ -238,10 +245,15 @@
         requestId++;
         var thisRequest = requestId;
 
-        $('#history-list').empty();
-        $('#history-error').addClass('hidden');
-        $('#history-load-more').addClass('hidden');
-        $('#history-loading').removeClass('hidden');
+        var historyList = document.getElementById('history-list');
+        var historyError = document.getElementById('history-error');
+        var historyLoadMore = document.getElementById('history-load-more');
+        var historyLoading = document.getElementById('history-loading');
+
+        if (historyList) historyList.innerHTML = '';
+        if (historyError) historyError.classList.add('hidden');
+        if (historyLoadMore) historyLoadMore.classList.add('hidden');
+        if (historyLoading) historyLoading.classList.remove('hidden');
 
         updateClearButton();
 
@@ -250,8 +262,10 @@
             renderTransactions(result);
         }).catch(function(err) {
             if (requestId !== thisRequest) return;
-            $('#history-loading').addClass('hidden');
-            $('#history-error').removeClass('hidden').text('❌ ' + err.message);
+            var hl = document.getElementById('history-loading');
+            var he = document.getElementById('history-error');
+            if (hl) hl.classList.add('hidden');
+            if (he) { he.classList.remove('hidden'); he.textContent = '❌ ' + err.message; }
         });
     }
 
@@ -263,22 +277,33 @@
         f.search = '';
 
         // Reset UI
-        $('#history-type-filter .segmented-btn').removeClass('active');
-        $('#history-type-filter .segmented-btn[data-type=""]').addClass('active').attr('aria-checked', 'true');
-        $('#history-type-filter .segmented-btn[data-type!=""]').attr('aria-checked', 'false');
-        $('#history-account-filter').val('').attr('placeholder', __('history.filter_account_placeholder'));
-        $('#history-search').val('');
-        $('#history-clear-wrap').addClass('hidden');
+        document.querySelectorAll('#history-type-filter .segmented-btn').forEach(function(btn) {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-checked', 'false');
+        });
+        var allBtn = document.querySelector('#history-type-filter .segmented-btn[data-type=""]');
+        if (allBtn) { allBtn.classList.add('active'); allBtn.setAttribute('aria-checked', 'true'); }
+
+        var accountFilter = document.getElementById('history-account-filter');
+        if (accountFilter) { accountFilter.value = ''; accountFilter.setAttribute('placeholder', __('history.filter_account_placeholder')); }
+
+        var searchEl = document.getElementById('history-search');
+        if (searchEl) searchEl.value = '';
+
+        var clearWrap = document.getElementById('history-clear-wrap');
+        if (clearWrap) clearWrap.classList.add('hidden');
 
         applyFilters();
     }
 
     function updateClearButton() {
         var f = window.FFPWA.historyFilters;
+        var clearWrap = document.getElementById('history-clear-wrap');
+        if (!clearWrap) return;
         if (f.type || f.accountId || f.search) {
-            $('#history-clear-wrap').removeClass('hidden');
+            clearWrap.classList.remove('hidden');
         } else {
-            $('#history-clear-wrap').addClass('hidden');
+            clearWrap.classList.add('hidden');
         }
     }
 
@@ -295,25 +320,28 @@
     }
 
     function filterAccountDropdown(query) {
-        var $dropdown = $('#history-account-dropdown');
+        var dropdown = document.getElementById('history-account-dropdown');
+        if (!dropdown) return;
         var accounts = getExpenseAccounts();
         var q = query.toLowerCase();
 
         if (q.length === 0) {
             // Show all
-            renderAccountDropdown($dropdown, accounts);
+            renderAccountDropdown(dropdown, accounts);
         } else {
             var filtered = accounts.filter(function(a) {
                 return a.name.toLowerCase().indexOf(q) !== -1;
             });
-            renderAccountDropdown($dropdown, filtered);
+            renderAccountDropdown(dropdown, filtered);
         }
     }
 
-    function renderAccountDropdown($dropdown, accounts) {
-        $dropdown.empty();
+    function renderAccountDropdown(dropdown, accounts) {
+        if (!dropdown) return;
+        dropdown.innerHTML = '';
         if (accounts.length === 0) {
-            $dropdown.addClass('hidden').removeClass('visible');
+            dropdown.classList.add('hidden');
+            dropdown.classList.remove('visible');
             return;
         }
 
@@ -323,32 +351,36 @@
                 '<span>' + window.FFPWA.escapeHtml(a.name) + '</span>' +
             '</li>';
         });
-        $dropdown.html(html);
+        dropdown.innerHTML = html;
     }
 
     function showAccountDropdown() {
-        var $dropdown = $('#history-account-dropdown');
-        var $input = $('#history-account-filter');
-        var rect = $input[0].getBoundingClientRect();
+        var dropdown = document.getElementById('history-account-dropdown');
+        var input = document.getElementById('history-account-filter');
+        if (!dropdown || !input) return;
+        var rect = input.getBoundingClientRect();
 
-        $dropdown.css({
-            top: (rect.bottom + 4) + 'px',
-            left: rect.left + 'px',
-            width: rect.width + 'px'
-        });
+        dropdown.style.top = (rect.bottom + 4) + 'px';
+        dropdown.style.left = rect.left + 'px';
+        dropdown.style.width = rect.width + 'px';
 
-        $dropdown.removeClass('hidden').addClass('visible');
+        dropdown.classList.remove('hidden');
+        dropdown.classList.add('visible');
     }
 
     function hideAccountDropdown() {
-        $('#history-account-dropdown').removeClass('visible').addClass('hidden');
+        var dropdown = document.getElementById('history-account-dropdown');
+        if (!dropdown) return;
+        dropdown.classList.remove('visible');
+        dropdown.classList.add('hidden');
     }
 
     function selectAccountFilter(id, name) {
         var f = window.FFPWA.historyFilters;
         f.accountId = String(id);
         f.accountName = name;
-        $('#history-account-filter').val(name);
+        var input = document.getElementById('history-account-filter');
+        if (input) input.value = name;
         hideAccountDropdown();
         applyFilters();
     }
@@ -357,7 +389,8 @@
         var f = window.FFPWA.historyFilters;
         f.accountId = '';
         f.accountName = '';
-        $('#history-account-filter').val('').attr('placeholder', __('history.filter_account_placeholder'));
+        var input = document.getElementById('history-account-filter');
+        if (input) { input.value = ''; input.setAttribute('placeholder', __('history.filter_account_placeholder')); }
         applyFilters();
     }
 
@@ -368,18 +401,25 @@
         totalPages = 1;
         isLoading = false;
 
-        $('#history-filters').removeClass('hidden');
-        $('#history-list-view').removeClass('hidden');
-        $('#history-detail').addClass('hidden');
+        var historyFilters = document.getElementById('history-filters');
+        var historyListView = document.getElementById('history-list-view');
+        var historyDetail = document.getElementById('history-detail');
+        if (historyFilters) historyFilters.classList.remove('hidden');
+        if (historyListView) historyListView.classList.remove('hidden');
+        if (historyDetail) historyDetail.classList.add('hidden');
 
         // Restore filter UI from persistent state
         restoreFilterUI();
         updateClearButton();
 
-        $('#history-list').empty();
-        $('#history-error').addClass('hidden');
-        $('#history-load-more').addClass('hidden');
-        $('#history-loading').removeClass('hidden');
+        var historyList = document.getElementById('history-list');
+        var historyError = document.getElementById('history-error');
+        var historyLoadMore = document.getElementById('history-load-more');
+        var historyLoading = document.getElementById('history-loading');
+        if (historyList) historyList.innerHTML = '';
+        if (historyError) historyError.classList.add('hidden');
+        if (historyLoadMore) historyLoadMore.classList.add('hidden');
+        if (historyLoading) historyLoading.classList.remove('hidden');
 
         if (window.i18nTranslateDOM) window.i18nTranslateDOM();
         if (window.injectIcons) window.injectIcons(document.getElementById('history-filters'));
@@ -387,8 +427,10 @@
         fetchTransactions(1).then(function(result) {
             renderTransactions(result);
         }).catch(function(err) {
-            $('#history-loading').addClass('hidden');
-            $('#history-error').removeClass('hidden').text('❌ ' + err.message);
+            var hl = document.getElementById('history-loading');
+            var he = document.getElementById('history-error');
+            if (hl) hl.classList.add('hidden');
+            if (he) { he.classList.remove('hidden'); he.textContent = '❌ ' + err.message; }
         });
     };
 
@@ -396,125 +438,161 @@
         var f = window.FFPWA.historyFilters;
 
         // Type segmented control
-        $('#history-type-filter .segmented-btn').removeClass('active').attr('aria-checked', 'false');
-        var $typeBtn = $('#history-type-filter .segmented-btn[data-type="' + f.type + '"]');
-        if ($typeBtn.length) {
-            $typeBtn.addClass('active').attr('aria-checked', 'true');
+        document.querySelectorAll('#history-type-filter .segmented-btn').forEach(function(btn) {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-checked', 'false');
+        });
+        var typeBtn = document.querySelector('#history-type-filter .segmented-btn[data-type="' + f.type + '"]');
+        if (typeBtn) {
+            typeBtn.classList.add('active');
+            typeBtn.setAttribute('aria-checked', 'true');
         } else {
-            $('#history-type-filter .segmented-btn[data-type=""]').addClass('active').attr('aria-checked', 'true');
+            var allBtn = document.querySelector('#history-type-filter .segmented-btn[data-type=""]');
+            if (allBtn) { allBtn.classList.add('active'); allBtn.setAttribute('aria-checked', 'true'); }
         }
 
         // Account filter
-        if (f.accountId && f.accountName) {
-            $('#history-account-filter').val(f.accountName);
-        } else {
-            $('#history-account-filter').val('').attr('placeholder', __('history.filter_account_placeholder'));
+        var accountFilter = document.getElementById('history-account-filter');
+        if (accountFilter) {
+            if (f.accountId && f.accountName) {
+                accountFilter.value = f.accountName;
+            } else {
+                accountFilter.value = '';
+                accountFilter.setAttribute('placeholder', __('history.filter_account_placeholder'));
+            }
         }
 
         // Search input
-        $('#history-search').val(f.search);
+        var searchEl = document.getElementById('history-search');
+        if (searchEl) searchEl.value = f.search;
     }
 
     /* ─── Event wiring ─── */
 
-    $(document).ready(function() {
+    function domReady() {
 
         // Type filter — segmented control
-        $(document).on('click', '#history-type-filter .segmented-btn', function() {
-            var $btn = $(this);
-            var newType = $btn.data('type');
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('#history-type-filter .segmented-btn');
+            if (!btn) return;
+            var newType = btn.getAttribute('data-type');
             if (newType === window.FFPWA.historyFilters.type) return;
 
-            $('#history-type-filter .segmented-btn').removeClass('active').attr('aria-checked', 'false');
-            $btn.addClass('active').attr('aria-checked', 'true');
+            document.querySelectorAll('#history-type-filter .segmented-btn').forEach(function(b) {
+                b.classList.remove('active');
+                b.setAttribute('aria-checked', 'false');
+            });
+            btn.classList.add('active');
+            btn.setAttribute('aria-checked', 'true');
 
             window.FFPWA.historyFilters.type = newType;
             applyFilters();
         });
 
         // Account filter — autocomplete input
-        $(document).on('input', '#history-account-filter', function() {
-            var val = $(this).val().trim();
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.id === 'history-account-filter') {
+                var val = e.target.value.trim();
 
-            // If user clears the input, clear the filter
-            if (val === '' && window.FFPWA.historyFilters.accountId) {
-                clearAccountFilter();
-                return;
-            }
-
-            clearTimeout(accountDropdownTimer);
-            accountDropdownTimer = setTimeout(function() {
-                filterAccountDropdown(val);
-                var accounts = getExpenseAccounts();
-                if (accounts.length > 0) {
-                    showAccountDropdown();
+                // If user clears the input, clear the filter
+                if (val === '' && window.FFPWA.historyFilters.accountId) {
+                    clearAccountFilter();
+                    return;
                 }
-            }, 150);
+
+                clearTimeout(accountDropdownTimer);
+                accountDropdownTimer = setTimeout(function() {
+                    filterAccountDropdown(val);
+                    var accounts = getExpenseAccounts();
+                    if (accounts.length > 0) {
+                        showAccountDropdown();
+                    }
+                }, 150);
+            }
         });
 
-        $(document).on('focus', '#history-account-filter', function() {
-            var accounts = getExpenseAccounts();
-            if (accounts.length > 0) {
-                filterAccountDropdown($(this).val().trim());
-                showAccountDropdown();
+        document.addEventListener('focus', function(e) {
+            if (e.target && e.target.id === 'history-account-filter') {
+                var accounts = getExpenseAccounts();
+                if (accounts.length > 0) {
+                    filterAccountDropdown(e.target.value.trim());
+                    showAccountDropdown();
+                }
             }
         });
 
         // Account selection
-        $(document).on('mousedown', '#history-account-dropdown .autocomplete-item', function(e) {
+        document.addEventListener('mousedown', function(e) {
+            var item = e.target.closest('#history-account-dropdown .autocomplete-item');
+            if (!item) return;
             e.preventDefault();
-            var id = $(this).data('account-id');
-            var name = $(this).data('account-name');
+            var id = item.getAttribute('data-account-id');
+            var name = item.getAttribute('data-account-name');
             selectAccountFilter(id, name);
         });
 
         // Close account dropdown on outside click
-        $(document).on('click', function(e) {
-            if (!$(e.target).closest('#history-account-filter-wrap').length) {
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#history-account-filter-wrap')) {
                 hideAccountDropdown();
             }
         });
 
         // Search — debounced input
-        $(document).on('input', '#history-search', function() {
-            var val = $(this).val().trim();
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.id === 'history-search') {
+                var val = e.target.value.trim();
 
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(function() {
-                if (window.FFPWA.historyFilters.search !== val) {
-                    window.FFPWA.historyFilters.search = val;
-                    applyFilters();
-                } else {
-                    updateClearButton();
-                }
-            }, 600);
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(function() {
+                    if (window.FFPWA.historyFilters.search !== val) {
+                        window.FFPWA.historyFilters.search = val;
+                        applyFilters();
+                    } else {
+                        updateClearButton();
+                    }
+                }, 600);
+            }
         });
 
         // Clear all filters
-        $(document).on('click', '#history-clear-filters', function() {
-            clearFilters();
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#history-clear-filters')) {
+                clearFilters();
+            }
         });
 
         // Load more
-        $(document).on('click', '#history-load-more', function() {
-            loadMore();
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#history-load-more')) {
+                loadMore();
+            }
         });
 
-        $(document).on('click', '.history-tx-card', function() {
-            var $card = $(this);
-            var groupId = $card.data('group-id');
-            var txIdx = $card.data('tx-idx');
-            var groupTitle = $card.data('group-title');
-            var reconciled = $card.data('reconciled') === true || $card.data('reconciled') === 'true';
+        document.addEventListener('click', function(e) {
+            var card = e.target.closest('.history-tx-card');
+            if (!card) return;
+            var groupId = card.getAttribute('data-group-id');
+            var txIdx = card.getAttribute('data-tx-idx');
+            var groupTitle = card.getAttribute('data-group-title');
+            var reconciled = card.getAttribute('data-reconciled') === 'true';
 
             if (window.FFPWA.showTransactionEdit) {
                 window.FFPWA.showTransactionEdit(groupId, txIdx, groupTitle, reconciled);
             }
         });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', domReady);
+    } else {
+        domReady();
+    }
 
     window.FFPWA._onLocaleHistory = function() {
-        if (!$('#history-container').hasClass('hidden') && window.FFPWA.showHistoryScreen) {
+        var historyContainer = document.getElementById('history-container');
+        if (!historyContainer || historyContainer.classList.contains('hidden')) return;
+        if (window.FFPWA.showHistoryScreen) {
             window.FFPWA.showHistoryScreen();
             if (window.i18nTranslateDOM) window.i18nTranslateDOM();
         }

@@ -23,29 +23,34 @@
         }
 
         // Immediately show loading state so old data doesn't linger
-        $('#history-filters').addClass('hidden');
-        $('#history-list-view').addClass('hidden');
-        $('#history-detail').removeClass('hidden');
-        $('#history-detail-summary').html(
+        var historyFilters = document.getElementById('history-filters');
+        var historyListView = document.getElementById('history-list-view');
+        var historyDetail = document.getElementById('history-detail');
+        var historyDetailSummary = document.getElementById('history-detail-summary');
+        if (historyFilters) historyFilters.classList.add('hidden');
+        if (historyListView) historyListView.classList.add('hidden');
+        if (historyDetail) historyDetail.classList.remove('hidden');
+        if (historyDetailSummary) historyDetailSummary.innerHTML =
             '<div class="text-center py-8">' +
                 '<div class="spinner mx-auto mb-2"></div>' +
                 '<p class="text-sm text-ios-text-secondary">' + __('history.loading_tx') + '</p>' +
-            '</div>'
-        );
+            '</div>';
 
         // Reset background por si venía de otra tx con mapa
-        $('#map-open-btn-container').addClass('hidden');
-        $('#history-detail-summary').css({
-            'background-image': '',
-            'background-size': '',
-            'background-position': '',
-            'border-radius': '',
-            'padding': ''
-        });
+        var mapBtnContainer = document.getElementById('map-open-btn-container');
+        if (mapBtnContainer) mapBtnContainer.classList.add('hidden');
+        if (historyDetailSummary) {
+            historyDetailSummary.style.backgroundImage = '';
+            historyDetailSummary.style.backgroundSize = '';
+            historyDetailSummary.style.backgroundPosition = '';
+            historyDetailSummary.style.borderRadius = '';
+            historyDetailSummary.style.padding = '';
+        }
 
         // Clear form to prevent old data flash
-        $('#history-edit-form')[0].reset();
-        $('#history-edit-form').addClass('hidden');
+        var form = document.getElementById('history-edit-form');
+        if (form) form.reset();
+        if (form) form.classList.add('hidden');
 
         fetchTransactionGroup(groupId).then(function(groupData) {
             var tx = groupData.transactions && groupData.transactions[txIdx];
@@ -70,7 +75,7 @@
         var token = window.FFPWA.config.token;
 
         return new Promise(function(resolve, reject) {
-            $.ajax({
+            window.FFPWA.http({
                 url: url + '/api/v1/transactions/' + groupId,
                 method: 'GET',
                 headers: {
@@ -102,24 +107,32 @@
     function fetchBudgets() {
         var url = window.FFPWA.config.url;
         var token = window.FFPWA.config.token;
-        return $.ajax({
-            url: url + '/api/v1/autocomplete/budgets',
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
-            dataType: 'json',
-            timeout: 10000
+        return new Promise(function(resolve, reject) {
+            window.FFPWA.http({
+                url: url + '/api/v1/autocomplete/budgets',
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + token },
+                dataType: 'json',
+                timeout: 10000,
+                success: function(data) { resolve(data); },
+                error: function(xhr) { reject(new Error('HTTP ' + xhr.status)); }
+            });
         });
     }
 
     function fetchCategories() {
         var url = window.FFPWA.config.url;
         var token = window.FFPWA.config.token;
-        return $.ajax({
-            url: url + '/api/v1/autocomplete/categories',
-            method: 'GET',
-            headers: { 'Authorization': 'Bearer ' + token },
-            dataType: 'json',
-            timeout: 10000
+        return new Promise(function(resolve, reject) {
+            window.FFPWA.http({
+                url: url + '/api/v1/autocomplete/categories',
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + token },
+                dataType: 'json',
+                timeout: 10000,
+                success: function(data) { resolve(data); },
+                error: function(xhr) { reject(new Error('HTTP ' + xhr.status)); }
+            });
         });
     }
 
@@ -129,11 +142,14 @@
         opts = opts || {};
         var reconciled = opts.reconciled === true;
 
-        $('#history-list-view').addClass('hidden');
-        $('#history-detail').removeClass('hidden');
+        var historyListView = document.getElementById('history-list-view');
+        var historyDetail = document.getElementById('history-detail');
+        if (historyListView) historyListView.classList.add('hidden');
+        if (historyDetail) historyDetail.classList.remove('hidden');
         isDuplicating = false;
 
-        $('#history-delete-btn').toggleClass('hidden', reconciled);
+        var deleteBtn = document.getElementById('history-delete-btn');
+        if (deleteBtn) deleteBtn.classList.toggle('hidden', reconciled);
 
         var type = tx.type || 'withdrawal';
         var amount = parseFloat(tx.amount) || 0;
@@ -176,12 +192,11 @@
                 window.FFPWA.escapeHtml(window.FFPWA.formatDate(dateStr)) + ' · ' + window.FFPWA.escapeHtml(sourceName) + ' → ' + window.FFPWA.escapeHtml(destName) +
             '</p>';
 
-        $('#history-detail-summary').html(summaryHtml);
+        var summaryEl = document.getElementById('history-detail-summary');
+        if (summaryEl) summaryEl.innerHTML = summaryHtml;
 
         // ── Mapa de fondo si la transacción tiene ubicación GPS ──
         if (tx.latitude && tx.longitude) {
-            // Convertir lat/lon a tile de OpenStreetMap
-            // https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
             var bgZoom = 15;
             var n = Math.pow(2, bgZoom);
             var tileX = Math.floor((tx.longitude + 180) / 360 * n);
@@ -193,40 +208,54 @@
             var isDark = window.FFPWA.theme && window.FFPWA.theme.getCurrent() === 'dark';
             var overlayColor = isDark ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.6)';
 
-            $('#history-detail-summary').css({
-                'background-image': 'linear-gradient(' + overlayColor + ', ' + overlayColor + '), url(' + tileUrl + ')',
-                'background-size': 'cover',
-                'background-position': 'center',
-                'border-radius': '14px',
-                'padding': '16px',
-                'position': 'relative'
-            });
+            if (summaryEl) {
+                summaryEl.style.backgroundImage = 'linear-gradient(' + overlayColor + ', ' + overlayColor + '), url(' + tileUrl + ')';
+                summaryEl.style.backgroundSize = 'cover';
+                summaryEl.style.backgroundPosition = 'center';
+                summaryEl.style.borderRadius = '14px';
+                summaryEl.style.padding = '16px';
+                summaryEl.style.position = 'relative';
+            }
             
             // Mostrar botón para abrir en Maps
-            $('#map-open-btn-container').removeClass('hidden');
-            $('#map-open-btn').off('click').on('click', function(e) {
-                e.stopPropagation();
-                var mapsUrl = 'https://www.openstreetmap.org/?mlat=' + tx.latitude + '&mlon=' + tx.longitude + '&zoom=' + tx.zoom_level;
-                window.open(mapsUrl, '_blank');
-            });
+            var mapBtnContainer2 = document.getElementById('map-open-btn-container');
+            if (mapBtnContainer2) mapBtnContainer2.classList.remove('hidden');
+            var mapBtn = document.getElementById('map-open-btn');
+            if (mapBtn) {
+                // Clone to remove old listeners
+                var newMapBtn = mapBtn.cloneNode(true);
+                mapBtn.parentNode.replaceChild(newMapBtn, mapBtn);
+                newMapBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var mapsUrl = 'https://www.openstreetmap.org/?mlat=' + tx.latitude + '&mlon=' + tx.longitude + '&zoom=' + tx.zoom_level;
+                    window.open(mapsUrl, '_blank');
+                });
+            }
 
             console.log('🗺️ Mapa de fondo aplicado (OSM tile):', tx.latitude, tx.longitude, 'zoom', bgZoom);
         }
 
         // Restore delete and save buttons to clean state
-        $('#history-delete-btn')
-            .prop('disabled', false)
-            .html(Icons.trash2 + ' <span data-i18n="history.delete_btn">' + __('history.delete_btn') + '</span>');
-        $('#history-duplicate-btn')
-            .prop('disabled', false)
-            .removeClass('hidden')
-            .html(Icons.copy + ' <span data-i18n="history.duplicate_btn">' + __('history.duplicate_btn') + '</span>');
-        $('#history-save-btn')
-            .prop('disabled', false)
-            .html('<span data-i18n="history.save">' + __('history.save') + '</span>');
+        if (deleteBtn) {
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = Icons.trash2 + ' <span data-i18n="history.delete_btn">' + __('history.delete_btn') + '</span>';
+        }
+        var duplicateBtn = document.getElementById('history-duplicate-btn');
+        if (duplicateBtn) {
+            duplicateBtn.disabled = false;
+            duplicateBtn.classList.remove('hidden');
+            duplicateBtn.innerHTML = Icons.copy + ' <span data-i18n="history.duplicate_btn">' + __('history.duplicate_btn') + '</span>';
+        }
+        var saveBtn = document.getElementById('history-save-btn');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<span data-i18n="history.save">' + __('history.save') + '</span>';
+        }
 
-        $('#history-edit-form').removeClass('hidden');
-        $('#edit-status-message').addClass('hidden');
+        var editForm = document.getElementById('history-edit-form');
+        if (editForm) editForm.classList.remove('hidden');
+        var editStatusMsg = document.getElementById('edit-status-message');
+        if (editStatusMsg) editStatusMsg.classList.add('hidden');
 
         if (reconciled) {
             populateForm(tx, { readOnly: true });
@@ -252,10 +281,14 @@
     /* ─── Budget dropdown ─── */
 
     function populateBudgetDropdown() {
-        var $select = $('#edit-budget');
-        $select.empty().append('<option value="">—</option>');
+        var select = document.getElementById('edit-budget');
+        if (!select) return;
+        select.innerHTML = '<option value="">—</option>';
         editBudgets.forEach(function(b) {
-            $select.append('<option value="' + window.FFPWA.escapeHtml(String(b.id)) + '">' + window.FFPWA.escapeHtml(b.name) + '</option>');
+            var opt = document.createElement('option');
+            opt.value = String(b.id);
+            opt.textContent = b.name;
+            select.appendChild(opt);
         });
     }
 
@@ -277,83 +310,101 @@
         var foreignAmt = parseFloat(tx.foreign_amount);
 
         // Readonly: ensure budget dropdown has data from tx data
-        if (readOnly && $('#edit-budget option').length <= 1 && tx.budget_name) {
-            $('#edit-budget').empty()
-                .append('<option value="">—</option>')
-                .append('<option value="' + window.FFPWA.escapeHtml(String(tx.budget_id || '')) + '" selected>' + window.FFPWA.escapeHtml(tx.budget_name) + '</option>');
+        var budgetSelect = document.getElementById('edit-budget');
+        if (readOnly && budgetSelect && budgetSelect.options.length <= 1 && tx.budget_name) {
+            budgetSelect.innerHTML = '<option value="">—</option>';
+            var opt = document.createElement('option');
+            opt.value = String(tx.budget_id || '');
+            opt.textContent = tx.budget_name;
+            opt.selected = true;
+            budgetSelect.appendChild(opt);
         }
 
         // Set disabled state on all form inputs
-        $('#history-edit-form .ios-input, #history-edit-form .ios-select')
-            .prop('disabled', readOnly)
-            .css('opacity', readOnly ? '0.7' : '1');
+        var form = document.getElementById('history-edit-form');
+        if (form) {
+            form.querySelectorAll('.ios-input, .ios-select').forEach(function(el) {
+                el.disabled = readOnly;
+                el.style.opacity = readOnly ? '0.7' : '1';
+            });
+        }
 
         // Fill all fields
-        $('#edit-description').val(tx.description || '');
-        $('#edit-source-account').val(tx.source_name || '');
-        $('#edit-source-account-id').val(tx.source_id || '');
-        $('#edit-source-account-name').val(tx.source_name || '');
-        $('#edit-dest-account').val(tx.destination_name || '');
-        $('#edit-dest-account-id').val(tx.destination_id || '');
-        $('#edit-dest-account-name').val(tx.destination_name || '');
-        $('#edit-date').val(datePart);
-        $('#edit-time').val(timePart);
+        var setVal = function(id, val) {
+            var el = document.getElementById(id);
+            if (el) el.value = val || '';
+        };
+        setVal('edit-description', tx.description || '');
+        setVal('edit-source-account', tx.source_name || '');
+        setVal('edit-source-account-id', tx.source_id || '');
+        setVal('edit-source-account-name', tx.source_name || '');
+        setVal('edit-dest-account', tx.destination_name || '');
+        setVal('edit-dest-account-id', tx.destination_id || '');
+        setVal('edit-dest-account-name', tx.destination_name || '');
+        setVal('edit-date', datePart);
+        setVal('edit-time', timePart);
 
-        $('#edit-amount').val(Math.abs(amount));
-        $('#edit-currency-code').text(tx.currency_code || '');
+        var editAmount = document.getElementById('edit-amount');
+        if (editAmount) editAmount.value = Math.abs(amount);
+        var editCurrencyCode = document.getElementById('edit-currency-code');
+        if (editCurrencyCode) editCurrencyCode.textContent = tx.currency_code || '';
 
         // Foreign amount
+        var editForeignAmount = document.getElementById('edit-foreign-amount');
         if (!isNaN(foreignAmt) && foreignAmt !== 0) {
-            $('#edit-foreign-amount').val(Math.abs(foreignAmt));
+            if (editForeignAmount) editForeignAmount.value = Math.abs(foreignAmt);
         } else {
-            $('#edit-foreign-amount').val('');
+            if (editForeignAmount) editForeignAmount.value = '';
         }
-        $('#edit-foreign-currency').val(tx.foreign_currency_code || '');
+        setVal('edit-foreign-currency', tx.foreign_currency_code || '');
 
         // Budget
-        if (tx.budget_id) {
-            $('#edit-budget').val(tx.budget_id);
-        } else {
-            $('#edit-budget').val('');
-        }
+        var editBudget = document.getElementById('edit-budget');
+        if (editBudget) editBudget.value = tx.budget_id || '';
 
         // Category
-        $('#edit-category').val(tx.category_name || '');
+        setVal('edit-category', tx.category_name || '');
 
         // Foreign row visibility
-        if (tx.foreign_amount || tx.foreign_currency_code) {
-            $('#edit-foreign-row').removeClass('hidden');
-        } else {
-            $('#edit-foreign-row').addClass('hidden');
+        var foreignRow = document.getElementById('edit-foreign-row');
+        if (foreignRow) {
+            if (tx.foreign_amount || tx.foreign_currency_code) {
+                foreignRow.classList.remove('hidden');
+            } else {
+                foreignRow.classList.add('hidden');
+            }
         }
 
         // Save button and status
-        $('#history-save-btn').toggleClass('hidden', readOnly);
-        $('#edit-status-message').addClass('hidden');
+        var saveBtn = document.getElementById('history-save-btn');
+        if (saveBtn) saveBtn.classList.toggle('hidden', readOnly);
+        var editStatusMsg = document.getElementById('edit-status-message');
+        if (editStatusMsg) editStatusMsg.classList.add('hidden');
     }
 
     /* ─── Build update payload ─── */
 
     function buildUpdatePayload(tx) {
         var transactionType = tx.type || 'withdrawal';
-        var sourceId = $('#edit-source-account-id').val() || null;
-        var sourceName = $('#edit-source-account-name').val() || $('#edit-source-account').val() || '';
-        var destId = $('#edit-dest-account-id').val() || null;
-        var destName = $('#edit-dest-account-name').val() || $('#edit-dest-account').val() || '';
-        var dateVal = $('#edit-date').val() || '';
-        var timeVal = $('#edit-time').val() || '00:00';
+        var getVal = function(id) { var el = document.getElementById(id); return el ? el.value : ''; };
+        var sourceId = getVal('edit-source-account-id') || null;
+        var sourceName = getVal('edit-source-account-name') || getVal('edit-source-account') || '';
+        var destId = getVal('edit-dest-account-id') || null;
+        var destName = getVal('edit-dest-account-name') || getVal('edit-dest-account') || '';
+        var dateVal = getVal('edit-date') || '';
+        var timeVal = getVal('edit-time') || '00:00';
         var dateTime = dateVal + 'T' + timeVal + ':00';
-        var amount = parseFloat($('#edit-amount').val()) || 0;
-        var foreignAmount = $('#edit-foreign-amount').val();
-        var foreignCurrency = $('#edit-foreign-currency').val();
-        var budgetId = $('#edit-budget').val();
-        var categoryName = $('#edit-category').val().trim() || null;
+        var amount = parseFloat(getVal('edit-amount')) || 0;
+        var foreignAmount = getVal('edit-foreign-amount');
+        var foreignCurrency = getVal('edit-foreign-currency');
+        var budgetId = getVal('edit-budget');
+        var categoryName = getVal('edit-category').trim() || null;
 
         var transaction = {
             "type": transactionType,
             "date": dateTime,
             "amount": String(amount),
-            "description": $('#edit-description').val().trim() || __('transaction.no_description')
+            "description": (getVal('edit-description') || '').trim() || __('transaction.no_description')
         };
 
         if (sourceId && sourceId !== '') {
@@ -402,10 +453,10 @@
 
         var payload = buildUpdatePayload(tx);
 
-        var $btn = $('#history-save-btn');
-        var $status = $('#edit-status-message');
-        $btn.prop('disabled', true).text(__('transaction.submit_sending'));
-        $status.addClass('hidden');
+        var btn = document.getElementById('history-save-btn');
+        var status = document.getElementById('edit-status-message');
+        if (btn) { btn.disabled = true; btn.textContent = __('transaction.submit_sending'); }
+        if (status) status.classList.add('hidden');
 
         var url = window.FFPWA.config.url;
         var token = window.FFPWA.config.token;
@@ -415,7 +466,7 @@
             : url + '/api/v1/transactions/' + currentEditGroupId;
         var method = isDuplicating ? 'POST' : 'PUT';
 
-        $.ajax({
+        window.FFPWA.http({
             url: endpoint,
             method: method,
             headers: {
@@ -427,9 +478,12 @@
             timeout: 30000,
             success: function() {
                 var msg = isDuplicating ? 'history.duplicate_success' : 'history.edit_saved';
-                $status.removeClass('hidden error').addClass('success')
-                    .html('✅ ' + __(msg));
-                $btn.prop('disabled', false).html(__('history.saved_btn'));
+                if (status) {
+                    status.classList.remove('hidden', 'error');
+                    status.classList.add('success');
+                    status.innerHTML = '✅ ' + __(msg);
+                }
+                if (btn) { btn.disabled = false; btn.innerHTML = __('history.saved_btn'); }
                 currentEditTxData = null;
                 currentEditGroupId = null;
                 isDuplicating = false;
@@ -447,9 +501,12 @@
                 } else {
                     msg += ' (HTTP ' + xhr.status + ')';
                 }
-                $status.removeClass('hidden success').addClass('error')
-                    .html('❌ ' + msg);
-                $btn.prop('disabled', false).html(__('history.save'));
+                if (status) {
+                    status.classList.remove('hidden', 'success');
+                    status.classList.add('error');
+                    status.innerHTML = '❌ ' + msg;
+                }
+                if (btn) { btn.disabled = false; btn.innerHTML = __('history.save'); }
             }
         });
     }
@@ -459,10 +516,10 @@
     function deleteTransaction() {
         if (!currentEditGroupId) return;
 
-        var $overlay = $('#delete-confirm-overlay');
-        if (!$overlay.length) {
+        var overlay = document.getElementById('delete-confirm-overlay');
+        if (!overlay) {
             // Create confirmation overlay on-demand
-            $('body').append(
+            var overlayHtml =
                 '<div id="delete-confirm-overlay" class="fixed inset-0 z-[200] flex items-end justify-center" style="background:rgba(0,0,0,0.4);">' +
                     '<div class="w-full rounded-t-[20px] p-6" style="background:var(--ios-card);padding-bottom:calc(24px + env(safe-area-inset-bottom));">' +
                         '<h3 class="text-[17px] font-semibold text-center text-ios-text mb-2" data-i18n="history.delete_confirm_title">' + __('history.delete_confirm_title') + '</h3>' +
@@ -470,41 +527,46 @@
                         '<button id="delete-confirm-cancel" class="ios-btn-primary mb-2">' + __('history.delete_confirm_cancel') + '</button>' +
                         '<button id="delete-confirm-ok" class="ios-btn-danger">' + __('history.delete_confirm_ok') + '</button>' +
                     '</div>' +
-                '</div>'
-            );
-            $overlay = $('#delete-confirm-overlay');
+                '</div>';
+            document.body.insertAdjacentHTML('beforeend', overlayHtml);
+            overlay = document.getElementById('delete-confirm-overlay');
 
             // Cancel button
-            $overlay.on('click', '#delete-confirm-cancel', function() {
-                $overlay.remove();
+            overlay.addEventListener('click', function(e) {
+                if (e.target.closest('#delete-confirm-cancel')) {
+                    overlay.remove();
+                }
             });
 
             // Click outside
-            $overlay.on('click', function(e) {
-                if (e.target === this) {
-                    $(this).remove();
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    overlay.remove();
                 }
             });
 
             // Confirm button
-            $overlay.on('click', '#delete-confirm-ok', function() {
-                $overlay.remove();
-                executeDelete();
+            overlay.addEventListener('click', function(e) {
+                if (e.target.closest('#delete-confirm-ok')) {
+                    overlay.remove();
+                    executeDelete();
+                }
             });
         }
     }
 
     function executeDelete() {
-        var $btn = $('#history-delete-btn');
-        var $status = $('#edit-status-message');
-        $btn.prop('disabled', true);
-        $btn.find('[data-i18n="history.delete_btn"]').text(__('transaction.submit_sending'));
-        $status.addClass('hidden');
+        var btn = document.getElementById('history-delete-btn');
+        var status = document.getElementById('edit-status-message');
+        if (btn) btn.disabled = true;
+        var btnLabel = btn ? btn.querySelector('[data-i18n="history.delete_btn"]') : null;
+        if (btnLabel) btnLabel.textContent = __('transaction.submit_sending');
+        if (status) status.classList.add('hidden');
 
         var url = window.FFPWA.config.url;
         var token = window.FFPWA.config.token;
 
-        $.ajax({
+        window.FFPWA.http({
             url: url + '/api/v1/transactions/' + currentEditGroupId,
             method: 'DELETE',
             headers: {
@@ -513,8 +575,11 @@
             },
             timeout: 15000,
             success: function() {
-                $status.removeClass('hidden error').addClass('success')
-                    .html('🗑️ ' + __('history.delete_success'));
+                if (status) {
+                    status.classList.remove('hidden', 'error');
+                    status.classList.add('success');
+                    status.innerHTML = '🗑️ ' + __('history.delete_success');
+                }
                 currentEditTxData = null;
                 currentEditGroupId = null;
 
@@ -533,10 +598,15 @@
                 } else {
                     msg += ' (HTTP ' + xhr.status + ')';
                 }
-                $status.removeClass('hidden success').addClass('error')
-                    .html('❌ ' + msg);
-                $btn.prop('disabled', false);
-                $btn.find('[data-i18n="history.delete_btn"]').text(__('history.delete_btn'));
+                if (status) {
+                    status.classList.remove('hidden', 'success');
+                    status.classList.add('error');
+                    status.innerHTML = '❌ ' + msg;
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    if (btnLabel) btnLabel.textContent = __('history.delete_btn');
+                }
             }
         });
     }
@@ -546,14 +616,22 @@
     function duplicateTransaction() {
         isDuplicating = true;
 
+        var form = document.getElementById('history-edit-form');
         // Enable form fields (may be disabled for reconciled transactions)
-        $('#history-edit-form .ios-input, #history-edit-form .ios-select')
-            .prop('disabled', false).css('opacity', '1');
-        $('#history-save-btn').removeClass('hidden');
+        if (form) {
+            form.querySelectorAll('.ios-input, .ios-select').forEach(function(el) {
+                el.disabled = false;
+                el.style.opacity = '1';
+            });
+        }
+        var saveBtn = document.getElementById('history-save-btn');
+        if (saveBtn) saveBtn.classList.remove('hidden');
 
         // Hide action buttons
-        $('#history-delete-btn').addClass('hidden');
-        $('#history-duplicate-btn').addClass('hidden');
+        var deleteBtn = document.getElementById('history-delete-btn');
+        var duplicateBtn = document.getElementById('history-duplicate-btn');
+        if (deleteBtn) deleteBtn.classList.add('hidden');
+        if (duplicateBtn) duplicateBtn.classList.add('hidden');
 
         // Update date/time to current
         var now = new Date();
@@ -562,11 +640,13 @@
             String(now.getDate()).padStart(2, '0');
         var timePart = String(now.getHours()).padStart(2, '0') + ':' +
             String(now.getMinutes()).padStart(2, '0');
-        $('#edit-date').val(datePart);
-        $('#edit-time').val(timePart);
+        var editDate = document.getElementById('edit-date');
+        var editTime = document.getElementById('edit-time');
+        if (editDate) editDate.value = datePart;
+        if (editTime) editTime.value = timePart;
 
         // Change save button label
-        $('#history-save-btn').html('<span data-i18n="history.duplicate_btn">' + __('history.duplicate_btn') + '</span>');
+        if (saveBtn) saveBtn.innerHTML = '<span data-i18n="history.duplicate_btn">' + __('history.duplicate_btn') + '</span>';
 
         // Ensure autocomplete + budgets are loaded (reconciled tx skip these)
         if (!editBudgets.length && !editCategories.length) {
@@ -581,9 +661,12 @@
         }
 
         // Show hint
-        $('#edit-status-message')
-            .removeClass('hidden error').addClass('success')
-            .html('📋 ' + __('history.duplicating_hint'));
+        var statusMsg = document.getElementById('edit-status-message');
+        if (statusMsg) {
+            statusMsg.classList.remove('hidden', 'error');
+            statusMsg.classList.add('success');
+            statusMsg.innerHTML = '📋 ' + __('history.duplicating_hint');
+        }
 
         if (window.i18nTranslateDOM) window.i18nTranslateDOM();
     }
@@ -596,21 +679,30 @@
 
         if (origin === 'accounts') {
             // Volver al detalle de cuenta específico
-            $('#history-detail').addClass('hidden');
-            $('#history-container').hide();
-            $('#accounts-container').show().removeClass('hidden');
-            $('#accounts-list').addClass('hidden');
-            $('#account-detail').removeClass('hidden');
-            $('#tab-bar .tab-btn').removeClass('active');
-            $('#tab-bar .tab-btn[data-screen="accounts"]').addClass('active');
+            var historyDetail = document.getElementById('history-detail');
+            var historyContainer = document.getElementById('history-container');
+            var accountsContainer = document.getElementById('accounts-container');
+            var accountsList = document.getElementById('accounts-list');
+            var accountDetail = document.getElementById('account-detail');
+            if (historyDetail) historyDetail.classList.add('hidden');
+            if (historyContainer) historyContainer.style.display = 'none';
+            if (accountsContainer) { accountsContainer.style.display = ''; accountsContainer.classList.remove('hidden'); }
+            if (accountsList) accountsList.classList.add('hidden');
+            if (accountDetail) accountDetail.classList.remove('hidden');
+            document.querySelectorAll('#tab-bar .tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+            var accBtn = document.querySelector('#tab-bar .tab-btn[data-screen="accounts"]');
+            if (accBtn) accBtn.classList.add('active');
             if (refresh && window.FFPWA.refreshCurrentAccount) {
                 window.FFPWA.refreshCurrentAccount();
             }
         } else {
             // Volver al listado del historial
-            $('#history-filters').removeClass('hidden');
-            $('#history-detail').addClass('hidden');
-            $('#history-list-view').removeClass('hidden');
+            var historyFilters = document.getElementById('history-filters');
+            var historyDetail2 = document.getElementById('history-detail');
+            var historyListView = document.getElementById('history-list-view');
+            if (historyFilters) historyFilters.classList.remove('hidden');
+            if (historyDetail2) historyDetail2.classList.add('hidden');
+            if (historyListView) historyListView.classList.remove('hidden');
             if (refresh && window.FFPWA.showHistoryScreen) {
                 window.FFPWA.showHistoryScreen();
             }
@@ -638,18 +730,17 @@
         var cache = window.FFPWA.accountsCache;
         if (!cache) return;
 
-        // Limpiar handlers previos en document (mousedown/click delegados) y en inputs (directos)
-        $(document).off('.editTx');
-        $('#edit-source-account, #edit-dest-account, #edit-category').off('.editTx');
-
         function getTransactionType() {
             return currentEditTxData ? currentEditTxData.type : 'withdrawal';
         }
 
+        function getEl(id) { return document.getElementById(id); }
+
         function doAccountFilter(input, dropdown, fieldContext) {
-            var query = $(input).val().trim().toLowerCase();
+            var query = input.value.trim().toLowerCase();
             if (query.length < 1) {
-                dropdown.addClass('hidden').removeClass('visible');
+                dropdown.classList.add('hidden');
+                dropdown.classList.remove('visible');
                 return;
             }
 
@@ -663,7 +754,8 @@
             });
 
             if (matches.length === 0) {
-                dropdown.addClass('hidden').removeClass('visible');
+                dropdown.classList.add('hidden');
+                dropdown.classList.remove('visible');
                 return;
             }
 
@@ -674,21 +766,21 @@
                     '<span>' + window.FFPWA.escapeHtml(a.name) + '</span>' +
                 '</li>';
             });
-            dropdown.html(html);
+            dropdown.innerHTML = html;
 
             var rect = input.getBoundingClientRect();
-            dropdown.css({
-                top: (rect.bottom + 4) + 'px',
-                left: rect.left + 'px',
-                width: rect.width + 'px'
-            });
-            dropdown.removeClass('hidden').addClass('visible');
+            dropdown.style.top = (rect.bottom + 4) + 'px';
+            dropdown.style.left = rect.left + 'px';
+            dropdown.style.width = rect.width + 'px';
+            dropdown.classList.remove('hidden');
+            dropdown.classList.add('visible');
         }
 
         function doCategoryFilter(input, dropdown) {
-            var query = $(input).val().trim().toLowerCase();
+            var query = input.value.trim().toLowerCase();
             if (query.length < 1 || editCategories.length === 0) {
-                dropdown.addClass('hidden').removeClass('visible');
+                dropdown.classList.add('hidden');
+                dropdown.classList.remove('visible');
                 return;
             }
 
@@ -697,7 +789,8 @@
             });
 
             if (matches.length === 0) {
-                dropdown.addClass('hidden').removeClass('visible');
+                dropdown.classList.add('hidden');
+                dropdown.classList.remove('visible');
                 return;
             }
 
@@ -708,87 +801,135 @@
                     '<span>' + window.FFPWA.escapeHtml(c.name) + '</span>' +
                 '</li>';
             });
-            dropdown.html(html);
+            dropdown.innerHTML = html;
 
             var rect = input.getBoundingClientRect();
-            dropdown.css({
-                top: (rect.bottom + 4) + 'px',
-                left: rect.left + 'px',
-                width: rect.width + 'px'
-            });
-            dropdown.removeClass('hidden').addClass('visible');
+            dropdown.style.top = (rect.bottom + 4) + 'px';
+            dropdown.style.left = rect.left + 'px';
+            dropdown.style.width = rect.width + 'px';
+            dropdown.classList.remove('hidden');
+            dropdown.classList.add('visible');
         }
 
-        // Vincular directamente a los inputs (ya existen)
-        $('#edit-source-account').on('keyup.editTx change.editTx', function() {
-            doAccountFilter(this, $('#edit-source-autocomplete'), 'source');
-        });
-        $('#edit-dest-account').on('keyup.editTx change.editTx', function() {
-            doAccountFilter(this, $('#edit-dest-autocomplete'), 'destination');
-        });
-        $('#edit-category').on('keyup.editTx change.editTx', function() {
-            doCategoryFilter(this, $('#edit-category-autocomplete'));
-        });
-
-        // Mousedown delegado para ítems generados dinámicamente
-        $(document).on('mousedown.editTx', '#edit-source-autocomplete .autocomplete-item', function(e) {
-            e.preventDefault();
-            $('#edit-source-account').val($(this).data('account-name'));
-            $('#edit-source-account-id').val($(this).data('account-id'));
-            $('#edit-source-account-name').val($(this).data('account-name'));
-            $('#edit-source-autocomplete').addClass('hidden').removeClass('visible');
-        });
-
-        $(document).on('mousedown.editTx', '#edit-dest-autocomplete .autocomplete-item', function(e) {
-            e.preventDefault();
-            $('#edit-dest-account').val($(this).data('account-name'));
-            $('#edit-dest-account-id').val($(this).data('account-id'));
-            $('#edit-dest-account-name').val($(this).data('account-name'));
-            $('#edit-dest-autocomplete').addClass('hidden').removeClass('visible');
-        });
-
-        $(document).on('mousedown.editTx', '#edit-category-autocomplete .autocomplete-item', function(e) {
-            e.preventDefault();
-            $('#edit-category').val($(this).data('category-name'));
-            $('#edit-category-autocomplete').addClass('hidden').removeClass('visible');
-        });
-
-        // Cerrar dropdowns al hacer clic fuera
-        $(document).on('click.editTx', function(e) {
-            if (!$(e.target).closest('#edit-source-autocomplete, #edit-source-account').length) {
-                $('#edit-source-autocomplete').addClass('hidden').removeClass('visible');
+        // Use a namespaced handler pattern — store reference for removal
+        var editHandler = function(e) {
+            // Source account input
+            if (e.target.id === 'edit-source-account' && (e.type === 'keyup' || (e.type === 'change' && document.activeElement === e.target))) {
+                doAccountFilter(e.target, getEl('edit-source-autocomplete'), 'source');
+                return;
             }
-            if (!$(e.target).closest('#edit-dest-autocomplete, #edit-dest-account').length) {
-                $('#edit-dest-autocomplete').addClass('hidden').removeClass('visible');
+            if (e.target.id === 'edit-dest-account' && (e.type === 'keyup' || (e.type === 'change' && document.activeElement === e.target))) {
+                doAccountFilter(e.target, getEl('edit-dest-autocomplete'), 'destination');
+                return;
             }
-            if (!$(e.target).closest('#edit-category-autocomplete, #edit-category').length) {
-                $('#edit-category-autocomplete').addClass('hidden').removeClass('visible');
+            if (e.target.id === 'edit-category' && (e.type === 'keyup' || (e.type === 'change' && document.activeElement === e.target))) {
+                doCategoryFilter(e.target, getEl('edit-category-autocomplete'));
+                return;
             }
-        });
+
+            // Mousedown on autocomplete items
+            if (e.type === 'mousedown') {
+                var srcItem = e.target.closest('#edit-source-autocomplete .autocomplete-item');
+                if (srcItem) {
+                    e.preventDefault();
+                    var srcName = srcItem.getAttribute('data-account-name');
+                    var srcId = srcItem.getAttribute('data-account-id');
+                    setVal('edit-source-account', srcName);
+                    setVal('edit-source-account-id', srcId);
+                    setVal('edit-source-account-name', srcName);
+                    hideEl('edit-source-autocomplete');
+                    return;
+                }
+
+                var destItem = e.target.closest('#edit-dest-autocomplete .autocomplete-item');
+                if (destItem) {
+                    e.preventDefault();
+                    var destName = destItem.getAttribute('data-account-name');
+                    var destId = destItem.getAttribute('data-account-id');
+                    setVal('edit-dest-account', destName);
+                    setVal('edit-dest-account-id', destId);
+                    setVal('edit-dest-account-name', destName);
+                    hideEl('edit-dest-autocomplete');
+                    return;
+                }
+
+                var catItem = e.target.closest('#edit-category-autocomplete .autocomplete-item');
+                if (catItem) {
+                    e.preventDefault();
+                    var catName = catItem.getAttribute('data-category-name');
+                    setVal('edit-category', catName);
+                    hideEl('edit-category-autocomplete');
+                    return;
+                }
+            }
+
+            // Click outside to close dropdowns
+            if (e.type === 'click') {
+                if (!e.target.closest('#edit-source-autocomplete, #edit-source-account')) {
+                    hideEl('edit-source-autocomplete');
+                }
+                if (!e.target.closest('#edit-dest-autocomplete, #edit-dest-account')) {
+                    hideEl('edit-dest-autocomplete');
+                }
+                if (!e.target.closest('#edit-category-autocomplete, #edit-category')) {
+                    hideEl('edit-category-autocomplete');
+                }
+            }
+        };
+
+        function setVal(id, val) { var el = document.getElementById(id); if (el) el.value = val; }
+        function hideEl(id) { var el = document.getElementById(id); if (el) { el.classList.add('hidden'); el.classList.remove('visible'); } }
+
+        // Remove previous editTx handlers if any
+        document.removeEventListener('keyup', editHandler);
+        document.removeEventListener('change', editHandler);
+        document.removeEventListener('mousedown', editHandler);
+        document.removeEventListener('click', editHandler);
+
+        // Add fresh handlers
+        document.addEventListener('keyup', editHandler);
+        document.addEventListener('change', editHandler);
+        document.addEventListener('mousedown', editHandler);
+        document.addEventListener('click', editHandler);
     }
 
     /* ─── Event wiring ─── */
 
-    $(document).ready(function() {
-        $(document).on('click', '#history-detail-back', function() {
-            goBackToList(false);
+    function domReady() {
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#history-detail-back')) {
+                goBackToList(false);
+            }
         });
 
-        $(document).on('submit', '#history-edit-form', function(e) {
-            saveTransaction(e);
+        document.addEventListener('submit', function(e) {
+            if (e.target && e.target.id === 'history-edit-form') {
+                saveTransaction(e);
+            }
         });
 
-        $(document).on('click', '#history-delete-btn', function() {
-            deleteTransaction();
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#history-delete-btn')) {
+                deleteTransaction();
+            }
         });
 
-        $(document).on('click', '#history-duplicate-btn', function() {
-            duplicateTransaction();
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#history-duplicate-btn')) {
+                duplicateTransaction();
+            }
         });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', domReady);
+    } else {
+        domReady();
+    }
 
     window.FFPWA._onLocaleEdit = function() {
-        if ($('#history-detail').is(':visible') && window.i18nTranslateDOM) {
+        var historyDetail = document.getElementById('history-detail');
+        if (historyDetail && historyDetail.offsetParent !== null && window.i18nTranslateDOM) {
             window.i18nTranslateDOM();
         }
     };

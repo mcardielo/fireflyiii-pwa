@@ -18,30 +18,32 @@
      * @param {string} type - 'success' | 'warning' | 'error'
      */
     function showStatusMessage(message, type) {
-        const $status = $('#status-message');
+        const status = document.getElementById('status-message');
 
         // Cancelar timeout y animación previos
         if (window.FFPWA._statusTimeout) clearTimeout(window.FFPWA._statusTimeout);
 
+        if (!status) return;
+
         // Reset: quitar hidden y done-class, forzar repaint para que la transición se dispare
-        $status.removeClass('hidden ios-status-done success warning error');
-        void $status[0].offsetHeight;
+        status.classList.remove('hidden', 'ios-status-done', 'success', 'warning', 'error');
+        void status.offsetHeight;
 
         if (type === 'success') {
-            $status.addClass('success');
+            status.classList.add('success');
         } else if (type === 'warning') {
-            $status.addClass('warning');
+            status.classList.add('warning');
         } else {
-            $status.addClass('error');
+            status.classList.add('error');
         }
-        $status.text(message);
+        status.textContent = message;
 
         // Auto-ocultar: primero animar hacia arriba, luego display:none
         const delay = type === 'success' ? 5000 : 8000;
         window.FFPWA._statusTimeout = setTimeout(function() {
-            $status.addClass('hidden'); // dispara la animación de salida
+            status.classList.add('hidden'); // dispara la animación de salida
             setTimeout(function() {
-                $status.addClass('ios-status-done');
+                status.classList.add('ios-status-done');
             }, 360);
         }, delay);
     }
@@ -53,7 +55,8 @@
      * @throws {Error} Si el monto no es válido
      */
     function validateAndFormatAmount() {
-        const raw = $('#amount').val().trim();
+        const amountEl = document.getElementById('amount');
+        const raw = amountEl ? amountEl.value.trim() : '';
         if (!raw) {
             throw new Error(__('transaction.error.amount_required'));
         }
@@ -72,15 +75,19 @@
      * - Para retiros/transferencias: default va en origen.
      */
     function resolveField(field) {
-        const transactionType = $('#transaction-type').val() || 'withdrawal';
+        var typeEl = document.getElementById('transaction-type');
+        const transactionType = (typeEl ? typeEl.value : '') || 'withdrawal';
         const prefix = field === 'source' ? 'source' : 'destination';
-        const visibleValue = $(`#${prefix}-account`).val().trim();
+        const visibleEl = document.getElementById(`${prefix}-account`);
+        const visibleValue = visibleEl ? visibleEl.value.trim() : '';
         const defaultAccount = window.FFPWA.config.defaultSourceAccount;
 
         if (visibleValue) {
+            var idEl = document.getElementById(`${prefix}-account-id`);
+            var nameEl = document.getElementById(`${prefix}-account-name`);
             return {
-                id: $(`#${prefix}-account-id`).val() || null,
-                name: $(`#${prefix}-account-name`).val() || visibleValue
+                id: (idEl ? idEl.value : '') || null,
+                name: (nameEl ? nameEl.value : '') || visibleValue
             };
         }
 
@@ -119,7 +126,8 @@
      * Recopila y transforma los datos del formulario en el formato JSON requerido por Firefly III.
      */
     async function buildTransactionPayload() {
-        const transactionType = $('#transaction-type').val() || 'withdrawal';
+        var typeEl = document.getElementById('transaction-type');
+        const transactionType = (typeEl ? typeEl.value : '') || 'withdrawal';
         const source = resolveField('source');
         const dest = resolveField('destination');
 
@@ -165,12 +173,13 @@
 
         const amount = validateAndFormatAmount();
 
+        var descEl = document.getElementById('description');
         // Construir la transacción dinámicamente:
         // - Si hay ID, enviarlo (cuenta existente seleccionada)
         // - Si no hay ID, NO incluirlo (Firefly creará la cuenta por el nombre)
         const transaction = {
             "type": transactionType,
-            "description": $('#description').val().trim() || __('transaction.no_description'),
+            "description": (descEl ? descEl.value.trim() : '') || __('transaction.no_description'),
             "date": new Date().toISOString(),
             "source_name": source.name
         };
@@ -207,7 +216,8 @@
             // Cuenta dictante: source para withdrawal, destination para deposit
             const dictatingId = transactionType === 'deposit' ? dest.id : source.id;
             const accountCurrency = dictatingId ? getAccountCurrency(dictatingId) : null;
-            const selectedCurrency = $('#currency-select').val();
+            var curSelect = document.getElementById('currency-select');
+            const selectedCurrency = curSelect ? curSelect.value : '';
 
             if (accountCurrency && selectedCurrency && selectedCurrency !== accountCurrency) {
                 // El usuario pagó en moneda distinta a la de la cuenta → convertir
@@ -249,7 +259,8 @@
         transaction.destination_name = dest.name;
 
         // ── GPS location ──
-        var txGpsEnabled = window.FFPWA.config.gpsEnabled && $('#tx-gps-toggle').is(':checked');
+        var txGpsToggle = document.getElementById('tx-gps-toggle');
+        var txGpsEnabled = window.FFPWA.config.gpsEnabled && txGpsToggle && txGpsToggle.checked;
         if (txGpsEnabled && window.FFPWA.lastLocation) {
             transaction.latitude = window.FFPWA.lastLocation.latitude;
             transaction.longitude = window.FFPWA.lastLocation.longitude;
@@ -267,20 +278,30 @@
      * Limpia el formulario y restaura el placeholder con la cuenta default.
      */
     function resetTransactionForm() {
-        const transactionType = $('#transaction-type').val() || 'withdrawal';
-        $('#transaction-form')[0].reset();
-        $('#source-account-id').val('');
-        $('#source-account-name').val('');
-        $('#destination-account-id').val('');
-        $('#destination-account-name').val('');
+        var typeEl = document.getElementById('transaction-type');
+        const transactionType = (typeEl ? typeEl.value : '') || 'withdrawal';
+        var form = document.getElementById('transaction-form');
+        if (form) form.reset();
+
+        var srcId = document.getElementById('source-account-id');
+        var srcName = document.getElementById('source-account-name');
+        var destId = document.getElementById('destination-account-id');
+        var destName = document.getElementById('destination-account-name');
+        if (srcId) srcId.value = '';
+        if (srcName) srcName.value = '';
+        if (destId) destId.value = '';
+        if (destName) destName.value = '';
 
         // Restaurar placeholder default según tipo
         const defaultAccount = window.FFPWA.config.defaultSourceAccount;
         if (defaultAccount && defaultAccount.id) {
             const { target } = window.FFPWA.getDefaultField(transactionType);
-            $(`#${target}-account`).val('').attr('placeholder', __('accounts.placeholder_default', { name: defaultAccount.name }));
-            $(`#${target}-account-id`).val(defaultAccount.id);
-            $(`#${target}-account-name`).val(defaultAccount.name);
+            var targetAcc = document.getElementById(`${target}-account`);
+            var targetAccId = document.getElementById(`${target}-account-id`);
+            var targetAccName = document.getElementById(`${target}-account-name`);
+            if (targetAcc) { targetAcc.value = ''; targetAcc.setAttribute('placeholder', __('accounts.placeholder_default', { name: defaultAccount.name })); }
+            if (targetAccId) targetAccId.value = defaultAccount.id;
+            if (targetAccName) targetAccName.value = defaultAccount.name;
         }
 
         // ── GPS toggle: update visibility ──
@@ -291,12 +312,12 @@
      * Muestra u oculta el toggle GPS según config.gpsEnabled.
      */
     function updateGPSToggleVisibility() {
-        var $row = $('#tx-gps-row');
-        if (!$row.length) return;
+        var row = document.getElementById('tx-gps-row');
+        if (!row) return;
         if (window.FFPWA.config && window.FFPWA.config.gpsEnabled) {
-            $row.removeClass('hidden');
+            row.classList.remove('hidden');
         } else {
-            $row.addClass('hidden');
+            row.classList.add('hidden');
         }
     }
     window.FFPWA._updateGPSToggleVisibility = updateGPSToggleVisibility;
@@ -313,7 +334,7 @@
         console.log('--- Intentando enviar transacción ---', payload);
 
         return new Promise((resolve, reject) => {
-            $.ajax({
+            window.FFPWA.http({
                 url: `${url}/api/v1/transactions`,
                 method: 'POST',
                 headers: {
@@ -496,7 +517,7 @@
         console.log('[HEALTH] Verificando disponibilidad del servidor Firefly...');
 
         return new Promise((resolve) => {
-            $.ajax({
+            window.FFPWA.http({
                 url: `${url}/api/v1/about`,
                 method: 'GET',
                 headers: {
@@ -590,13 +611,13 @@
             return;
         }
 
-        const $btn = $('#submit-transaction-btn');
-        $btn.prop('disabled', true).text(__('transaction.submit_sending'));
+        const btn = document.getElementById('submit-transaction-btn');
+        if (btn) { btn.disabled = true; btn.textContent = __('transaction.submit_sending'); }
 
         // Siempre encolar — la UI se libera al instante.
         queueTransaction(transactionPayload);
         resetTransactionForm();
-        $btn.prop('disabled', false).text(__('transaction.submit_btn'));
+        if (btn) { btn.disabled = false; btn.textContent = __('transaction.submit_btn'); }
 
         // Disparar sync en background si hay conexión.
         if (navigator.onLine) {
@@ -607,8 +628,12 @@
         }
     }
 
-    $(document).ready(function() {
-        $(document).on('submit', '#transaction-form', handleTransactionSubmit);
+    function domReady() {
+        document.addEventListener('submit', function(e) {
+            if (e.target && e.target.id === 'transaction-form') {
+                handleTransactionSubmit(e);
+            }
+        });
 
         // ── Network / visibility handlers ──
         window.FFPWA._onOnline = function() {
@@ -688,6 +713,12 @@
         // si no hay items pendientes, se detendrá automáticamente
         // al detectar que el servidor responde y la cola está vacía.
         startFireflyHealthCheck();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', domReady);
+    } else {
+        domReady();
+    }
 
 })();

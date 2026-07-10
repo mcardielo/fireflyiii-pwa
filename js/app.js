@@ -48,28 +48,26 @@
             return fallback;
         }
 
-        var $badges = $('.online-status');
-        if (state === 'offline') {
-            $badges
-                .removeClass('text-ios-green bg-ios-green-bg text-ios-red')
-                .addClass('text-ios-orange bg-ios-orange-bg')
-                .text(t('nav.offline', '● Offline'));
-        } else if (state === 'server_down') {
-            $badges
-                .removeClass('text-ios-green bg-ios-green-bg text-ios-orange bg-ios-orange-bg')
-                .addClass('text-ios-red bg-ios-orange-bg')
-                .text(t('nav.server_down', '🔶 Servidor no disponible'));
-        } else if (state === 'checking') {
-            $badges
-                .removeClass('text-ios-green bg-ios-green-bg text-ios-red')
-                .addClass('text-ios-orange bg-ios-orange-bg')
-                .text(t('nav.server_checking', '🔶 Verificando...'));
-        } else {
-            $badges
-                .removeClass('text-ios-orange bg-ios-orange-bg text-ios-red')
-                .addClass('text-ios-green bg-ios-green-bg')
-                .text(t('nav.online', '● Online'));
-        }
+        var badges = document.querySelectorAll('.online-status');
+        badges.forEach(function(badge) {
+            if (state === 'offline') {
+                badge.classList.remove('text-ios-green', 'bg-ios-green-bg', 'text-ios-red');
+                badge.classList.add('text-ios-orange', 'bg-ios-orange-bg');
+                badge.textContent = t('nav.offline', '● Offline');
+            } else if (state === 'server_down') {
+                badge.classList.remove('text-ios-green', 'bg-ios-green-bg', 'text-ios-orange', 'bg-ios-orange-bg');
+                badge.classList.add('text-ios-red', 'bg-ios-orange-bg');
+                badge.textContent = t('nav.server_down', '🔶 Servidor no disponible');
+            } else if (state === 'checking') {
+                badge.classList.remove('text-ios-green', 'bg-ios-green-bg', 'text-ios-red');
+                badge.classList.add('text-ios-orange', 'bg-ios-orange-bg');
+                badge.textContent = t('nav.server_checking', '🔶 Verificando...');
+            } else {
+                badge.classList.remove('text-ios-orange', 'bg-ios-orange-bg', 'text-ios-red');
+                badge.classList.add('text-ios-green', 'bg-ios-green-bg');
+                badge.textContent = t('nav.online', '● Online');
+            }
+        });
     };
 
     // Registrar SW inmediatamente (no esperar DOMReady)
@@ -80,22 +78,20 @@
      * Útil cuando el teclado del móvil abre/cierra (resize) o el usuario scrollea.
      */
     function repositionAutocompleteDropdowns() {
-        $('.autocomplete-dropdown.visible').each(function() {
-            var $dropdown = $(this);
-            var $input = $dropdown.closest('.relative').find('input');
-            if ($input.length === 0) {
-                var inputId = this.id.replace('-autocomplete', '');
-                $input = $('#' + inputId);
+        document.querySelectorAll('.autocomplete-dropdown.visible').forEach(function(dropdown) {
+            var wrapper = dropdown.closest('.relative');
+            var input = wrapper ? wrapper.querySelector('input') : null;
+            if (!input) {
+                var inputId = dropdown.id.replace('-autocomplete', '');
+                input = document.getElementById(inputId);
             }
-            if ($input.length) {
-                var rect = $input[0].getBoundingClientRect();
+            if (input) {
+                var rect = input.getBoundingClientRect();
                 // Solo reposicionar si el input está visible en el viewport
                 if (rect.width > 0 && rect.height > 0) {
-                    $dropdown.css({
-                        top: (rect.bottom + 4) + 'px',
-                        left: rect.left + 'px',
-                        width: rect.width + 'px'
-                    });
+                    dropdown.style.top = (rect.bottom + 4) + 'px';
+                    dropdown.style.left = rect.left + 'px';
+                    dropdown.style.width = rect.width + 'px';
                 }
             }
         });
@@ -113,21 +109,22 @@
     }
 
     // Reposicionar en resize y scroll de cualquier contenedor
-    $(window).on('resize', function() {
+    window.addEventListener('resize', function() {
         requestAnimationFrame(repositionAutocompleteDropdowns);
     });
-    $(document).on('scroll', function() {
+    document.addEventListener('scroll', function() {
         requestAnimationFrame(repositionAutocompleteDropdowns);
     });
     // Reposicionar también al enfocar un input
-    $(document).on('focusin', function() {
+    document.addEventListener('focusin', function() {
         requestAnimationFrame(repositionAutocompleteDropdowns);
     });
 
     /*
      *  Boot de la app: montar UI restante, configurar pantallas, handlers.
+     *  Si DOMContentLoaded ya disparó (SW cache), ejecutar inmediatamente.
      */
-    $(function() {
+    function startBoot() {
 
         var loadingEl = document.getElementById('loading-screen');
 
@@ -151,14 +148,14 @@
         // ── Consolidated global event listeners ──
         function setupGlobalListeners() {
             // configLoaded: disparar init en módulos de datos
-            $(window).on('configLoaded', function() {
+            window.addEventListener('configLoaded', function() {
                 if (window.FFPWA._initAccountsOnConfigLoaded) window.FFPWA._initAccountsOnConfigLoaded();
                 if (window.FFPWA._initCurrenciesOnConfigLoaded) window.FFPWA._initCurrenciesOnConfigLoaded();
                 if (window.FFPWA._updateGPSToggleVisibility) window.FFPWA._updateGPSToggleVisibility();
             });
 
             // localeChanged: traducir módulos
-            $(window).on('localeChanged', function() {
+            window.addEventListener('localeChanged', function() {
                 if (window.FFPWA._onLocaleAccounts) window.FFPWA._onLocaleAccounts();
                 if (window.FFPWA._onLocaleAccountsScreen) window.FFPWA._onLocaleAccountsScreen();
                 if (window.FFPWA._onLocaleHistory) window.FFPWA._onLocaleHistory();
@@ -180,25 +177,24 @@
         }
 
         function boot() {
-            if (typeof $ === 'undefined') {
+            var appEl = document.getElementById('app');
+            if (!appEl) {
                 showOfflineFallback();
                 return;
             }
 
-            var $app = $('#app');
-
             // ── Montar templates --
-            if (!$('#dashboard-container').length) {
-                $app.append(document.getElementById('screen-setup').content.cloneNode(true));
-                $app.append(document.getElementById('screen-account-picker').content.cloneNode(true));
-                $app.append(document.getElementById('screen-record').content.cloneNode(true));
+            if (!document.getElementById('dashboard-container')) {
+                appEl.appendChild(document.getElementById('screen-setup').content.cloneNode(true));
+                appEl.appendChild(document.getElementById('screen-account-picker').content.cloneNode(true));
+                appEl.appendChild(document.getElementById('screen-record').content.cloneNode(true));
             }
 
             // Inyectar iconos en los templates recién montados
             if (window.injectIcons) window.injectIcons();
 
             // ── Montar tab bar ──
-            $app.append(
+            var tabBarHtml =
                 '<div id="tab-bar" class="hidden">' +
                     '<button class="tab-btn active" data-screen="record">' +
                                                 '<span class="tab-icon">' + Icons.receipt + '</span>' +
@@ -216,8 +212,8 @@
                                                 '<span class="tab-icon">' + Icons.cogTab + '</span>' +
                         '<span class="tab-label" data-i18n="nav.config">Config</span>' +
                     '</button>' +
-                '</div>'
-            );
+                '</div>';
+            appEl.insertAdjacentHTML('beforeend', tabBarHtml);
 
             // ── Theme icons init ──
             if (window.FFPWA && window.FFPWA.theme) {
@@ -233,10 +229,10 @@
                 if (!tpl) return;
                 var content = tpl.content;
                 var firstEl = content.firstElementChild;
-                if (firstEl && firstEl.id && $('#' + firstEl.id).length) return;
+                if (firstEl && firstEl.id && document.getElementById(firstEl.id)) return;
                 var clone = content.cloneNode(true);
                 var root = clone.firstElementChild;
-                $app.append(clone);
+                appEl.appendChild(clone);
 
                 // Inyectar iconos en el template recién montado
                 if (window.injectIcons && root) {
@@ -257,32 +253,40 @@
             function showLockScreen(screen) {
                 pendingScreen = screen || 'accounts';
                 window.mountScreen('screen-lock');
-                $('#lock-container').css('display', 'flex').removeClass('hidden');
-                $('#accounts-container').addClass('hidden');
-                $('#tab-bar').addClass('hidden');
+                var lockContainer = document.getElementById('lock-container');
+                var accountsContainer = document.getElementById('accounts-container');
+                var tabBar = document.getElementById('tab-bar');
+                if (lockContainer) { lockContainer.style.display = 'flex'; lockContainer.classList.remove('hidden'); }
+                if (accountsContainer) accountsContainer.classList.add('hidden');
+                if (tabBar) tabBar.classList.add('hidden');
 
-                $('#lock-pin-area').addClass('hidden');
-                $('#lock-pin-error').addClass('hidden');
-                $('#lock-loading').addClass('hidden');
+                var lockPinArea = document.getElementById('lock-pin-area');
+                var lockPinError = document.getElementById('lock-pin-error');
+                var lockLoading = document.getElementById('lock-loading');
+                if (lockPinArea) lockPinArea.classList.add('hidden');
+                if (lockPinError) lockPinError.classList.add('hidden');
+                if (lockLoading) lockLoading.classList.add('hidden');
 
                 var method = window.FFPWA.auth.getMethod();
                 var hasPin = window.FFPWA.auth.hasPin();
+                var lockBtnText = document.getElementById('lock-btn-text');
 
                 if (method === 'webauthn' && !hasPin) {
-                    $('#lock-btn-text').html(Icons.lockSm);
+                    if (lockBtnText) lockBtnText.innerHTML = Icons.lockSm;
                 } else if (method === 'webauthn' && hasPin) {
-                    $('#lock-btn-text').html(Icons.lockSm + ' ' + (window.__ && window.__('lock.unlock_biometric') || 'Desbloquear con biometría'));
-                    $('#lock-pin-area').removeClass('hidden');
+                    if (lockBtnText) lockBtnText.innerHTML = Icons.lockSm + ' ' + (window.__ && window.__('lock.unlock_biometric') || 'Desbloquear con biometría');
+                    if (lockPinArea) lockPinArea.classList.remove('hidden');
                 } else {
-                    $('#lock-btn-text').addClass('hidden');
-                    $('#lock-pin-area').removeClass('hidden');
+                    if (lockBtnText) lockBtnText.classList.add('hidden');
+                    if (lockPinArea) lockPinArea.classList.remove('hidden');
                 }
 
                 if (window.i18nTranslateDOM) window.i18nTranslateDOM();
             }
 
             function hideLockScreen() {
-                $('#lock-container').hide();
+                var lockContainer = document.getElementById('lock-container');
+                if (lockContainer) lockContainer.style.display = 'none';
                 pendingScreen = null;
             }
 
@@ -292,37 +296,52 @@
                 window.FFPWA.auth.unlocked = true;
                 pendingScreen = null;
 
+                var accountsContainer, tabBar;
                 if (target === 'accounts') {
-                    $('#accounts-container').css('display', 'flex').removeClass('hidden');
+                    accountsContainer = document.getElementById('accounts-container');
+                    if (accountsContainer) { accountsContainer.style.display = 'flex'; accountsContainer.classList.remove('hidden'); }
                     if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
                 } else if (target === 'history') {
-                    $('#history-container').css('display', 'flex').removeClass('hidden');
+                    var historyContainer = document.getElementById('history-container');
+                    if (historyContainer) { historyContainer.style.display = 'flex'; historyContainer.classList.remove('hidden'); }
                     if (window.FFPWA.showHistoryScreen) window.FFPWA.showHistoryScreen();
                 } else if (target === 'config') {
-                    $('#default-account-container').css('display', 'flex').removeClass('hidden');
+                    var defaultAccountContainer = document.getElementById('default-account-container');
+                    if (defaultAccountContainer) { defaultAccountContainer.style.display = 'flex'; defaultAccountContainer.classList.remove('hidden'); }
                     window.showDefaultAccountPicker();
-                    $('#tab-bar .tab-btn').removeClass('active');
-                    $('#tab-bar .tab-btn[data-screen="config"]').addClass('active');
+                    tabBar = document.getElementById('tab-bar');
+                    if (tabBar) {
+                        document.querySelectorAll('#tab-bar .tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+                        var configBtn = document.querySelector('#tab-bar .tab-btn[data-screen="config"]');
+                        if (configBtn) configBtn.classList.add('active');
+                    }
                 }
 
-                $('#tab-bar').css('display', 'flex').removeClass('hidden');
+                tabBar = document.getElementById('tab-bar');
+                if (tabBar) { tabBar.style.display = 'flex'; tabBar.classList.remove('hidden'); }
                 updateLangBtn(window.getLocale());
             }
 
             /* ─── Tab switching ─── */
             function switchTab(screen) {
-                // Forzar ocultar todas las pantallas con .hide() para máxima especificidad
-                $('#setup-container, #default-account-container, #dashboard-container, #accounts-container, #history-container, #lock-container').hide();
+                // Forzar ocultar todas las pantallas
+                var hideIds = ['setup-container', 'default-account-container', 'dashboard-container', 'accounts-container', 'history-container', 'lock-container'];
+                hideIds.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
 
                 if (screen === 'record') {
-                    $('#dashboard-container').css('display', 'flex').removeClass('hidden');
+                    var dc = document.getElementById('dashboard-container');
+                    if (dc) { dc.style.display = 'flex'; dc.classList.remove('hidden'); }
                     window.FFPWA._updateGPSToggleVisibility();
                 } else if (screen === 'accounts') {
                     window.mountScreen('screen-accounts');
                     if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {
                         showLockScreen('accounts');
                     } else {
-                        $('#accounts-container').css('display', 'flex').removeClass('hidden');
+                        var ac = document.getElementById('accounts-container');
+                        if (ac) { ac.style.display = 'flex'; ac.classList.remove('hidden'); }
                         if (window.FFPWA.showAccountsScreen) window.FFPWA.showAccountsScreen();
                     }
                 } else if (screen === 'history') {
@@ -330,26 +349,32 @@
                     if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {
                         showLockScreen('history');
                     } else {
-                        $('#history-container').css('display', 'flex').removeClass('hidden');
+                        var hc = document.getElementById('history-container');
+                        if (hc) { hc.style.display = 'flex'; hc.classList.remove('hidden'); }
                         if (window.FFPWA.showHistoryScreen) window.FFPWA.showHistoryScreen();
                     }
                 } else if (screen === 'config') {
                     if (window.FFPWA.auth && window.FFPWA.auth.needsAuth()) {
                         showLockScreen('config');
                     } else {
-                        $('#default-account-container').css('display', 'flex').removeClass('hidden');
+                        var dac = document.getElementById('default-account-container');
+                        if (dac) { dac.style.display = 'flex'; dac.classList.remove('hidden'); }
                         window.showDefaultAccountPicker();
-                        $('#tab-bar').css('display', 'flex').removeClass('hidden');
-                        $('#tab-bar .tab-btn').removeClass('active');
-                        $('#tab-bar .tab-btn[data-screen="config"]').addClass('active');
+                        var tb = document.getElementById('tab-bar');
+                        if (tb) { tb.style.display = 'flex'; tb.classList.remove('hidden'); }
+                        document.querySelectorAll('#tab-bar .tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+                        var configBtn = document.querySelector('#tab-bar .tab-btn[data-screen="config"]');
+                        if (configBtn) configBtn.classList.add('active');
                         updateLangBtn(window.getLocale());
                         return;
                     }
                 }
 
-                $('#tab-bar .tab-btn').removeClass('active');
-                $('#tab-bar .tab-btn[data-screen="' + screen + '"]').addClass('active');
-                $('#tab-bar').css('display', 'flex').removeClass('hidden');
+                document.querySelectorAll('#tab-bar .tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+                var activeBtn = document.querySelector('#tab-bar .tab-btn[data-screen="' + screen + '"]');
+                if (activeBtn) activeBtn.classList.add('active');
+                var tb2 = document.getElementById('tab-bar');
+                if (tb2) { tb2.style.display = 'flex'; tb2.classList.remove('hidden'); }
 
                 if (!navigator.onLine) {
                     window.FFPWA.updateStatus('offline');
@@ -361,65 +386,83 @@
             window.switchTab = switchTab;
 
             /* ─── Event handlers ─── */
-            $(document).on('click', '#lock-cancel-btn', function() {
-                hideLockScreen();
-                switchTab('record');
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('#lock-cancel-btn')) {
+                    hideLockScreen();
+                    switchTab('record');
+                }
             });
 
-            $(document).on('click', '#lock-unlock-btn', function() {
-                var method = window.FFPWA.auth.getMethod();
-                $('#lock-loading').removeClass('hidden');
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('#lock-unlock-btn')) {
+                    var method = window.FFPWA.auth.getMethod();
+                    var lockLoading = document.getElementById('lock-loading');
+                    if (lockLoading) lockLoading.classList.remove('hidden');
 
-                window.FFPWA.auth.unlock(method).then(function(success) {
-                    $('#lock-loading').addClass('hidden');
-                    if (success) {
-                        handleUnlockSuccess();
-                    } else {
-                        if (window.FFPWA.auth.hasPin()) {
-                            $('#lock-pin-area').removeClass('hidden');
-                            $('#lock-btn-text').html(Icons.lockSm + ' ' + 'Usar PIN');
-                        }
-                    }
-                });
-            });
-
-            $(document).on('input', '#lock-pin-input', function() {
-                var pin = $(this).val();
-                if (pin.length >= 4) {
-                    $('#lock-pin-error').addClass('hidden');
-                    window.FFPWA.auth.verifyPin(pin).then(function(valid) {
-                        if (valid) {
+                    window.FFPWA.auth.unlock(method).then(function(success) {
+                        var ll = document.getElementById('lock-loading');
+                        if (ll) ll.classList.add('hidden');
+                        if (success) {
                             handleUnlockSuccess();
                         } else {
-                            $('#lock-pin-error').removeClass('hidden');
-                            $('#lock-pin-input').val('');
+                            if (window.FFPWA.auth.hasPin()) {
+                                var lpa = document.getElementById('lock-pin-area');
+                                var lbt = document.getElementById('lock-btn-text');
+                                if (lpa) lpa.classList.remove('hidden');
+                                if (lbt) lbt.innerHTML = Icons.lockSm + ' ' + 'Usar PIN';
+                            }
                         }
                     });
                 }
             });
 
-            $(document).on('click', '#tab-bar .tab-btn', function() {
-                var screen = $(this).data('screen');
-                if ($(this).hasClass('active')) return;
+            document.addEventListener('input', function(e) {
+                if (e.target && e.target.id === 'lock-pin-input') {
+                    var pin = e.target.value;
+                    if (pin.length >= 4) {
+                        var lpe = document.getElementById('lock-pin-error');
+                        if (lpe) lpe.classList.add('hidden');
+                        window.FFPWA.auth.verifyPin(pin).then(function(valid) {
+                            if (valid) {
+                                handleUnlockSuccess();
+                            } else {
+                                var errEl = document.getElementById('lock-pin-error');
+                                if (errEl) errEl.classList.remove('hidden');
+                                e.target.value = '';
+                            }
+                        });
+                    }
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                var tabBtn = e.target.closest('#tab-bar .tab-btn');
+                if (!tabBtn) return;
+                var screen = tabBtn.getAttribute('data-screen');
+                if (tabBtn.classList.contains('active')) return;
                 switchTab(screen);
             });
 
-            $(document).on('click', '.lang-btn', function() {
+            document.addEventListener('click', function(e) {
+                var langBtn = e.target.closest('.lang-btn');
+                if (!langBtn) return;
                 var current = window.getLocale();
                 var next = current === 'es' ? 'en' : 'es';
                 window.setLocale(next).then(function() {
-                    $('html').attr('lang', next);
+                    document.documentElement.setAttribute('lang', next);
                     updateLangBtn(next);
                 });
             });
 
             function updateLangBtn(locale) {
-                $('.lang-btn').text(locale === 'es' ? 'EN' : 'ES');
+                document.querySelectorAll('.lang-btn').forEach(function(btn) {
+                    btn.textContent = locale === 'es' ? 'EN' : 'ES';
+                });
             }
 
             /* ─── Init sequence ─── */
             window.initI18n(function(locale) {
-                $('html').attr('lang', locale);
+                document.documentElement.setAttribute('lang', locale);
                 updateLangBtn(locale);
                 window.initConfig();
                 hideLoadingScreen();
@@ -438,6 +481,13 @@
         }
 
         boot();
-    });
+    }
+
+    // Si el DOM ya está ready (SW cache hit), ejecutar inmediatamente
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startBoot);
+    } else {
+        startBoot();
+    }
 
 })();

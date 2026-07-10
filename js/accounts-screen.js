@@ -67,7 +67,7 @@
         }
 
         return new Promise(function(resolve, reject) {
-            $.ajax({
+            window.FFPWA.http({
                 url: url + '/api/v1/accounts?type=asset&limit=10000',
                 method: 'GET',
                 headers: {
@@ -103,7 +103,7 @@
         }
 
         return new Promise(function(resolve, reject) {
-            $.ajax({
+            window.FFPWA.http({
                 url: url + '/api/v1/accounts?type=liabilities&limit=10000',
                 method: 'GET',
                 headers: {
@@ -135,7 +135,7 @@
         var token = window.FFPWA.config.token;
 
         return new Promise(function(resolve, reject) {
-            $.ajax({
+            window.FFPWA.http({
                 url: url + '/api/v1/accounts/' + accountId + '/transactions?limit=50&page=' + page,
                 method: 'GET',
                 headers: {
@@ -164,12 +164,14 @@
     /* ─── Accounts list rendering ─── */
 
     function renderAccounts(accounts) {
-        $('#accounts-loading').addClass('hidden');
+        var loadingEl = document.getElementById('accounts-loading');
+        if (loadingEl) loadingEl.classList.add('hidden');
+
+        var listEl = document.getElementById('accounts-list');
 
         if (!accounts || accounts.length === 0) {
-            $('#accounts-list').html(
-                '<div class="ios-status warning">' + __('accounts.no_accounts') + '</div>'
-            );
+            if (listEl) listEl.innerHTML =
+                '<div class="ios-status warning">' + __('accounts.no_accounts') + '</div>';
             return;
         }
 
@@ -211,7 +213,7 @@
             '</div>';
         });
 
-        $('#accounts-list').html(html);
+        if (listEl) listEl.innerHTML = html;
     }
 
     function renderLiabilities(liabilities) {
@@ -259,7 +261,8 @@
             '</div>';
         });
 
-        $('#accounts-list').append(html);
+        var listEl = document.getElementById('accounts-list');
+        if (listEl) listEl.insertAdjacentHTML('beforeend', html);
     }
 
     /* ─── Transaction detail ─── */
@@ -281,45 +284,58 @@
         var roleBg = ROLE_BG_COLORS[role] || '#f2f2f7';
 
         // Switch to detail view
-        $('#accounts-list').addClass('hidden');
-        $('#account-detail').removeClass('hidden');
+        var listEl = document.getElementById('accounts-list');
+        var detailEl = document.getElementById('account-detail');
+        if (listEl) listEl.classList.add('hidden');
+        if (detailEl) detailEl.classList.remove('hidden');
 
         // Fill summary
-        $('#detail-account-name').text(window.FFPWA.escapeHtml(name));
-        $('#detail-account-balance').text(window.FFPWA.formatMoney(balance, symbol, decimals))
-            .removeClass('text-ios-red text-ios-text')
-            .addClass(balance < 0 ? 'text-ios-red' : 'text-ios-text');
-        $('#detail-account-role').html(
+        var nameEl = document.getElementById('detail-account-name');
+        var balanceEl = document.getElementById('detail-account-balance');
+        var roleEl = document.getElementById('detail-account-role');
+        if (nameEl) nameEl.textContent = window.FFPWA.escapeHtml(name);
+        if (balanceEl) {
+            balanceEl.textContent = window.FFPWA.formatMoney(balance, symbol, decimals);
+            balanceEl.classList.remove('text-ios-red', 'text-ios-text');
+            balanceEl.classList.add(balance < 0 ? 'text-ios-red' : 'text-ios-text');
+        }
+        if (roleEl) roleEl.innerHTML =
             '<span class="inline-block text-[11px] font-medium px-2.5 py-0.5 rounded-full" ' +
             'style="color:' + roleColor + ';background:' + roleBg + ';">' +
-            window.FFPWA.escapeHtml(roleLabel) + '</span>'
-        );
+            window.FFPWA.escapeHtml(roleLabel) + '</span>';
 
         // Clear previous data, show loading
-        $('#detail-list').empty();
-        $('#detail-load-more').addClass('hidden');
-        $('#detail-loading').removeClass('hidden');
-        $('#detail-error').addClass('hidden');
+        var detailList = document.getElementById('detail-list');
+        var detailLoadMore = document.getElementById('detail-load-more');
+        var detailLoading = document.getElementById('detail-loading');
+        var detailError = document.getElementById('detail-error');
+        if (detailList) detailList.innerHTML = '';
+        if (detailLoadMore) detailLoadMore.classList.add('hidden');
+        if (detailLoading) detailLoading.classList.remove('hidden');
+        if (detailError) detailError.classList.add('hidden');
 
         // Fetch first page
         fetchTransactions(accountId, 1).then(renderTransactions).catch(handleDetailError);
     }
 
     function renderTransactions(result) {
-        $('#detail-loading').addClass('hidden');
+        var detailLoading = document.getElementById('detail-loading');
+        if (detailLoading) detailLoading.classList.add('hidden');
 
         var data = result.transactions;
         var pagination = result.meta.pagination;
         currentPage = pagination.current_page || 1;
         totalPages = pagination.total_pages || 1;
 
+        var detailList = document.getElementById('detail-list');
+        var detailLoadMore = document.getElementById('detail-load-more');
+
         if (!data || data.length === 0) {
-            if (currentPage === 1) {
-                $('#detail-list').html(
-                    '<div class="ios-status warning">' + __('detail.no_transactions') + '</div>'
-                );
+            if (currentPage === 1 && detailList) {
+                detailList.innerHTML =
+                    '<div class="ios-status warning">' + __('detail.no_transactions') + '</div>';
             }
-            $('#detail-load-more').addClass('hidden');
+            if (detailLoadMore) detailLoadMore.classList.add('hidden');
             return;
         }
 
@@ -332,10 +348,9 @@
         });
 
         if (filtered.length === 0 && currentPage === 1) {
-            $('#detail-list').html(
-                '<div class="ios-status warning">' + __('detail.no_transactions') + '</div>'
-            );
-            $('#detail-load-more').addClass('hidden');
+            if (detailList) detailList.innerHTML =
+                '<div class="ios-status warning">' + __('detail.no_transactions') + '</div>';
+            if (detailLoadMore) detailLoadMore.classList.add('hidden');
             return;
         }
 
@@ -398,22 +413,24 @@
         });
 
         if (currentPage === 1) {
-            $('#detail-list').html(html);
+            if (detailList) detailList.innerHTML = html;
         } else {
-            $('#detail-list').append(html);
+            if (detailList) detailList.insertAdjacentHTML('beforeend', html);
         }
 
         // Show load more if more pages
         if (currentPage < totalPages) {
-            $('#detail-load-more').removeClass('hidden');
+            if (detailLoadMore) detailLoadMore.classList.remove('hidden');
         } else {
-            $('#detail-load-more').addClass('hidden');
+            if (detailLoadMore) detailLoadMore.classList.add('hidden');
         }
     }
 
     function handleDetailError(err) {
-        $('#detail-loading').addClass('hidden');
-        $('#detail-error').removeClass('hidden').text('❌ ' + err.message);
+        var detailLoading = document.getElementById('detail-loading');
+        var detailError = document.getElementById('detail-error');
+        if (detailLoading) detailLoading.classList.add('hidden');
+        if (detailError) { detailError.classList.remove('hidden'); detailError.textContent = '❌ ' + err.message; }
     }
 
     /* ─── Public entry point ─── */
@@ -422,11 +439,16 @@
         buildRoleLabels();
         buildLiabilityLabels();
 
-        $('#accounts-list').removeClass('hidden');
-        $('#account-detail').addClass('hidden');
-        $('#accounts-list').empty();
-        $('#accounts-error').addClass('hidden');
-        $('#accounts-loading').removeClass('hidden');
+        var accountsList = document.getElementById('accounts-list');
+        var accountDetail = document.getElementById('account-detail');
+        var accountsError = document.getElementById('accounts-error');
+        var accountsLoading = document.getElementById('accounts-loading');
+
+        if (accountsList) accountsList.classList.remove('hidden');
+        if (accountDetail) accountDetail.classList.add('hidden');
+        if (accountsList) accountsList.innerHTML = '';
+        if (accountsError) accountsError.classList.add('hidden');
+        if (accountsLoading) accountsLoading.classList.remove('hidden');
 
         if (window.i18nTranslateDOM) window.i18nTranslateDOM();
 
@@ -435,19 +457,21 @@
             return fetchLiabilityAccounts();
         }).then(function(liabilities) {
             renderLiabilities(liabilities);
-            $('#accounts-loading').addClass('hidden');
+            if (accountsLoading) accountsLoading.classList.add('hidden');
         }).catch(function(err) {
-            $('#accounts-loading').addClass('hidden');
-            $('#accounts-error').removeClass('hidden').text('❌ ' + err.message);
+            if (accountsLoading) accountsLoading.classList.add('hidden');
+            if (accountsError) { accountsError.classList.remove('hidden'); accountsError.textContent = '❌ ' + err.message; }
         });
     };
 
     /* ─── Event wiring ─── */
 
-    $(document).ready(function() {
+    function domReady() {
         // Click on account card → show transactions
-        $(document).on('click', '.account-card', function() {
-            var id = $(this).data('account-id');
+        document.addEventListener('click', function(e) {
+            var card = e.target.closest('.account-card');
+            if (!card) return;
+            var id = card.getAttribute('data-account-id');
             var accountData = accountsMap[id];
             if (accountData) {
                 showAccountDetail(id, accountData);
@@ -455,14 +479,18 @@
         });
 
         // Click on transaction card → open edit/detail
-        $(document).on('click', '.tx-card', function() {
-            var groupId = $(this).data('group-id');
-            var groupTitle = $(this).data('group-title') || '';
-            var reconciled = $(this).data('reconciled') === true || $(this).data('reconciled') === 'true';
+        document.addEventListener('click', function(e) {
+            var card = e.target.closest('.tx-card');
+            if (!card) return;
+            var groupId = card.getAttribute('data-group-id');
+            var groupTitle = card.getAttribute('data-group-title') || '';
+            var reconciled = card.getAttribute('data-reconciled') === 'true';
 
             // Back to accounts list
-            $('#account-detail').addClass('hidden');
-            $('#accounts-list').removeClass('hidden');
+            var accountDetail = document.getElementById('account-detail');
+            var accountsList = document.getElementById('accounts-list');
+            if (accountDetail) accountDetail.classList.add('hidden');
+            if (accountsList) accountsList.classList.remove('hidden');
 
             // Switch to history tab
             window.FFPWA._editOrigin = 'accounts';
@@ -477,56 +505,78 @@
         });
 
         // Back button from detail → show accounts list
-        $(document).on('click', '#detail-back-btn', function() {
-            $('#accounts-list').removeClass('hidden');
-            $('#account-detail').addClass('hidden');
-            if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#detail-back-btn')) {
+                var accountsList = document.getElementById('accounts-list');
+                var accountDetail = document.getElementById('account-detail');
+                if (accountsList) accountsList.classList.remove('hidden');
+                if (accountDetail) accountDetail.classList.add('hidden');
+                if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+            }
         });
 
         // Load more transactions
-        $(document).on('click', '#detail-load-more', function() {
-            if (!currentAccount) return;
-            var nextPage = currentPage + 1;
-            if (nextPage > totalPages) return;
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#detail-load-more')) {
+                if (!currentAccount) return;
+                var nextPage = currentPage + 1;
+                if (nextPage > totalPages) return;
 
-            $('#detail-load-more').addClass('hidden');
-            $('#detail-loading').removeClass('hidden');
-            $('#detail-error').addClass('hidden');
+                var detailLoadMore = document.getElementById('detail-load-more');
+                var detailLoading = document.getElementById('detail-loading');
+                var detailError = document.getElementById('detail-error');
+                if (detailLoadMore) detailLoadMore.classList.add('hidden');
+                if (detailLoading) detailLoading.classList.remove('hidden');
+                if (detailError) detailError.classList.add('hidden');
 
-            fetchTransactions(currentAccount.id, nextPage).then(renderTransactions).catch(handleDetailError);
+                fetchTransactions(currentAccount.id, nextPage).then(renderTransactions).catch(handleDetailError);
+            }
         });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', domReady);
+    } else {
+        domReady();
+    }
 
     /* ─── Re-render on locale change ─── */
 
     window.FFPWA._onLocaleAccountsScreen = function() {
-        if (!$('#accounts-container').hasClass('hidden')) {
-            // If in detail view, go back to list to avoid stale data
-            if (!$('#account-detail').hasClass('hidden')) {
-                $('#accounts-list').removeClass('hidden');
-                $('#account-detail').addClass('hidden');
-            }
-            buildRoleLabels();
-            buildLiabilityLabels();
-            fetchAssetAccounts().then(function(assets) {
-                renderAccounts(assets);
-                return fetchLiabilityAccounts();
-            }).then(function(liabilities) {
-                renderLiabilities(liabilities);
-            }).catch(function(err) {
-                $('#accounts-loading').addClass('hidden');
-            });
-            if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+        var accountsContainer = document.getElementById('accounts-container');
+        if (!accountsContainer || accountsContainer.classList.contains('hidden')) return;
+        // If in detail view, go back to list to avoid stale data
+        var accountDetail = document.getElementById('account-detail');
+        var accountsList = document.getElementById('accounts-list');
+        if (accountDetail && !accountDetail.classList.contains('hidden')) {
+            if (accountsList) accountsList.classList.remove('hidden');
+            if (accountDetail) accountDetail.classList.add('hidden');
         }
+        buildRoleLabels();
+        buildLiabilityLabels();
+        fetchAssetAccounts().then(function(assets) {
+            renderAccounts(assets);
+            return fetchLiabilityAccounts();
+        }).then(function(liabilities) {
+            renderLiabilities(liabilities);
+        }).catch(function(err) {
+            var accountsLoading = document.getElementById('accounts-loading');
+            if (accountsLoading) accountsLoading.classList.add('hidden');
+        });
+        if (window.i18nTranslateDOM) window.i18nTranslateDOM();
     };
 
     /* ─── Exposed: refresh current account transactions ─── */
     window.FFPWA.refreshCurrentAccount = function() {
         if (currentAccount && currentAccount.id) {
-            $('#detail-loading').removeClass('hidden');
-            $('#detail-list').empty();
-            $('#detail-load-more').addClass('hidden');
-            $('#detail-error').addClass('hidden');
+            var detailLoading = document.getElementById('detail-loading');
+            var detailList = document.getElementById('detail-list');
+            var detailLoadMore = document.getElementById('detail-load-more');
+            var detailError = document.getElementById('detail-error');
+            if (detailLoading) detailLoading.classList.remove('hidden');
+            if (detailList) detailList.innerHTML = '';
+            if (detailLoadMore) detailLoadMore.classList.add('hidden');
+            if (detailError) detailError.classList.add('hidden');
             fetchTransactions(currentAccount.id, 1).then(renderTransactions).catch(handleDetailError);
         }
     };

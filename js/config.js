@@ -19,13 +19,17 @@
     function loadAssetAccountsForPicker() {
         const url = window.FFPWA.config.url;
         const token = window.FFPWA.config.token;
-        const $select = $('#default-account-select');
-        const $msg = $('#default-account-message');
+        const select = document.getElementById('default-account-select');
+        const msg = document.getElementById('default-account-message');
 
-        $select.html('<option value="">' + __('account.loading') + '</option>');
-        $msg.removeClass('hidden success error').addClass('warning').text('🔄 ' + __('setup.loading_accounts'));
+        if (!select || !msg) return;
 
-        $.ajax({
+        select.innerHTML = '<option value="">' + __('account.loading') + '</option>';
+        msg.classList.remove('hidden', 'success', 'error');
+        msg.classList.add('warning');
+        msg.textContent = '🔄 ' + __('setup.loading_accounts');
+
+        window.FFPWA.http({
             url: `${url}/api/v1/accounts?type=asset&limit=10000`,
             method: 'GET',
             headers: {
@@ -39,9 +43,10 @@
                 accounts = accounts.filter(acc => acc.attributes.active !== false);
 
                 if (accounts.length === 0) {
-                    $msg.removeClass('hidden success warning').addClass('error');
-                    $msg.text('❌ ' + __('account.no_assets'));
-                    $select.html('<option value="">' + __('account.no_active') + '</option>');
+                    msg.classList.remove('hidden', 'success', 'warning');
+                    msg.classList.add('error');
+                    msg.textContent = '❌ ' + __('account.no_assets');
+                    select.innerHTML = '<option value="">' + __('account.no_active') + '</option>';
                     return;
                 }
 
@@ -49,16 +54,19 @@
                 accounts.forEach(acc => {
                     html += `<option value="${acc.id}" data-name="${acc.attributes.name}">${acc.attributes.name}</option>`;
                 });
-                $select.html(html);
-                $msg.removeClass('hidden warning error').addClass('success');
-                $msg.text('✅ ' + __('account.found', { count: accounts.length }));
+                select.innerHTML = html;
+                msg.classList.remove('hidden', 'warning', 'error');
+                msg.classList.add('success');
+                msg.textContent = '✅ ' + __('account.found', { count: accounts.length });
             },
             error: function(xhr) {
                 let errorMsg = '❌ ' + __('account.error');
                 if (xhr.status === 401) errorMsg += ' ' + __('setup.token_401');
                 else if (xhr.status === 0) errorMsg += ' ' + __('setup.no_connection');
-                $msg.removeClass('hidden success warning').addClass('error').text(errorMsg);
-                $select.html('<option value="">' + __('account.error') + '</option>');
+                msg.classList.remove('hidden', 'success', 'warning');
+                msg.classList.add('error');
+                msg.textContent = errorMsg;
+                select.innerHTML = '<option value="">' + __('account.error') + '</option>';
             }
         });
     }
@@ -67,33 +75,43 @@
      * Guarda la cuenta default seleccionada.
      */
     function handleDefaultAccountSave() {
-        var $select = $('#default-account-select');
-        var $msg = $('#default-account-message');
-        var selectedId = $select.val();
-        var selectedText = $select.find('option:selected').text();
+        var select = document.getElementById('default-account-select');
+        var msg = document.getElementById('default-account-message');
+        if (!select) return;
+        var selectedId = select.value;
+        var selectedOption = select.options[select.selectedIndex];
+        var selectedText = selectedOption ? selectedOption.textContent : '';
 
         if (!selectedId) {
-            $msg.removeClass('hidden success warning').addClass('error');
-            $msg.text('❌ ' + __('account.not_selected'));
+            msg.classList.remove('hidden', 'success', 'warning');
+            msg.classList.add('error');
+            msg.textContent = '❌ ' + __('account.not_selected');
             return;
         }
 
         var defaultAccount = {
             id: selectedId,
-            name: $select.find('option:selected').data('name') || selectedText
+            name: (selectedOption ? selectedOption.getAttribute('data-name') : '') || selectedText
         };
 
         localStorage.setItem(DEFAULT_ACCOUNT_KEY, JSON.stringify(defaultAccount));
         window.FFPWA.config.defaultSourceAccount = defaultAccount;
 
-        var isConfigTab = $('#tab-bar .tab-btn[data-screen="config"]').hasClass('active');
+        var isConfigTab = false;
+        var configTab = document.querySelector('#tab-bar .tab-btn[data-screen="config"]');
+        if (configTab) isConfigTab = configTab.classList.contains('active');
+
         if (!isConfigTab) {
             // Setup inicial
-            $('#default-account-container').hide();
-            $('#dashboard-container').css('display', 'flex').removeClass('hidden');
-            $('#tab-bar').css('display', 'flex').removeClass('hidden');
-            $('#tab-bar .tab-btn').removeClass('active');
-            $('#tab-bar .tab-btn[data-screen="record"]').addClass('active');
+            var dac = document.getElementById('default-account-container');
+            var dc = document.getElementById('dashboard-container');
+            var tb = document.getElementById('tab-bar');
+            if (dac) dac.style.display = 'none';
+            if (dc) { dc.style.display = 'flex'; dc.classList.remove('hidden'); }
+            if (tb) { tb.style.display = 'flex'; tb.classList.remove('hidden'); }
+            document.querySelectorAll('#tab-bar .tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+            var recordBtn = document.querySelector('#tab-bar .tab-btn[data-screen="record"]');
+            if (recordBtn) recordBtn.classList.add('active');
         } else {
             // Desde tab Config: regresar a Record
             if (window.switchTab) {
@@ -101,7 +119,7 @@
             }
         }
 
-        $(window).trigger('configLoaded');
+        window.dispatchEvent(new Event('configLoaded'));
     }
 
     /**
@@ -110,13 +128,26 @@
      */
     function showDefaultAccountPicker() {
         // Ocultar otras pantallas pero NO el tab-bar
-        $('#setup-container').hide();
-        $('#dashboard-container').hide();
-        $('#accounts-container').hide();
-        $('#history-container').hide();
-        $('#default-account-container').css('display', 'flex').removeClass('hidden');
+        var els = {
+            setup: document.getElementById('setup-container'),
+            dashboard: document.getElementById('dashboard-container'),
+            accounts: document.getElementById('accounts-container'),
+            history: document.getElementById('history-container'),
+            defaultAccount: document.getElementById('default-account-container')
+        };
+        if (els.setup) els.setup.style.display = 'none';
+        if (els.dashboard) els.dashboard.style.display = 'none';
+        if (els.accounts) els.accounts.style.display = 'none';
+        if (els.history) els.history.style.display = 'none';
+        if (els.defaultAccount) { els.defaultAccount.style.display = 'flex'; els.defaultAccount.classList.remove('hidden'); }
 
-        $('#save-default-account-btn').off('click').on('click', handleDefaultAccountSave);
+        var saveBtn = document.getElementById('save-default-account-btn');
+        if (saveBtn) {
+            // Remove existing listeners by cloning
+            var newSaveBtn = saveBtn.cloneNode(true);
+            saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+            newSaveBtn.addEventListener('click', handleDefaultAccountSave);
+        }
         loadAssetAccountsForPicker();
         setTimeout(function() {
             initSecurityUI('-2');
@@ -129,15 +160,24 @@
      * Transiciona directamente al dashboard (ya hay cuenta default guardada).
      */
     function showDashboard() {
-        $('#setup-container').hide();
-        $('#default-account-container').hide();
-        $('#accounts-container').hide();
-        $('#history-container').hide();
-        $('#dashboard-container').removeClass('hidden').css('display', 'flex');
-        $('#tab-bar').removeClass('hidden').css('display', 'flex');
-        $('#tab-bar .tab-btn').removeClass('active');
-        $('#tab-bar .tab-btn[data-screen="record"]').addClass('active');
-        $(window).trigger('configLoaded');
+        var els = {
+            setup: document.getElementById('setup-container'),
+            defaultAccount: document.getElementById('default-account-container'),
+            accounts: document.getElementById('accounts-container'),
+            history: document.getElementById('history-container'),
+            dashboard: document.getElementById('dashboard-container'),
+            tabBar: document.getElementById('tab-bar')
+        };
+        if (els.setup) els.setup.style.display = 'none';
+        if (els.defaultAccount) els.defaultAccount.style.display = 'none';
+        if (els.accounts) els.accounts.style.display = 'none';
+        if (els.history) els.history.style.display = 'none';
+        if (els.dashboard) { els.dashboard.classList.remove('hidden'); els.dashboard.style.display = 'flex'; }
+        if (els.tabBar) { els.tabBar.classList.remove('hidden'); els.tabBar.style.display = 'flex'; }
+        document.querySelectorAll('#tab-bar .tab-btn').forEach(function(btn) { btn.classList.remove('active'); });
+        var recordBtn = document.querySelector('#tab-bar .tab-btn[data-screen="record"]');
+        if (recordBtn) recordBtn.classList.add('active');
+        window.dispatchEvent(new Event('configLoaded'));
     }
 
     /**
@@ -146,28 +186,32 @@
     function handleConfigSubmit(e) {
         e.preventDefault();
 
-        const url = $('#firefly-url').val().trim();
-        const token = $('#personal-token').val().trim();
-        const messageArea = $('#config-message');
+        const url = document.getElementById('firefly-url').value.trim();
+        const token = document.getElementById('personal-token').value.trim();
+        const messageArea = document.getElementById('config-message');
 
         if (!url || !token) {
-            messageArea.removeClass('hidden success warning').addClass('error');
-            messageArea.text('❌ ' + __('setup.required_fields'));
+            messageArea.classList.remove('hidden', 'success', 'warning');
+            messageArea.classList.add('error');
+            messageArea.textContent = '❌ ' + __('setup.required_fields');
             return;
         }
 
         try {
             new URL(url);
         } catch (_) {
-            messageArea.removeClass('hidden success warning').addClass('error');
-            messageArea.text('❌ ' + __('setup.invalid_url'));
+            messageArea.classList.remove('hidden', 'success', 'warning');
+            messageArea.classList.add('error');
+            messageArea.textContent = '❌ ' + __('setup.invalid_url');
             return;
         }
 
-        messageArea.removeClass('hidden success error').addClass('warning').text('🔄 ' + __('setup.validating'));
-        $('#config-form button').prop('disabled', true);
+        messageArea.classList.remove('hidden', 'success', 'error');
+        messageArea.classList.add('warning');
+        messageArea.textContent = '🔄 ' + __('setup.validating');
+        document.querySelectorAll('#config-form button').forEach(function(btn) { btn.disabled = true; });
 
-        $.ajax({
+        window.FFPWA.http({
             url: `${url}/api/v1/about`,
             method: 'GET',
             headers: {
@@ -200,11 +244,12 @@
                     errorMessage = '❌ ' + __('setup.api_error', { status: xhr.status });
                 }
 
-                messageArea.removeClass('hidden success warning').addClass('error');
-                messageArea.text(errorMessage);
+                messageArea.classList.remove('hidden', 'success', 'warning');
+                messageArea.classList.add('error');
+                messageArea.textContent = errorMessage;
             },
             complete: function() {
-                $('#config-form button').prop('disabled', false);
+                document.querySelectorAll('#config-form button').forEach(function(btn) { btn.disabled = false; });
             }
         });
     }
@@ -236,9 +281,12 @@
 
         if (!storedUrl || !storedToken) {
             console.log('Configuración no encontrada. Mostrando pantalla de setup.');
-            $('#setup-container').removeClass('hidden');
-            $('#dashboard-container').addClass('hidden');
-            $('#config-form').on('submit', handleConfigSubmit);
+            var setupEl = document.getElementById('setup-container');
+            var dashboardEl = document.getElementById('dashboard-container');
+            if (setupEl) setupEl.classList.remove('hidden');
+            if (dashboardEl) dashboardEl.classList.add('hidden');
+            var form = document.getElementById('config-form');
+            if (form) form.addEventListener('submit', handleConfigSubmit);
             return false;
         }
 
@@ -273,15 +321,20 @@
     /* ─── GPS Toggle ─── */
 
     function initGPSToggle() {
-        var $toggle = $('#gps-toggle');
-        var $msg = $('#gps-message');
-        if (!$toggle.length) return;
+        var toggle = document.getElementById('gps-toggle');
+        var msg = document.getElementById('gps-message');
+        if (!toggle) return;
 
         var enabled = window.FFPWA.config.gpsEnabled === true;
-        $toggle.prop('checked', enabled);
+        toggle.checked = enabled;
 
-        $toggle.off('change').on('change', function() {
-            var on = $(this).is(':checked');
+        // Remove existing listeners by cloning
+        var newToggle = toggle.cloneNode(true);
+        toggle.parentNode.replaceChild(newToggle, toggle);
+        toggle = newToggle;
+
+        toggle.addEventListener('change', function() {
+            var on = this.checked;
             localStorage.setItem(GPS_ENABLED_KEY, on ? 'true' : 'false');
             window.FFPWA.config.gpsEnabled = on;
 
@@ -289,14 +342,16 @@
                 window.FFPWA.getLocation().then(function(loc) {
                     window.FFPWA.lastLocation = loc;
                 });
-                $msg.removeClass('hidden success error').addClass('success')
-                    .text('✅ ' + (window.__ && window.__('config.gps_enabled') || 'Ubicación activada'));
+                msg.classList.remove('hidden', 'success', 'error');
+                msg.classList.add('success');
+                msg.textContent = '✅ ' + (window.__ && window.__('config.gps_enabled') || 'Ubicación activada');
             } else {
                 window.FFPWA.lastLocation = null;
-                $msg.removeClass('hidden success error').addClass('warning')
-                    .text('🔕 ' + (window.__ && window.__('config.gps_disabled') || 'Ubicación desactivada'));
+                msg.classList.remove('hidden', 'success', 'error');
+                msg.classList.add('warning');
+                msg.textContent = '🔕 ' + (window.__ && window.__('config.gps_disabled') || 'Ubicación desactivada');
             }
-            setTimeout(function() { $msg.addClass('hidden'); }, 2000);
+            setTimeout(function() { msg.classList.add('hidden'); }, 2000);
         });
     }
 
@@ -304,85 +359,105 @@
 
     function initSecurityUI(suffix) {
         suffix = suffix || '';
-        var $toggle = $('#security-toggle' + suffix);
-        var $biometric = $('#auth-biometric' + suffix);
-        var $pinRow = $('#pin-config-row' + suffix);
-        var $pinInput = $('#auth-pin' + suffix);
-        var $configArea = $('#security-config-area' + suffix);
-        var $msg = $('#security-message' + suffix);
+        var toggle = document.getElementById('security-toggle' + suffix);
+        var biometric = document.getElementById('auth-biometric' + suffix);
+        var pinRow = document.getElementById('pin-config-row' + suffix);
+        var pinInput = document.getElementById('auth-pin' + suffix);
+        var configArea = document.getElementById('security-config-area' + suffix);
+        var msg = document.getElementById('security-message' + suffix);
 
-        if (!$toggle.length) return;
+        if (!toggle) return;
 
         var enabled = window.FFPWA.auth.isEnabled();
         var method = window.FFPWA.auth.getMethod();
-        $toggle.prop('checked', enabled);
-        $configArea.toggleClass('hidden', !enabled);
-        $biometric.prop('checked', method === 'webauthn');
-        $pinRow.toggleClass('hidden', method !== 'pin');
+        toggle.checked = enabled;
+        if (configArea) configArea.classList.toggle('hidden', !enabled);
+        if (biometric) biometric.checked = (method === 'webauthn');
+        if (pinRow) pinRow.classList.toggle('hidden', method !== 'pin');
 
         // Toggle security on/off
-        $toggle.off('change').on('change', function() {
-            var on = $(this).is(':checked');
-            $configArea.toggleClass('hidden', !on);
+        var newToggle = toggle.cloneNode(true);
+        toggle.parentNode.replaceChild(newToggle, toggle);
+        toggle = newToggle;
+
+        toggle.addEventListener('change', function() {
+            var on = this.checked;
+            if (configArea) configArea.classList.toggle('hidden', !on);
             if (!on) {
                 window.FFPWA.auth.setEnabled(false);
-                $msg.removeClass('hidden success error').addClass('warning')
-                    .text('🔓 ' + (window.__ && window.__('security.disabled') || 'Seguridad desactivada'));
-                setTimeout(function() { $msg.addClass('hidden'); }, 2000);
+                msg.classList.remove('hidden', 'success', 'error');
+                msg.classList.add('warning');
+                msg.textContent = '🔓 ' + (window.__ && window.__('security.disabled') || 'Seguridad desactivada');
+                setTimeout(function() { msg.classList.add('hidden'); }, 2000);
             } else {
                 window.FFPWA.auth.setEnabled(true);
                 // Trigger biometric registration if checkbox is already checked
-                if ($biometric.is(':checked')) {
-                    $biometric.trigger('change');
+                if (biometric && biometric.checked) {
+                    biometric.dispatchEvent(new Event('change'));
                 }
             }
         });
 
         // Toggle biometric vs PIN
-        $biometric.off('change').on('change', function() {
-            var useBiometric = $(this).is(':checked');
-            $pinRow.toggleClass('hidden', useBiometric);
+        if (biometric) {
+            var newBio = biometric.cloneNode(true);
+            biometric.parentNode.replaceChild(newBio, biometric);
+            biometric = newBio;
 
-            if (useBiometric) {
-                window.FFPWA.auth.setMethod('webauthn');
-                window.FFPWA.auth.webauthnAvailable().then(function(avail) {
-                    if (!avail) {
-                        $msg.removeClass('hidden success error').addClass('warning')
-                            .text('⚠️ ' + (window.__ && window.__('security.no_biometric') || 'Biometría no disponible'));
-                        $biometric.prop('checked', false);
-                        $pinRow.removeClass('hidden');
-                        window.FFPWA.auth.setMethod('pin');
-                    } else {
-                        window.FFPWA.auth.registerWebAuthn().then(function(ok) {
-                            if (ok) {
-                                window.FFPWA.auth.setEnabled(true);
-                                window.FFPWA.auth.setMethod('webauthn');
-                                $msg.removeClass('hidden warning error').addClass('success')
-                                    .text('✅ ' + (window.__ && window.__('security.biometric_ready') || 'Biometría lista'));
-                                setTimeout(function() { $msg.addClass('hidden'); }, 2000);
-                            }
-                        });
-                    }
-                });
-            } else {
-                window.FFPWA.auth.setMethod('pin');
-                $pinRow.removeClass('hidden');
-            }
-        });
+            biometric.addEventListener('change', function() {
+                var useBiometric = this.checked;
+                if (pinRow) pinRow.classList.toggle('hidden', useBiometric);
+
+                if (useBiometric) {
+                    window.FFPWA.auth.setMethod('webauthn');
+                    window.FFPWA.auth.webauthnAvailable().then(function(avail) {
+                        if (!avail) {
+                            msg.classList.remove('hidden', 'success', 'error');
+                            msg.classList.add('warning');
+                            msg.textContent = '⚠️ ' + (window.__ && window.__('security.no_biometric') || 'Biometría no disponible');
+                            biometric.checked = false;
+                            if (pinRow) pinRow.classList.remove('hidden');
+                            window.FFPWA.auth.setMethod('pin');
+                        } else {
+                            window.FFPWA.auth.registerWebAuthn().then(function(ok) {
+                                if (ok) {
+                                    window.FFPWA.auth.setEnabled(true);
+                                    window.FFPWA.auth.setMethod('webauthn');
+                                    msg.classList.remove('hidden', 'warning', 'error');
+                                    msg.classList.add('success');
+                                    msg.textContent = '✅ ' + (window.__ && window.__('security.biometric_ready') || 'Biometría lista');
+                                    setTimeout(function() { msg.classList.add('hidden'); }, 2000);
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    window.FFPWA.auth.setMethod('pin');
+                    if (pinRow) pinRow.classList.remove('hidden');
+                }
+            });
+        }
 
         // PIN input
-        $pinInput.off('input').on('input', function() {
-            var pin = $(this).val();
-            if (pin.length >= 4) {
-                window.FFPWA.auth.setPin(pin).then(function() {
-                    window.FFPWA.auth.setEnabled(true);
-                    window.FFPWA.auth.setMethod('pin');
-                    $msg.removeClass('hidden warning error').addClass('success')
-                        .text('✅ ' + (window.__ && window.__('security.pin_ready') || 'PIN configurado'));
-                    setTimeout(function() { $msg.addClass('hidden'); }, 1500);
-                });
-            }
-        });
+        if (pinInput) {
+            var newPin = pinInput.cloneNode(true);
+            pinInput.parentNode.replaceChild(newPin, pinInput);
+            pinInput = newPin;
+
+            pinInput.addEventListener('input', function() {
+                var pin = this.value;
+                if (pin.length >= 4) {
+                    window.FFPWA.auth.setPin(pin).then(function() {
+                        window.FFPWA.auth.setEnabled(true);
+                        window.FFPWA.auth.setMethod('pin');
+                        msg.classList.remove('hidden', 'warning', 'error');
+                        msg.classList.add('success');
+                        msg.textContent = '✅ ' + (window.__ && window.__('security.pin_ready') || 'PIN configurado');
+                        setTimeout(function() { msg.classList.add('hidden'); }, 1500);
+                    });
+                }
+            });
+        }
 
         // If security is already enabled with webauthn and no credential stored, register
         if (enabled && method === 'webauthn' && !window.FFPWA.auth.hasCredential()) {

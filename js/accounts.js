@@ -6,24 +6,29 @@
     window.FFPWA = window.FFPWA || {};
 
     function hideDropdown(element) {
-        $(element).removeClass('visible').addClass('hidden');
+        var el = typeof element === 'string' ? document.querySelector(element) : element;
+        if (!el) return;
+        el.classList.remove('visible');
+        el.classList.add('hidden');
     }
 
     /**
      * Muestra el dropdown de autocomplete con posición fixed.
      */
     function showDropdown(element) {
-        const $dropdown = $(element);
-        const $input = $dropdown.closest('.relative').find('input');
-        const rect = $input[0].getBoundingClientRect();
+        var dropdown = typeof element === 'string' ? document.querySelector(element) : element;
+        if (!dropdown) return;
+        var wrapper = dropdown.closest('.relative');
+        var input = wrapper ? wrapper.querySelector('input') : null;
+        if (!input) return;
+        var rect = input.getBoundingClientRect();
 
-        $dropdown.css({
-            top: (rect.bottom + 4) + 'px',
-            left: rect.left + 'px',
-            width: rect.width + 'px'
-        });
+        dropdown.style.top = (rect.bottom + 4) + 'px';
+        dropdown.style.left = rect.left + 'px';
+        dropdown.style.width = rect.width + 'px';
 
-        $dropdown.removeClass('hidden').addClass('visible');
+        dropdown.classList.remove('hidden');
+        dropdown.classList.add('visible');
     }
 
     /**
@@ -49,7 +54,7 @@
 
     function fetchAccounts(url, token) {
         return new Promise((resolve, reject) => {
-            $.ajax({
+            window.FFPWA.http({
                 url: `${url}/api/v1/accounts?type=all&limit=10000`,
                 method: 'GET',
                 headers: {
@@ -103,9 +108,12 @@
      */
     function setAccountFields(field, name, id) {
         const prefix = field;
-        $(`#${prefix}-account`).val(name);
-        $(`#${prefix}-account-name`).val(name);
-        $(`#${prefix}-account-id`).val(id !== undefined && id !== null ? id : '');
+        var accEl = document.getElementById(`${prefix}-account`);
+        var accNameEl = document.getElementById(`${prefix}-account-name`);
+        var accIdEl = document.getElementById(`${prefix}-account-id`);
+        if (accEl) accEl.value = name;
+        if (accNameEl) accNameEl.value = name;
+        if (accIdEl) accIdEl.value = id !== undefined && id !== null ? id : '';
     }
 
     /**
@@ -136,9 +144,10 @@
         const { target } = window.FFPWA.getDefaultField(transactionType);
         if (field !== target) return;
 
-        const $select = $('#currency-select');
-        if ($select.val() !== account.currency_code) {
-            $select.val(account.currency_code).trigger('change');
+        const select = document.getElementById('currency-select');
+        if (select && select.value !== account.currency_code) {
+            select.value = account.currency_code;
+            select.dispatchEvent(new Event('change'));
         }
     }
 
@@ -151,7 +160,8 @@
 
         setAccountFields(field, account.name, id);
 
-        const transactionType = $('#transaction-type').val() || 'withdrawal';
+        var typeEl = document.getElementById('transaction-type');
+        const transactionType = typeEl ? typeEl.value : 'withdrawal';
         autoSetCurrencyFromAccount(id, field, transactionType);
 
         hideDropdown('#source-autocomplete');
@@ -174,7 +184,7 @@
      * Filtra la lista de cuentas y muestra el dropdown de sugerencias.
      */
     function filterAndDisplayAccounts(e, inputElement, dropdownElement, fieldContext, cache) {
-        const rawValue = $(inputElement).val().trim();
+        const rawValue = inputElement.value.trim();
         const query = rawValue.toLowerCase();
 
         if (query.length < 2) {
@@ -182,7 +192,8 @@
             return;
         }
 
-        const transactionType = $('#transaction-type').val();
+        var typeEl = document.getElementById('transaction-type');
+        const transactionType = typeEl ? typeEl.value : 'withdrawal';
         const targetTypes = getAccountTypesForField(transactionType, fieldContext);
 
         const accountsToFilter = cache.filter(account =>
@@ -212,7 +223,9 @@
      * Renderiza el dropdown de sugerencias.
      */
     function renderAutocomplete(dropdownEl, results) {
-        dropdownEl.empty();
+        if (typeof dropdownEl === 'string') dropdownEl = document.querySelector(dropdownEl);
+        if (!dropdownEl) return;
+        dropdownEl.innerHTML = '';
 
         let htmlContent = '';
 
@@ -229,7 +242,7 @@
             </li>`;
         });
 
-        dropdownEl.append(htmlContent);
+        dropdownEl.innerHTML = htmlContent;
     }
 
     /**
@@ -237,16 +250,19 @@
      * antes del blur/change del input, evitando el doble clic).
      */
     function setupDropdownClickHandler(dropdownEl) {
-        $(dropdownEl).off('mousedown').on('mousedown', '.autocomplete-item', function(e) {
+        if (typeof dropdownEl === 'string') dropdownEl = document.querySelector(dropdownEl);
+        if (!dropdownEl) return;
+
+        dropdownEl.addEventListener('mousedown', function(e) {
+            var item = e.target.closest('.autocomplete-item');
+            if (!item) return;
             e.preventDefault(); // Evita que el input pierda foco antes de seleccionar
 
-            const $clickedItem = $(this);
+            var id = item.getAttribute('data-account-id');
+            var name = item.getAttribute('data-account-name');
+            var isNew = item.getAttribute('data-is-new') === 'true';
 
-            const id = $clickedItem.data('account-id');
-            const name = $clickedItem.data('account-name');
-            const isNew = $clickedItem.data('is-new') === true;
-
-            const context = $clickedItem.closest('.autocomplete-dropdown').attr('id') === 'source-autocomplete' ? 'source' : 'destination';
+            var context = item.closest('.autocomplete-dropdown').id === 'source-autocomplete' ? 'source' : 'destination';
 
             if (isNew) {
                 selectNewAccount({ name: name, isNew: true }, context);
@@ -256,9 +272,6 @@
         });
     }
 
-    /**
-     * Inicializa el autocompletado para origen y destino.
-     */
     /**
      * Simple debounce utility.
      */
@@ -272,28 +285,43 @@
         };
     }
 
+    var autocompleteInitialized = false;
+
     function initAutocomplete(sourceInputId, sourceDropdownId, destInputId, destDropdownId, accountsCache) {
-        const sourceInput = $(`#${sourceInputId}`);
-        const sourceDropdown = $(`#${sourceDropdownId}`);
-        const destInput = $(`#${destInputId}`);
-        const destDropdown = $(`#${destDropdownId}`);
+        const sourceInput = document.getElementById(sourceInputId);
+        const sourceDropdown = document.getElementById(sourceDropdownId);
+        const destInput = document.getElementById(destInputId);
+        const destDropdown = document.getElementById(destDropdownId);
+
+        if (!sourceInput || !sourceDropdown || !destInput || !destDropdown) return;
+
+        // Evitar registrar listeners duplicados si initAutocomplete se llama otra vez
+        if (autocompleteInitialized) return;
+        autocompleteInitialized = true;
 
         const filterDebounced = debounce(function(e, input, dropdown, context) {
-            filterAndDisplayAccounts(e, input, dropdown, context, accountsCache);
+            filterAndDisplayAccounts(e, input, dropdown, context, window.FFPWA.accountsCache || accountsCache);
         }, 150);
 
-        // Listener para el campo fuente (debounced en keyup, inmediato en change)
-        sourceInput.on('keyup', function(e) {
+        // Listener para el campo fuente (debounced en keyup, change solo si tiene foco)
+        sourceInput.addEventListener('keyup', function(e) {
             filterDebounced(e, this, sourceDropdown, 'source');
-        }).on('change', function(e) {
-            filterAndDisplayAccounts(e, this, sourceDropdown, 'source', accountsCache);
+        });
+        sourceInput.addEventListener('change', function(e) {
+            // Solo filtrar si el input tiene foco (evita re-abrir dropdown al perder foco por selección)
+            if (document.activeElement === this) {
+                filterAndDisplayAccounts(e, this, sourceDropdown, 'source', window.FFPWA.accountsCache || accountsCache);
+            }
         });
 
-        // Listener para el campo destino (debounced en keyup, inmediato en change)
-        destInput.on('keyup', function(e) {
+        // Listener para el campo destino (debounced en keyup, change solo si tiene foco)
+        destInput.addEventListener('keyup', function(e) {
             filterDebounced(e, this, destDropdown, 'destination');
-        }).on('change', function(e) {
-            filterAndDisplayAccounts(e, this, destDropdown, 'destination', accountsCache);
+        });
+        destInput.addEventListener('change', function(e) {
+            if (document.activeElement === this) {
+                filterAndDisplayAccounts(e, this, destDropdown, 'destination', window.FFPWA.accountsCache || accountsCache);
+            }
         });
 
         // Configurar los manejadores de clics delegados
@@ -301,9 +329,10 @@
         setupDropdownClickHandler(destDropdown);
 
         // Clic fuera del dropdown o al seleccionar un item, lo cierra
-        $(document).on('click', function(e) {
-            if (!$(e.target).closest('.autocomplete-dropdown').length &&
-                !$(e.target).closest('#source-account, #destination-account').length) {
+        document.addEventListener('click', function(e) {
+            var target = e.target;
+            if (!target.closest('.autocomplete-dropdown') &&
+                !target.closest('#source-account, #destination-account')) {
                 hideDropdown(sourceDropdown);
                 hideDropdown(destDropdown);
             }
@@ -325,14 +354,20 @@
         const { target, other } = window.FFPWA.getDefaultField(transactionType);
 
         // Limpiar el otro campo
-        $(`#${other}-account`).val('').attr('placeholder', __('accounts.placeholder_search', { field: other }));
-        $(`#${other}-account-id`).val('');
-        $(`#${other}-account-name`).val('');
+        var otherAcc = document.getElementById(`${other}-account`);
+        var otherAccId = document.getElementById(`${other}-account-id`);
+        var otherAccName = document.getElementById(`${other}-account-name`);
+        if (otherAcc) { otherAcc.value = ''; otherAcc.setAttribute('placeholder', __('accounts.placeholder_search', { field: other })); }
+        if (otherAccId) otherAccId.value = '';
+        if (otherAccName) otherAccName.value = '';
 
         // Poner default en targetField
-        $(`#${target}-account`).val('').attr('placeholder', __('accounts.placeholder_default', { name: match.name }));
-        $(`#${target}-account-id`).val(match.id);
-        $(`#${target}-account-name`).val(match.name);
+        var targetAcc = document.getElementById(`${target}-account`);
+        var targetAccId = document.getElementById(`${target}-account-id`);
+        var targetAccName = document.getElementById(`${target}-account-name`);
+        if (targetAcc) { targetAcc.value = ''; targetAcc.setAttribute('placeholder', __('accounts.placeholder_default', { name: match.name })); }
+        if (targetAccId) targetAccId.value = match.id;
+        if (targetAccName) targetAccName.value = match.name;
 
         // Auto-ajustar moneda según cuenta default
         autoSetCurrencyFromAccount(match.id, target, transactionType);
@@ -344,18 +379,18 @@
      * Actualiza las etiquetas de tipo de cuenta según la transacción seleccionada.
      */
     function updateTypeHints(transactionType) {
-        const sourceHint = $('#source-type-hint');
-        const destHint = $('#dest-type-hint');
+        const sourceHint = document.getElementById('source-type-hint');
+        const destHint = document.getElementById('dest-type-hint');
 
         if (transactionType === 'deposit') {
-            sourceHint.text(__('transaction.hint_revenue'));
-            destHint.text(__('transaction.hint_asset'));
+            if (sourceHint) sourceHint.textContent = __('transaction.hint_revenue');
+            if (destHint) destHint.textContent = __('transaction.hint_asset');
         } else if (transactionType === 'transfer') {
-            sourceHint.text(__('transaction.hint_asset'));
-            destHint.text(__('transaction.hint_asset'));
+            if (sourceHint) sourceHint.textContent = __('transaction.hint_asset');
+            if (destHint) destHint.textContent = __('transaction.hint_asset');
         } else {
-            sourceHint.text(__('transaction.hint_asset'));
-            destHint.text(__('transaction.hint_expense'));
+            if (sourceHint) sourceHint.textContent = __('transaction.hint_asset');
+            if (destHint) destHint.textContent = __('transaction.hint_expense');
         }
     }
 
@@ -363,8 +398,8 @@
      * Maneja el cambio de tipo de transacción.
      */
     function onTransactionTypeChanged(newType, accountsCache) {
-        const hiddenInput = $('#transaction-type');
-        hiddenInput.val(newType);
+        const hiddenInput = document.getElementById('transaction-type');
+        if (hiddenInput) hiddenInput.value = newType;
 
         // Actualizar hints
         updateTypeHints(newType);
@@ -381,22 +416,23 @@
      * Configura el selector visual de tipo de transacción (segmented control iOS).
      */
     function setupTransactionTypeSelector(accountsCache) {
-        const $selector = $('#type-selector');
-        const $buttons = $selector.find('.segmented-btn');
+        const selector = document.getElementById('type-selector');
+        if (!selector) return;
+        const buttons = selector.querySelectorAll('.segmented-btn');
 
-        $selector.on('click', '.segmented-btn', function() {
-            const $btn = $(this);
-            const newType = $btn.data('type');
-            const currentType = $('#transaction-type').val();
+        selector.addEventListener('click', function(e) {
+            var btn = e.target.closest('.segmented-btn');
+            if (!btn) return;
+            const newType = btn.getAttribute('data-type');
+            var typeEl = document.getElementById('transaction-type');
+            const currentType = typeEl ? typeEl.value : 'withdrawal';
 
             if (newType === currentType) return;
 
             // Toggle active class para segmented control iOS-style
-            $buttons.removeClass('active');
-            $btn.addClass('active');
-
-            $buttons.attr('aria-checked', 'false');
-            $btn.attr('aria-checked', 'true');
+            buttons.forEach(function(b) { b.classList.remove('active'); b.setAttribute('aria-checked', 'false'); });
+            btn.classList.add('active');
+            btn.setAttribute('aria-checked', 'true');
 
             onTransactionTypeChanged(newType, accountsCache);
         });
@@ -412,7 +448,8 @@
             return;
         }
 
-        const currentType = $('#transaction-type').val() || 'withdrawal';
+        var typeEl = document.getElementById('transaction-type');
+        const currentType = (typeEl ? typeEl.value : '') || 'withdrawal';
 
         initAutocomplete(
             'source-account', 'source-autocomplete',
@@ -434,7 +471,8 @@
      * Punto de entrada: evento disparado por config.js
      */
     window.FFPWA._onLocaleAccounts = function() {
-        const currentType = $('#transaction-type').val() || 'withdrawal';
+        var typeEl = document.getElementById('transaction-type');
+        const currentType = (typeEl ? typeEl.value : '') || 'withdrawal';
         updateTypeHints(currentType);
         const cache = window.FFPWA.accountsCache;
         if (cache) prefillDefaultSource(cache, currentType);

@@ -32,7 +32,7 @@
 
     function fetchCurrenciesFromApi(url, token) {
         return new Promise((resolve, reject) => {
-            $.ajax({
+            window.FFPWA.http({
                 url: `${url}/api/v1/currencies?limit=1000`,
                 method: 'GET',
                 headers: {
@@ -66,18 +66,22 @@
     /* ───────── Inicialización ───────── */
 
     function populateCurrencyDropdown() {
-        const $select = $('#currency-select');
-        if (!$select.length) return;
+        const select = document.getElementById('currency-select');
+        if (!select) return;
 
         const enabled = window.FFPWA.currencies.enabled;
         const primaryCode = window.FFPWA.currencies.primary
             ? window.FFPWA.currencies.primary.code
             : '';
 
-        $select.empty();
+        select.innerHTML = '';
         enabled.forEach(c => {
             const label = c.code;
-            $select.append(`<option value="${c.code}" ${c.code === primaryCode ? 'selected' : ''}>${label}</option>`);
+            const opt = document.createElement('option');
+            opt.value = c.code;
+            if (c.code === primaryCode) opt.selected = true;
+            opt.textContent = label;
+            select.appendChild(opt);
         });
     }
 
@@ -194,7 +198,7 @@
 
     function fetchExchangeRateFromFrankfurter(from, to) {
         return new Promise((resolve, reject) => {
-            $.ajax({
+            window.FFPWA.http({
                 url: `https://api.frankfurter.dev/v2/rate/${from}/${to}`,
                 method: 'GET',
                 dataType: 'json',
@@ -216,50 +220,51 @@
     /* ───────── UI: Indicador de tasa ───────── */
 
     function updateRateDisplay() {
-        const selectedCurrency = $('#currency-select').val();
+        const selectedCurrency = document.getElementById('currency-select') ? document.getElementById('currency-select').value : '';
         const primaryCurrency = window.FFPWA.currencies.primary;
-        const $rateDisplay = $('#exchange-rate-display');
-        const $rateInfo = $('#exchange-rate-info');
+        const rateDisplay = document.getElementById('exchange-rate-display');
+        const rateInfo = document.getElementById('exchange-rate-info');
 
-        if (!$rateInfo.length) return;
+        if (!rateInfo) return;
 
         if (!selectedCurrency || !primaryCurrency || selectedCurrency === primaryCurrency.code) {
-            $rateInfo.addClass('hidden');
+            rateInfo.classList.add('hidden');
             return;
         }
 
         // Mostrar estado de carga
-        $rateInfo.removeClass('hidden');
-        $rateDisplay.text(__('currency.loading_rate'));
+        rateInfo.classList.remove('hidden');
+        if (rateDisplay) rateDisplay.textContent = __('currency.loading_rate');
 
         getExchangeRate(selectedCurrency, primaryCurrency.code)
             .then(rateInfo => {
-                $rateDisplay.text(__('currency.rate_display', {
+                if (rateDisplay) rateDisplay.textContent = __('currency.rate_display', {
                     from: selectedCurrency,
                     rate: rateInfo.rate.toFixed(4),
                     to: primaryCurrency.code,
                     date: rateInfo.date
-                }));
+                });
                 recalcAmountDisplay();
             })
             .catch(err => {
-                $rateDisplay.text(__('currency.rate_error', { message: err.message }));
+                if (rateDisplay) rateDisplay.textContent = __('currency.rate_error', { message: err.message });
             });
     }
 
     function recalcAmountDisplay() {
-        const $amount = $('#amount');
-        const $converted = $('#amount-converted');
-        const selectedCurrency = $('#currency-select').val();
+        const amountEl = document.getElementById('amount');
+        const convertedEl = document.getElementById('amount-converted');
+        const currencySelect = document.getElementById('currency-select');
+        const selectedCurrency = currencySelect ? currencySelect.value : '';
         const primaryCurrency = window.FFPWA.currencies.primary;
 
-        if (!$converted.length || !selectedCurrency || selectedCurrency === primaryCurrency.code) {
+        if (!convertedEl || !selectedCurrency || !primaryCurrency || selectedCurrency === primaryCurrency.code) {
             return;
         }
 
-        const rawAmount = $amount.val().trim();
+        const rawAmount = amountEl ? amountEl.value.trim() : '';
         if (!rawAmount || isNaN(parseFloat(rawAmount))) {
-            $converted.addClass('hidden');
+            convertedEl.classList.add('hidden');
             return;
         }
 
@@ -268,26 +273,35 @@
                          { rate: 1, date: '' };
 
         const converted = (amount * rateInfo.rate).toFixed(primaryCurrency.decimal_places || 2);
-        $converted.removeClass('hidden');
-        $converted.text(__('currency.converted_display', {
+        convertedEl.classList.remove('hidden');
+        convertedEl.textContent = __('currency.converted_display', {
             amount: converted,
             code: primaryCurrency.code
-        }));
+        });
     }
 
+    var _currencyHandlerInitialized = false;
+
     function setupCurrencyChangeHandler() {
+        if (_currencyHandlerInitialized) return;
+        _currencyHandlerInitialized = true;
+
         var _rateDebounceTimer;
-        $(document).on('change', '#currency-select', function() {
-            // Debounce 400ms: si el usuario cambia rápido de moneda,
-            // solo se dispara una llamada a la API
-            clearTimeout(_rateDebounceTimer);
-            _rateDebounceTimer = setTimeout(function() {
-                updateRateDisplay();
-            }, 400);
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.id === 'currency-select') {
+                // Debounce 400ms: si el usuario cambia rápido de moneda,
+                // solo se dispara una llamada a la API
+                clearTimeout(_rateDebounceTimer);
+                _rateDebounceTimer = setTimeout(function() {
+                    updateRateDisplay();
+                }, 400);
+            }
         });
 
-        $(document).on('input', '#amount', function() {
-            recalcAmountDisplay();
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.id === 'amount') {
+                recalcAmountDisplay();
+            }
         });
     }
 
@@ -304,11 +318,16 @@
             initCurrencies(cached);
         }
 
+        // Después de poblar el dropdown, re-aplicar moneda de la cuenta default
+        // (accounts.js ya seteo select.value pero el select estaba vacío)
+        reapplyAccountCurrency();
+
         // Refrescar desde API (online)
         fetchCurrenciesFromApi(url, token)
             .then(currencies => {
                 cacheCurrencies(currencies);
                 initCurrencies(currencies);
+                reapplyAccountCurrency();
             })
             .catch(err => {
                 console.warn('[CURRENCIES]', err.message);
@@ -322,8 +341,30 @@
                         enabled: true,
                         primary: true
                     }]);
+                    reapplyAccountCurrency();
                 }
             });
     };
+
+    /* ─── Re-aplicar moneda de cuenta default después de poblar dropdown ─── */
+    function reapplyAccountCurrency() {
+        var typeEl = document.getElementById('transaction-type');
+        var transactionType = typeEl ? typeEl.value : 'withdrawal';
+        var defaultAccount = window.FFPWA.config && window.FFPWA.config.defaultSourceAccount;
+        if (!defaultAccount || !defaultAccount.id) return;
+        var { target } = window.FFPWA.getDefaultField(transactionType);
+        var targetIdEl = document.getElementById(target + '-account-id');
+        if (targetIdEl && targetIdEl.value) {
+            var select = document.getElementById('currency-select');
+            var cache = window.FFPWA.accountsCache;
+            if (cache && select) {
+                var account = cache.find(function(a) { return String(a.id) === String(targetIdEl.value); });
+                if (account && account.currency_code && select.value !== account.currency_code) {
+                    select.value = account.currency_code;
+                    select.dispatchEvent(new Event('change'));
+                }
+            }
+        }
+    }
 
 })();

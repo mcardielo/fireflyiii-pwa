@@ -5,9 +5,9 @@
 (function() {
     'use strict';
 
-    var $modal = null;
-    var $expression = null;
-    var $result = null;
+    var modal = null;
+    var expressionEl = null;
+    var resultEl = null;
     var expression = [];
     var currentInput = '';
     var lastResult = null;
@@ -17,14 +17,14 @@
      * Monta el modal desde el template (solo la primera vez).
      */
     function ensureModal() {
-        if ($modal) return;
+        if (modal) return;
         var tpl = document.getElementById('calc-modal-template');
         if (!tpl) return;
         var clone = tpl.content.cloneNode(true);
         document.body.appendChild(clone);
-        $modal = $('#calc-modal');
-        $expression = $('#calc-expression');
-        $result = $('#calc-result');
+        modal = document.getElementById('calc-modal');
+        expressionEl = document.getElementById('calc-expression');
+        resultEl = document.getElementById('calc-result');
     }
 
     /**
@@ -44,11 +44,11 @@
         if (currentInput !== '') {
             exprParts.push(currentInput);
         }
-        $expression.text(exprParts.join(' ') || ' ');
+        if (expressionEl) expressionEl.textContent = exprParts.join(' ') || ' ';
 
         // Mostrar resultado live si hay algo para evaluar
         var val = evaluateLive();
-        $result.text(val !== null ? formatNum(val) : '0');
+        if (resultEl) resultEl.textContent = val !== null ? formatNum(val) : '0';
     }
 
     function formatNum(n) {
@@ -115,16 +115,16 @@
             expression.pop();
         }
         if (expression.length === 0) {
-            $result.text('0');
+            if (resultEl) resultEl.textContent = '0';
             return;
         }
         var val = safeEval(expression);
         if (val !== null) {
             lastResult = val;
             expression = [val];
-            $result.text(formatNum(val));
+            if (resultEl) resultEl.textContent = formatNum(val);
         } else {
-            $result.text('Error');
+            if (resultEl) resultEl.textContent = 'Error';
             expression = [];
         }
         currentInput = '';
@@ -253,22 +253,22 @@
      */
     function open() {
         ensureModal();
-        if (!$modal) return;
+        if (!modal) return;
         doClear();
         // Precargar con el valor actual del campo amount
-        var currentAmount = $('#amount').val();
+        var currentAmount = document.getElementById('amount') ? document.getElementById('amount').value : '';
         if (currentAmount && !isNaN(parseFloat(currentAmount))) {
             currentInput = currentAmount;
             updateDisplay();
         }
-        $modal.removeClass('hidden');
+        if (modal) modal.classList.remove('hidden');
     }
 
     /**
      * Cierra el modal.
      */
     function close() {
-        if ($modal) $modal.addClass('hidden');
+        if (modal) modal.classList.add('hidden');
     }
 
     /**
@@ -276,31 +276,46 @@
      */
     function useResult() {
         var val = evaluateLive();
+        var amountEl = document.getElementById('amount');
         if (val !== null && val > 0) {
-            $('#amount').val(val.toFixed(2)).trigger('change');
+            if (amountEl) { amountEl.value = val.toFixed(2); amountEl.dispatchEvent(new Event('change')); }
         } else if (currentInput !== '' && !isNaN(parseFloat(currentInput))) {
-            $('#amount').val(parseFloat(currentInput).toFixed(2)).trigger('change');
+            if (amountEl) { amountEl.value = parseFloat(currentInput).toFixed(2); amountEl.dispatchEvent(new Event('change')); }
         }
         close();
     }
 
     // ── Event Handlers ──
-    $(document).on('click', '#calc-btn', function(e) {
-        e.preventDefault();
-        open();
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('#calc-btn')) {
+            e.preventDefault();
+            open();
+        }
     });
 
-    $(document).on('click', '#calc-modal', function(e) {
-        if (e.target === this) close(); // cerrar al tocar overlay
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'calc-modal') {
+            close(); // cerrar al tocar overlay
+        }
     });
 
-    $(document).on('click', '#calc-cancel-btn', close);
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('#calc-cancel-btn')) {
+            close();
+        }
+    });
 
-    $(document).on('click', '#calc-use-btn', useResult);
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('#calc-use-btn')) {
+            useResult();
+        }
+    });
 
-    $(document).on('click', '.calc-key', function() {
-        var action = $(this).data('action');
-        var value = $(this).data('value');
+    document.addEventListener('click', function(e) {
+        var key = e.target.closest('.calc-key');
+        if (!key) return;
+        var action = key.getAttribute('data-action');
+        var value = key.getAttribute('data-value');
         switch (action) {
             case 'digit': inputDigit(String(value)); break;
             case 'decimal': inputDecimal(); break;
