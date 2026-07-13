@@ -98,9 +98,12 @@
                 pendingCallbacks.shift()(detected);
             }
         }).catch(function() {
-            // Fallback to default on error
+            // Fallback to default on error or timeout
             console.warn('[i18n] Falló carga de locale, usando default:', DEFAULT_LOCALE);
             currentLocale = DEFAULT_LOCALE;
+            while (pendingCallbacks.length) {
+                pendingCallbacks.shift()(DEFAULT_LOCALE);
+            }
         });
     };
 
@@ -139,13 +142,24 @@
     function loadLocale(locale) {
         var langFile = 'lang/' + locale + '.json';
         return new Promise(function(resolve, reject) {
+            // Timeout: si no carga en 2s, rechazar para que el caller haga fallback
+            var timedOut = false;
+            var timeoutId = setTimeout(function() {
+                timedOut = true;
+                reject(new Error('i18n-timeout'));
+            }, 2000);
+
             fetch(langFile)
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
+                    if (timedOut) return;
+                    clearTimeout(timeoutId);
                     translations = data || {};
                     resolve();
                 })
                 .catch(function(err) {
+                    if (timedOut) return;
+                    clearTimeout(timeoutId);
                     console.error('[i18n] Error cargando', langFile, err);
                     // Try fallback locale if not already trying it
                     if (locale !== FALLBACK_LOCALE) {

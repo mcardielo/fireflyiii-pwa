@@ -12,6 +12,9 @@
     let fireflyServerAvailable = true;
     let healthCheckIntervalId = null;
 
+    // Lock para evitar syncs simultáneas (race condition → duplicación)
+    let isSyncing = false;
+
     /**
      * Muestra un toast temporal estilo, fixed overlay, sin afectar el layout.
      * @param {string} message - Texto del mensaje
@@ -331,7 +334,11 @@
         const token = window.FFPWA.config.token;
         const url = window.FFPWA.config.url;
 
-        console.log('--- Intentando enviar transacción ---', payload);
+        // Limpiar _queueId antes de enviar al servidor (campo interno de la cola)
+        const cleanPayload = Object.assign({}, payload);
+        delete cleanPayload._queueId;
+
+        console.log('--- Intentando enviar transacción ---', cleanPayload);
 
         return new Promise((resolve, reject) => {
             window.FFPWA.http({
@@ -341,7 +348,7 @@
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                data: JSON.stringify(payload),
+                data: JSON.stringify(cleanPayload),
                 dataType: 'json',
                 timeout: 15000, // 15 segundos máx, si no responde se trata como server caído
                 success: function(response) {
@@ -394,6 +401,7 @@
 
     /**
      * Agrega una transacción a la cola de sincronización offline.
+     * Asigna un _queueId único para dedupe (evita duplicación por retries).
      */
     function queueTransaction(payload) {
         let queue = getQueue();
@@ -402,9 +410,11 @@
             showStatusMessage('❌ ' + __('sync.queue_full'), 'error');
             return;
         }
+        // ID único para dedupe: si el mismo payload ya está en cola, no encolar de nuevo
+        payload._queueId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         queue.push(payload);
         localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
-        console.log(`🟡 Transacción encolada. Cola actual: ${queue.length} ítems.`);
+        console.log(`🟡 Transacción encolada (_queueId: ${payload._queueId}). Cola actual: ${queue.length} ítems.`);
 
         showStatusMessage('💾 ' + __('sync.queued'), 'warning');
 
@@ -428,8 +438,15 @@
 
     /**
      * Procesa la cola de sincronización.
+     * Lock con isSyncing para prevenir ejecuciones simultáneas (race condition).
      */
     async function syncQueue() {
+        // Lock: si ya hay un sync en progreso, no iniciar otro
+        if (isSyncing) {
+            console.log('🔒 Sync ya en progreso, saltando.');
+            return;
+        }
+
         const queue = getQueue();
         if (queue.length === 0) {
             console.log('📦 ' + __('sync.queue_empty'));
@@ -441,16 +458,29 @@
             return;
         }
 
+        isSyncing = true;
         showStatusMessage('🔄 ' + __('sync.progress', { count: queue.length }), 'warning');
 
         const remaining = [];
+        const sentIds = new Set(); // Track de _queueIds ya enviados en esta ejecución
         let successfulSends = 0;
         let failedSends = 0;
         let authBlocked = false;
 
         for (let i = 0; i < queue.length; i++) {
+            const item = queue[i];
+
+            // Dedupe: si ya enviamos este _queueId en esta ejecución, saltar
+            if (item._queueId && sentIds.has(item._queueId)) {
+                console.log(`🔄 Skip duplicado en cola: ${item._queueId}`);
+                continue;
+            }
+            if (item._queueId) {
+                sentIds.add(item._queueId);
+            }
+
             try {
-                await sendTransaction(queue[i]);
+                await sendTransaction(item);
                 successfulSends++;
             } catch (e) {
                 // Errores de autenticación: conservar en la cola y cortar el loop.
@@ -459,7 +489,7 @@
                     console.error(`[DEBUG]: Auth error en tx #${i + 1}:`, e.message);
                     authBlocked = true;
                     // Conservar esta transacción y todas las restantes sin intentar
-                    remaining.push(queue[i]);
+                    remaining.push(item);
                     for (let j = i + 1; j < queue.length; j++) {
                         remaining.push(queue[j]);
                     }
@@ -467,12 +497,13 @@
                     break;
                 }
                 console.error(`[DEBUG]: Falló tx #${i + 1}:`, e.message);
-                remaining.push(queue[i]);
+                remaining.push(item);
                 failedSends++;
             }
         }
 
         localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(remaining));
+        isSyncing = false;
 
         let message = '';
         if (authBlocked) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'firefly-pwa-v2.31';
+const CACHE_NAME = 'firefly-pwa-v2.35';
 const ASSETS_TO_CACHE = [
     './',
     'index.html',
@@ -26,37 +26,47 @@ const ASSETS_TO_CACHE = [
 ];
 
 /**
- * Estrategia Cache First con fallback offline para HTML.
- *  1. Sirve desde caché al instante.
- *  2. Actualiza en background desde la red (si hay conexión).
- *  3. Si no hay caché ni red, devuelve index.html como fallback.
+ * Estrategia Cache First para navegación (HTML).
+ *  1. Intenta servir index.html desde caché INMEDIATAMENTE (ignora query params).
+ *  2. Si hay red, actualiza en background con timeout (no bloquea la respuesta).
+ *  3. Sin caché ni red → fallback a cualquier index.html cacheado.
  */
-async function cacheFirstWithNetworkUpdate(request) {
+async function cacheFirstNavigation(request) {
     const cache = await caches.open(CACHE_NAME);
-    const cachedResponse = await cache.match(request);
 
-    const updateCache = fetch(request).then(networkResponse => {
+    // Intentar match directo, luego index.html (ignorando query params)
+    let cachedResponse = await cache.match(request, { ignoreSearch: true });
+    if (!cachedResponse) {
+        cachedResponse = await cache.match('index.html', { ignoreSearch: true });
+    }
+    if (!cachedResponse) {
+        cachedResponse = await cache.match('./index.html', { ignoreSearch: true });
+    }
+    if (!cachedResponse) {
+        cachedResponse = await cache.match('/index.html', { ignoreSearch: true });
+    }
+
+    if (cachedResponse) {
+        // Actualizar en background con timeout de 8s (no bloquea la respuesta cacheada)
+        fetch(request).then(networkResponse => {
+            if (networkResponse && networkResponse.ok) {
+                cache.put(request, networkResponse.clone());
+            }
+        }).catch(() => null);
+        return cachedResponse;
+    }
+
+    // Sin caché: esperar red con timeout de 10s
+    try {
+        const networkResponse = await Promise.race([
+            fetch(request),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+        ]);
         if (networkResponse && networkResponse.ok) {
             cache.put(request, networkResponse.clone());
         }
         return networkResponse;
-    }).catch(() => null);
-
-    if (cachedResponse) {
-        return cachedResponse;
-    }
-
-    // Sin caché: esperar la red
-    try {
-        return await updateCache;
     } catch (_) {
-        // Sin red ni caché → fallback a index.html
-        const fallback = await cache.match('/index.html');
-        if (fallback) return fallback;
-        const fallback2 = await cache.match('index.html');
-        if (fallback2) return fallback2;
-        const fallback3 = await cache.match('./index.html');
-        if (fallback3) return fallback3;
         throw new Error('No hay caché ni conexión');
     }
 }
@@ -137,23 +147,40 @@ self.addEventListener('fetch', (event) => {
 
     // ── Navegación (HTML): Cache First + fallback offline ──
     if (requestUrl.pathname.endsWith('/') || requestUrl.pathname.endsWith('.html')) {
-        event.respondWith(cacheFirstWithNetworkUpdate(event.request));
+        event.respondWith(cacheFirstNavigation(event.request));
         return;
     }
 
-    // ── CDN y assets estáticos: Cache First ──
+    // ── Assets estáticos: Cache First + timeout de red ──
     event.respondWith(
-        caches.match(event.request)
-            .then((cachedResponse) => {
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
-                return fetch(event.request).catch(() => {
-                    // Si falla un recurso no cacheado (p.ej. una imagen no crítica),
-                    // devolver 404 silencioso en vez de error fatal
-                    return new Response(null, { status: 404 });
+        caches.open(CACHE_NAME).then(function(cache) {
+            return cache.match(event.request, { ignoreSearch: true })
+                .then(function(cachedResponse) {
+                    if (cachedResponse) {
+                        // Actualizar en background (no bloquea)
+                        fetch(event.request).then(function(networkResponse) {
+                            if (networkResponse && networkResponse.ok) {
+                                cache.put(event.request, networkResponse.clone());
+                            }
+                        }).catch(function() {});
+                        return cachedResponse;
+                    }
+                    // Sin caché: fetch con timeout de 5s (no 30s default)
+                    return Promise.race([
+                        fetch(event.request),
+                        new Promise(function(_, reject) {
+                            setTimeout(function() { reject(new Error('asset-timeout')); }, 5000);
+                        })
+                    ]).then(function(networkResponse) {
+                        if (networkResponse && networkResponse.ok) {
+                            cache.put(event.request, networkResponse.clone());
+                        }
+                        return networkResponse;
+                    }).catch(function() {
+                        return new Response(null, { status: 404 });
+                    });
                 });
-            })
+        })
     );
 });
 

@@ -468,8 +468,8 @@
                 hideLoadingScreen();
             });
 
-            // Fallback: esconder pantalla de carga después de 3 segundos si algo falla en init
-            setTimeout(hideLoadingScreen, 3000);
+            // Fallback: esconder pantalla de carga después de 3.5s si algo falla en init
+            setTimeout(hideLoadingScreen, 3500);
 
             // Initial online status
             window.FFPWA.updateStatus && window.FFPWA.updateStatus(
