@@ -367,4 +367,6 @@
         }
     }
 
+    window.FFPWA.reapplyAccountCurrency = reapplyAccountCurrency;
+
 })();

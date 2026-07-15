@@ -378,15 +378,21 @@
                 '';
 
             // Determine display direction and other party
-            var isNegative = (type === 'withdrawal');
+            var isNegative;
             var otherParty = '';
 
             if (type === 'transfer') {
+                var currentAcctId = currentAccount ? String(currentAccount.id) : '';
+                var sourceId = String(subTx.source_id || '');
+                isNegative = (sourceId === currentAcctId);
                 otherParty = window.FFPWA.escapeHtml(sourceName) + ' → ' + window.FFPWA.escapeHtml(destName);
-            } else if (isNegative) {
-                otherParty = window.FFPWA.escapeHtml(destName);
             } else {
-                otherParty = window.FFPWA.escapeHtml(sourceName);
+                isNegative = (type === 'withdrawal');
+                if (isNegative) {
+                    otherParty = window.FFPWA.escapeHtml(destName);
+                } else {
+                    otherParty = window.FFPWA.escapeHtml(sourceName);
+                }
             }
 
             var sign = isNegative ? '-' : '+';

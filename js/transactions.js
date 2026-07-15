@@ -307,6 +307,11 @@
             if (targetAccName) targetAccName.value = defaultAccount.name;
         }
 
+        // Re-aplicar moneda de la cuenta default después del form.reset()
+        if (window.FFPWA.reapplyAccountCurrency) {
+            window.FFPWA.reapplyAccountCurrency();
+        }
+
         // ── GPS toggle: update visibility ──
         updateGPSToggleVisibility();
     }
