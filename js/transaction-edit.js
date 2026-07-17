@@ -103,38 +103,8 @@
     }
 
     /* ─── Fetch autocomplete data ─── */
-
-    function fetchBudgets() {
-        var url = window.FFPWA.config.url;
-        var token = window.FFPWA.config.token;
-        return new Promise(function(resolve, reject) {
-            window.FFPWA.http({
-                url: url + '/api/v1/autocomplete/budgets',
-                method: 'GET',
-                headers: { 'Authorization': 'Bearer ' + token },
-                dataType: 'json',
-                timeout: 10000,
-                success: function(data) { resolve(data); },
-                error: function(xhr) { reject(new Error('HTTP ' + xhr.status)); }
-            });
-        });
-    }
-
-    function fetchCategories() {
-        var url = window.FFPWA.config.url;
-        var token = window.FFPWA.config.token;
-        return new Promise(function(resolve, reject) {
-            window.FFPWA.http({
-                url: url + '/api/v1/autocomplete/categories',
-                method: 'GET',
-                headers: { 'Authorization': 'Bearer ' + token },
-                dataType: 'json',
-                timeout: 10000,
-                success: function(data) { resolve(data); },
-                error: function(xhr) { reject(new Error('HTTP ' + xhr.status)); }
-            });
-        });
-    }
+    var fetchBudgets = function() { return window.FFPWA.lookups.fetchBudgets(); };
+    var fetchCategories = function() { return window.FFPWA.lookups.fetchCategories(); };
 
     /* ─── Show/hide views ─── */
 

@@ -357,7 +357,19 @@
         var otherAcc = document.getElementById(`${other}-account`);
         var otherAccId = document.getElementById(`${other}-account-id`);
         var otherAccName = document.getElementById(`${other}-account-name`);
-        if (otherAcc) { otherAcc.value = ''; otherAcc.setAttribute('placeholder', __('accounts.placeholder_search', { field: other })); }
+        if (otherAcc) {
+            otherAcc.value = '';
+            if (other === 'destination' && transactionType === 'withdrawal') {
+                var defaultDest = window.FFPWA.config.defaultDestAccount;
+                if (defaultDest && defaultDest.name) {
+                    otherAcc.setAttribute('placeholder', __('accounts.placeholder_default', { name: defaultDest.name }));
+                } else {
+                    otherAcc.setAttribute('placeholder', __('accounts.placeholder_search', { field: other }));
+                }
+            } else {
+                otherAcc.setAttribute('placeholder', __('accounts.placeholder_search', { field: other }));
+            }
+        }
         if (otherAccId) otherAccId.value = '';
         if (otherAccName) otherAccName.value = '';
 
@@ -410,7 +422,153 @@
         // Cerrar dropdowns abiertos
         hideDropdown('#source-autocomplete');
         hideDropdown('#destination-autocomplete');
+
+        // Aplicar visibilidad de campos (Quick Entry solo para withdrawal)
+        applyFieldVisibility(newType);
     }
+
+    /**
+     * Aplica la visibilidad de campos según el tipo de transacción.
+     * Solo withdrawal (gasto) usa Quick Entry; deposit y transfer muestran todo.
+     */
+    function applyFieldVisibility(transactionType) {
+        var vis = window.FFPWA.getFieldVisibility ? window.FFPWA.getFieldVisibility() : null;
+        if (!vis) return;
+
+        var isWithdrawal = transactionType === 'withdrawal';
+
+        // Source y dest: ocultos solo en withdrawal si config lo dice
+        var sourceGroup = document.getElementById('source-field-group');
+        var destGroup = document.getElementById('dest-field-group');
+        var categoryGroup = document.getElementById('category-field-group');
+        var budgetGroup = document.getElementById('budget-field-group');
+        var datetimeGroup = document.getElementById('datetime-field-group');
+
+        if (sourceGroup) sourceGroup.classList.toggle('hidden', isWithdrawal && !vis.source);
+        if (destGroup) destGroup.classList.toggle('hidden', isWithdrawal && !vis.dest);
+        if (categoryGroup) categoryGroup.classList.toggle('hidden', !(isWithdrawal && vis.category));
+        if (budgetGroup) budgetGroup.classList.toggle('hidden', !(isWithdrawal && vis.budget));
+        if (datetimeGroup) datetimeGroup.classList.toggle('hidden', !(isWithdrawal && vis.datetime));
+
+        // Si se muestra datetime, inicializar con fecha/hora actual
+        if (isWithdrawal && vis.datetime) {
+            initDatetimeFields();
+        }
+
+        // Si se muestran category/budget, asegurar que tengan datos
+        if (isWithdrawal && vis.category && !window.FFPWA.categoriesCache) {
+            window.FFPWA.lookups.getCategories();
+            initCategoryAutocomplete();
+        }
+        if (isWithdrawal && vis.budget && !window.FFPWA.budgetsCache) {
+            window.FFPWA.lookups.getBudgets();
+            populateBudgetDropdown();
+        }
+        // Si category/budget ya se inicializaron antes, solo refrescar datos
+        if (isWithdrawal && vis.category) {
+            initCategoryAutocomplete();
+        }
+        if (isWithdrawal && vis.budget) {
+            populateBudgetDropdown();
+        }
+    }
+
+    /**
+     * Inicializa el autocomplete de categoría en el formulario de registro.
+     * Reutiliza el mismo patrón que el autocomplete de cuentas.
+     */
+    var categoryAutocompleteInit = false;
+    function initCategoryAutocomplete() {
+        if (categoryAutocompleteInit) return;
+        var input = document.getElementById('tx-category');
+        var dropdown = document.getElementById('tx-category-autocomplete');
+        if (!input || !dropdown) return;
+        categoryAutocompleteInit = true;
+
+        var filterDebounced = debounce(function(query) {
+            if (query.length < 1) {
+                hideDropdown(dropdown);
+                return;
+            }
+            var cached = window.FFPWA.categoriesCache || [];
+            var matches = cached.filter(function(c) {
+                return c.name.toLowerCase().includes(query.toLowerCase());
+            });
+            if (matches.length === 0) {
+                hideDropdown(dropdown);
+                return;
+            }
+            var html = '';
+            matches.forEach(function(c) {
+                html += '<li class="autocomplete-item" data-category-name="' + window.FFPWA.escapeHtml(c.name) + '">'
+                    + '<span>' + window.FFPWA.escapeHtml(c.name) + '</span></li>';
+            });
+            dropdown.innerHTML = html;
+            showDropdown(dropdown);
+        }, 150);
+
+        input.addEventListener('keyup', function() {
+            filterDebounced(this.value.trim());
+        });
+
+        dropdown.addEventListener('mousedown', function(e) {
+            var item = e.target.closest('.autocomplete-item');
+            if (!item) return;
+            e.preventDefault();
+            input.value = item.getAttribute('data-category-name');
+            hideDropdown(dropdown);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#tx-category-autocomplete, #tx-category')) {
+                hideDropdown(dropdown);
+            }
+        });
+    }
+
+    /**
+     * Llena el dropdown de budget en el formulario de registro.
+     */
+    var budgetDropdownInit = false;
+    function populateBudgetDropdown() {
+        var select = document.getElementById('tx-budget');
+        if (!select) return;
+        var cached = window.FFPWA.budgetsCache || [];
+        select.innerHTML = '<option value="">—</option>';
+        cached.forEach(function(b) {
+            var opt = document.createElement('option');
+            opt.value = String(b.id);
+            opt.textContent = b.name;
+            select.appendChild(opt);
+        });
+        budgetDropdownInit = true;
+    }
+
+    window.FFPWA.applyFieldVisibility = applyFieldVisibility;
+
+    /**
+     * Inicializa los campos de fecha y hora con la fecha/hora actual.
+     */
+    function initDatetimeFields() {
+        var dateEl = document.getElementById('tx-date');
+        var timeEl = document.getElementById('tx-time');
+        if (!dateEl || !timeEl) return;
+        // Solo setear si están vacíos (no sobrescribir si el usuario ya cambió)
+        if (!dateEl.value) {
+            var now = new Date();
+            var yyyy = now.getFullYear();
+            var mm = String(now.getMonth() + 1).padStart(2, '0');
+            var dd = String(now.getDate()).padStart(2, '0');
+            dateEl.value = yyyy + '-' + mm + '-' + dd;
+        }
+        if (!timeEl.value) {
+            var now2 = new Date();
+            var hh = String(now2.getHours()).padStart(2, '0');
+            var mi = String(now2.getMinutes()).padStart(2, '0');
+            timeEl.value = hh + ':' + mi;
+        }
+    }
+    window.FFPWA.initDatetimeFields = initDatetimeFields;
 
     /**
      * Configura el selector visual de tipo de transacción (segmented control iOS).
@@ -463,6 +621,14 @@
 
         // Exponer cache globalmente para otros módulos (transactions.js)
         window.FFPWA.accountsCache = accountsCache;
+
+        // Aplicar visibilidad de campos según config (Quick Entry)
+        applyFieldVisibility(currentType);
+        // Precargar categorías y budgets si están habilitados
+        var vis = window.FFPWA.getFieldVisibility ? window.FFPWA.getFieldVisibility() : null;
+        if (vis && vis.category) { window.FFPWA.lookups.getCategories(); initCategoryAutocomplete(); }
+        if (vis && vis.budget) { window.FFPWA.lookups.getBudgets(); populateBudgetDropdown(); }
+        if (vis && vis.datetime) { initDatetimeFields(); }
 
         window.FFPWA.showStatusMessage(__('status.accounts_system_ok', { count: accountsCache.length }), 'success');
     }

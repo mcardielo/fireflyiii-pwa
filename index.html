@@ -169,6 +169,74 @@
                 <p class="text-xs text-ios-text-secondary px-1 mb-6" data-i18n="config.gps_hint">Se usará tu ubicación actual al registrar nuevas transacciones o duplicar existentes.</p>
                 <div id="gps-message" class="ios-status hidden"></div>
 
+                <!-- ── Pantalla de Registro (Quick Entry) ── -->
+                <p class="section-label" data-i18n="config.quick_entry_section">Pantalla de Registro</p>
+                <p class="text-xs text-ios-text-secondary px-1 mb-4" data-i18n="config.quick_entry_hint">Personaliza los campos visibles al registrar gastos. Los campos ocultos usarán valores por defecto.</p>
+                <div class="field-card mb-6">
+                    <div class="field-row">
+                        <span class="field-label field-label--tight" data-i18n="config.show_source">Cuenta origen</span>
+                        <div class="field-value">
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-field-source" checked>
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label field-label--tight" data-i18n="config.show_dest">Cuenta destino</span>
+                        <div class="field-value">
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-field-dest" checked>
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label field-label--tight" data-i18n="config.show_category">Categoría</span>
+                        <div class="field-value">
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-field-category">
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label field-label--tight" data-i18n="config.show_budget">Presupuesto</span>
+                        <div class="field-value">
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-field-budget">
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label field-label--tight" data-i18n="config.show_datetime">Fecha y hora</span>
+                        <div class="field-value">
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-field-datetime">
+                                <span class="ios-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cuenta destino default (condicional) -->
+                <div id="default-dest-account-area" class="hidden mb-6">
+                    <p class="section-label" data-i18n="config.default_dest_section">Cuenta Destino Default</p>
+                    <div class="field-card">
+                        <div class="field-row">
+                            <span class="field-label field-label--tight" data-i18n="config.default_dest_label">Cuenta</span>
+                            <div class="field-value">
+                                <select id="default-dest-account-select" class="ios-select">
+                                    <option value="" data-i18n="account.select_hint">Selecciona...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-ios-text-secondary px-1 mt-1" data-i18n="config.default_dest_hint">Se usará cuando el campo destino esté oculto o vacío al registrar un gasto.</p>
+                    <div id="default-dest-message" class="ios-status hidden mt-2"></div>
+                </div>
+
             </div>
             <footer class="sticky-footer">
                 <button id="save-default-account-btn" class="ios-btn-primary">
@@ -201,7 +269,7 @@
                 </div>
                 <div id="status-message" class="ios-status hidden"></div>
                 <form id="transaction-form">
-                    <div class="mb-6 field-group">
+                    <div id="source-field-group" class="mb-6 field-group" data-field="source">
                         <p class="section-label" data-i18n="transaction.source_section">Cuenta Origen</p>
                         <div class="field-card">
                             <div class="field-row">
@@ -217,14 +285,14 @@
                         <input type="hidden" id="source-account-id" name="source-account-id">
                         <input type="hidden" id="source-account-name" name="source-account-name">
                     </div>
-                    <div class="mb-6 field-group">
+                    <div id="dest-field-group" class="mb-6 field-group" data-field="dest">
                         <p class="section-label" data-i18n="transaction.dest_section">Cuenta Destino</p>
                         <div class="field-card">
                             <div class="field-row">
                                 <span class="field-label"><span data-i18n="transaction.dest_label">Destino</span> <span id="dest-type-hint" class="field-hint" data-i18n="transaction.dest_hint_expense">(Expense)</span></span>
                                 <div class="field-value">
                                     <div class="relative flex-1">
-                                        <input type="text" id="destination-account" required placeholder="Buscar cuenta..." autocomplete="off" class="ios-input" data-i18n-placeholder="transaction.dest_placeholder">
+                                        <input type="text" id="destination-account" placeholder="Buscar cuenta..." autocomplete="off" class="ios-input" data-i18n-placeholder="transaction.dest_placeholder">
                                         <div id="destination-autocomplete" class="autocomplete-dropdown hidden"></div>
                                     </div>
                                 </div>
@@ -257,6 +325,50 @@
                         <div id="exchange-rate-info" class="hidden">
                             <p id="exchange-rate-display" class="text-xs text-ios-text-secondary"></p>
                             <p id="amount-converted" class="text-sm font-medium text-ios-blue hidden"></p>
+                        </div>
+                        <!-- Fecha/Hora (Quick Entry - solo withdrawal) -->
+                        <div id="datetime-field-group" class="hidden" data-field="datetime">
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="history.date">Fecha</span>
+                                <div class="field-value">
+                                    <input type="date" id="tx-date" class="ios-input" style="text-align:right;width:auto;">
+                                </div>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="history.time">Hora</span>
+                                <div class="field-value">
+                                    <input type="time" id="tx-time" class="ios-input" style="text-align:right;width:auto;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Categoría (Quick Entry - solo withdrawal) -->
+                    <div id="category-field-group" class="mb-6 field-group hidden" data-field="category">
+                        <p class="section-label" data-i18n="transaction.category_section">Categoría</p>
+                        <div class="field-card">
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="transaction.category_label">Categoría</span>
+                                <div class="field-value">
+                                    <div class="relative flex-1">
+                                        <input type="text" id="tx-category" placeholder="—" autocomplete="off" class="ios-input" data-i18n-placeholder="transaction.category_placeholder">
+                                        <div id="tx-category-autocomplete" class="autocomplete-dropdown hidden"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Budget (Quick Entry - solo withdrawal) -->
+                    <div id="budget-field-group" class="mb-6 field-group hidden" data-field="budget">
+                        <p class="section-label" data-i18n="transaction.budget_section">Presupuesto</p>
+                        <div class="field-card">
+                            <div class="field-row">
+                                <span class="field-label" data-i18n="transaction.budget_label">Presupuesto</span>
+                                <div class="field-value">
+                                    <select id="tx-budget" class="ios-select" style="direction:rtl;">
+                                        <option value="">—</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div id="tx-gps-row" class="mb-6 field-group hidden">
@@ -599,6 +711,7 @@
 
     <!-- Scripts -->
     <script src="js/http.js"></script>
+    <script src="js/lookups.js"></script>
     <script src="js/i18n.js"></script>
     <script src="js/icons.js"></script>
     <script src="js/darkmode.js"></script>

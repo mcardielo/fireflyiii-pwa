@@ -84,6 +84,7 @@
         const visibleEl = document.getElementById(`${prefix}-account`);
         const visibleValue = visibleEl ? visibleEl.value.trim() : '';
         const defaultAccount = window.FFPWA.config.defaultSourceAccount;
+        const defaultDestAccount = window.FFPWA.config.defaultDestAccount;
 
         if (visibleValue) {
             var idEl = document.getElementById(`${prefix}-account-id`);
@@ -98,6 +99,11 @@
         const { target } = window.FFPWA.getDefaultField(transactionType);
         if (field === target && defaultAccount && defaultAccount.id) {
             return { id: String(defaultAccount.id), name: defaultAccount.name };
+        }
+
+        // Fallback: cuenta destino default para withdrawals cuando destino está vacío
+        if (field === 'destination' && transactionType === 'withdrawal' && defaultDestAccount && defaultDestAccount.id) {
+            return { id: String(defaultDestAccount.id), name: defaultDestAccount.name };
         }
 
         return { id: null, name: null };
@@ -123,6 +129,20 @@
     function getAccountDecimalPlaces(accountId) {
         const account = getAccountById(accountId);
         return account ? (account.currency_decimal_places || 2) : null;
+    }
+
+    /**
+     * Devuelve la fecha/hora de la transacción.
+     * Si los campos fecha/hora están visibles y tienen valor, usa esos.
+     * Si no, usa la fecha/hora actual.
+     */
+    function getTransactionDate() {
+        var dateEl = document.getElementById('tx-date');
+        var timeEl = document.getElementById('tx-time');
+        if (dateEl && dateEl.value && timeEl && timeEl.value) {
+            return dateEl.value + 'T' + timeEl.value + ':00';
+        }
+        return new Date().toISOString();
     }
 
     /**
@@ -183,7 +203,7 @@
         const transaction = {
             "type": transactionType,
             "description": (descEl ? descEl.value.trim() : '') || __('transaction.no_description'),
-            "date": new Date().toISOString(),
+            "date": getTransactionDate(),
             "source_name": source.name
         };
 
@@ -261,6 +281,24 @@
         // destination_name siempre se incluye
         transaction.destination_name = dest.name;
 
+        // ── Categoría (Quick Entry - solo withdrawal) ──
+        var categoryEl = document.getElementById('tx-category');
+        if (categoryEl && transactionType === 'withdrawal') {
+            var categoryName = categoryEl.value.trim();
+            if (categoryName) {
+                transaction.category_name = categoryName;
+            }
+        }
+
+        // ── Budget (Quick Entry - solo withdrawal) ──
+        var budgetEl = document.getElementById('tx-budget');
+        if (budgetEl && transactionType === 'withdrawal') {
+            var budgetId = budgetEl.value;
+            if (budgetId) {
+                transaction.budget_id = budgetId;
+            }
+        }
+
         // ── GPS location ──
         var txGpsToggle = document.getElementById('tx-gps-toggle');
         var txGpsEnabled = window.FFPWA.config.gpsEnabled && txGpsToggle && txGpsToggle.checked;
@@ -314,6 +352,15 @@
 
         // ── GPS toggle: update visibility ──
         updateGPSToggleVisibility();
+
+        // Limpiar categoría y budget
+        var catEl = document.getElementById('tx-category');
+        var budEl = document.getElementById('tx-budget');
+        if (catEl) catEl.value = '';
+        if (budEl) budEl.value = '';
+
+        // Reinicializar fecha/hora a ahora si están visibles
+        if (window.FFPWA.initDatetimeFields) window.FFPWA.initDatetimeFields();
     }
 
     /**

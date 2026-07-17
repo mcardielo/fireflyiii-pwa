@@ -3,14 +3,86 @@
 
     const DEFAULT_ACCOUNT_KEY = 'FIREFLY_DEFAULT_SOURCE_ACCOUNT';
     const GPS_ENABLED_KEY = 'FIREFLY_GPS_ENABLED';
+    const FIELD_VISIBILITY_KEY = 'FIREFLY_FIELD_VISIBILITY';
+    const DEFAULT_DEST_ACCOUNT_KEY = 'FIREFLY_DEFAULT_DEST_ACCOUNT';
 
     window.FFPWA = window.FFPWA || {};
     window.FFPWA.config = {
         url: null,
         token: null,
         defaultSourceAccount: null,
-        gpsEnabled: false
+        defaultDestAccount: null,
+        gpsEnabled: false,
+        fieldVisibility: null
     };
+
+    /**
+     * Valores por defecto de visibilidad de campos.
+     * Solo aplican a withdrawals (gastos).
+     */
+    var DEFAULT_FIELD_VISIBILITY = {
+        source: true,
+        dest: true,
+        category: false,
+        budget: false,
+        datetime: false
+    };
+
+    /**
+     * Carga la visibilidad guardada o devuelve los defaults.
+     */
+    function getFieldVisibility() {
+        try {
+            var raw = localStorage.getItem(FIELD_VISIBILITY_KEY);
+            if (!raw) return Object.assign({}, DEFAULT_FIELD_VISIBILITY);
+            var parsed = JSON.parse(raw);
+            return Object.assign({}, DEFAULT_FIELD_VISIBILITY, parsed);
+        } catch (e) {
+            return Object.assign({}, DEFAULT_FIELD_VISIBILITY);
+        }
+    }
+
+    /**
+     * Guarda la visibilidad en localStorage.
+     */
+    function saveFieldVisibility(vis) {
+        try {
+            localStorage.setItem(FIELD_VISIBILITY_KEY, JSON.stringify(vis));
+            window.FFPWA.config.fieldVisibility = vis;
+        } catch (e) {
+            console.error('Error al guardar field visibility', e);
+        }
+    }
+
+    /**
+     * Carga la cuenta destino default desde localStorage.
+     */
+    function loadDefaultDestAccount() {
+        try {
+            var raw = localStorage.getItem(DEFAULT_DEST_ACCOUNT_KEY);
+            if (!raw) return null;
+            return JSON.parse(raw);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Guarda la cuenta destino default.
+     */
+    function saveDefaultDestAccount(account) {
+        try {
+            localStorage.setItem(DEFAULT_DEST_ACCOUNT_KEY, JSON.stringify(account));
+            window.FFPWA.config.defaultDestAccount = account;
+        } catch (e) {
+            console.error('Error al guardar default dest account', e);
+        }
+    }
+
+    window.FFPWA.getFieldVisibility = getFieldVisibility;
+    window.FFPWA.saveFieldVisibility = saveFieldVisibility;
+    window.FFPWA.config.defaultDestAccount = loadDefaultDestAccount();
+    window.FFPWA.config.fieldVisibility = getFieldVisibility();
 
     /**
      * Carga las cuentas asset desde la API y llena el dropdown
@@ -24,10 +96,48 @@
 
         if (!select || !msg) return;
 
-        select.innerHTML = '<option value="">' + __('account.loading') + '</option>';
-        msg.classList.remove('hidden', 'success', 'error');
-        msg.classList.add('warning');
-        msg.textContent = '🔄 ' + __('setup.loading_accounts');
+        // ── Render inmediato desde caché (stale-while-revalidate) ──
+        // Si tenemos cuentas en caché, llenar el select ya y pre-seleccionar la cuenta guardada.
+        var cachedAccounts = window.FFPWA.accountsCache;
+        if (!cachedAccounts) {
+            try {
+                var raw = localStorage.getItem('firefly_accounts_cache');
+                cachedAccounts = raw ? JSON.parse(raw) : null;
+            } catch (e) { cachedAccounts = null; }
+        }
+
+        var savedDefault = window.FFPWA.config.defaultSourceAccount;
+
+        if (cachedAccounts && cachedAccounts.length > 0) {
+            // Filtrar solo asset activas (igual que el fetch)
+            var assetAccounts = cachedAccounts.filter(function(a) {
+                return a.type === 'asset' && a.active !== false;
+            });
+            if (assetAccounts.length > 0) {
+                var html = '<option value="">' + __('account.select_hint') + '</option>';
+                assetAccounts.forEach(function(acc) {
+                    html += '<option value="' + acc.id + '" data-name="' + window.FFPWA.escapeHtml(acc.name) + '">' + window.FFPWA.escapeHtml(acc.name) + '</option>';
+                });
+                select.innerHTML = html;
+                msg.classList.add('hidden');
+
+                // Pre-seleccionar cuenta guardada
+                if (savedDefault && savedDefault.id) {
+                    select.value = savedDefault.id;
+                }
+            }
+        }
+
+        // ── Fetch en background para refrescar ──
+        if (!url || !token) return;
+
+        // Solo mostrar loading si no había caché
+        if (!cachedAccounts || cachedAccounts.length === 0) {
+            select.innerHTML = '<option value="">' + __('account.loading') + '</option>';
+            msg.classList.remove('hidden', 'success', 'error');
+            msg.classList.add('warning');
+            msg.textContent = '🔄 ' + __('setup.loading_accounts');
+        }
 
         window.FFPWA.http({
             url: `${url}/api/v1/accounts?type=asset&limit=10000`,
@@ -55,11 +165,20 @@
                     html += `<option value="${acc.id}" data-name="${acc.attributes.name}">${acc.attributes.name}</option>`;
                 });
                 select.innerHTML = html;
+
+                // Pre-seleccionar cuenta guardada después del refresh
+                if (savedDefault && savedDefault.id) {
+                    select.value = savedDefault.id;
+                }
+
                 msg.classList.remove('hidden', 'warning', 'error');
                 msg.classList.add('success');
                 msg.textContent = '✅ ' + __('account.found', { count: accounts.length });
             },
             error: function(xhr) {
+                // Si ya teníamos caché, no mostrar error — el usuario ya puede seleccionar
+                if (cachedAccounts && cachedAccounts.length > 0) return;
+
                 let errorMsg = '❌ ' + __('account.error');
                 if (xhr.status === 401) errorMsg += ' ' + __('setup.token_401');
                 else if (xhr.status === 0) errorMsg += ' ' + __('setup.no_connection');
@@ -152,6 +271,7 @@
         setTimeout(function() {
             initSecurityUI('-2');
             initGPSToggle();
+            initQuickEntryConfig();
             if (window.i18nTranslateDOM) window.i18nTranslateDOM();
         }, 100);
     }
@@ -352,6 +472,201 @@
                 msg.textContent = '🔕 ' + (window.__ && window.__('config.gps_disabled') || 'Ubicación desactivada');
             }
             setTimeout(function() { msg.classList.add('hidden'); }, 2000);
+        });
+    }
+
+    /* ─── Quick Entry Config ─── */
+
+    /**
+     * Inicializa los toggles de visibilidad de campos y el select de cuenta destino default.
+     * Solo aplica al tipo withdrawal (gasto).
+     */
+    function initQuickEntryConfig() {
+        var vis = getFieldVisibility();
+        var destArea = document.getElementById('default-dest-account-area');
+        var destSelect = document.getElementById('default-dest-account-select');
+        var destMsg = document.getElementById('default-dest-message');
+        if (!destArea || !destSelect) return;
+
+        // Setear toggles según visibilidad guardada
+        var toggleSource = document.getElementById('toggle-field-source');
+        var toggleDest = document.getElementById('toggle-field-dest');
+        var toggleCategory = document.getElementById('toggle-field-category');
+        var toggleBudget = document.getElementById('toggle-field-budget');
+        var toggleDatetime = document.getElementById('toggle-field-datetime');
+
+        if (toggleSource) toggleSource.checked = vis.source;
+        if (toggleDest) toggleDest.checked = vis.dest;
+        if (toggleCategory) toggleCategory.checked = vis.category;
+        if (toggleBudget) toggleBudget.checked = vis.budget;
+        if (toggleDatetime) toggleDatetime.checked = vis.datetime;
+
+        // Mostrar/ocultar área de cuenta destino default según toggle dest
+        function updateDestArea() {
+            var destHidden = toggleDest && !toggleDest.checked;
+            destArea.classList.toggle('hidden', !destHidden);
+            if (destHidden) {
+                loadDestAccountsForPicker();
+            }
+        }
+
+        // Listener del toggle dest
+        if (toggleDest) {
+            var newToggleDest = toggleDest.cloneNode(true);
+            toggleDest.parentNode.replaceChild(newToggleDest, toggleDest);
+            toggleDest = newToggleDest;
+            toggleDest.addEventListener('change', function() {
+                updateDestArea();
+            });
+        }
+
+        // Listener del toggle source
+        if (toggleSource) {
+            var newToggleSource = toggleSource.cloneNode(true);
+            toggleSource.parentNode.replaceChild(newToggleSource, toggleSource);
+            toggleSource = newToggleSource;
+        }
+        if (toggleCategory) {
+            var newToggleCat = toggleCategory.cloneNode(true);
+            toggleCategory.parentNode.replaceChild(newToggleCat, toggleCategory);
+            toggleCategory = newToggleCat;
+        }
+        if (toggleBudget) {
+            var newToggleBudget = toggleBudget.cloneNode(true);
+            toggleBudget.parentNode.replaceChild(newToggleBudget, toggleBudget);
+            toggleBudget = newToggleBudget;
+        }
+        if (toggleDatetime) {
+            var newToggleDt = toggleDatetime.cloneNode(true);
+            toggleDatetime.parentNode.replaceChild(newToggleDt, toggleDatetime);
+            toggleDatetime = newToggleDt;
+        }
+
+        // Cargar cuenta destino default existente en el select
+        function loadDestAccountsForPicker() {
+            var url = window.FFPWA.config.url;
+            var token = window.FFPWA.config.token;
+            if (!url || !token) return;
+
+            // ── Render inmediato desde caché (stale-while-revalidate) ──
+            var cachedAccounts = window.FFPWA.accountsCache;
+            if (!cachedAccounts) {
+                try {
+                    var raw = localStorage.getItem('firefly_accounts_cache');
+                    cachedAccounts = raw ? JSON.parse(raw) : null;
+                } catch (e) { cachedAccounts = null; }
+            }
+            var savedDest = window.FFPWA.config.defaultDestAccount;
+
+            if (cachedAccounts && cachedAccounts.length > 0) {
+                var expenseAccounts = cachedAccounts.filter(function(a) {
+                    return a.type === 'expense' && a.active !== false;
+                });
+                if (expenseAccounts.length > 0) {
+                    var html = '<option value="">' + (window.__ && window.__('account.select_hint') || 'Selecciona...') + '</option>';
+                    expenseAccounts.forEach(function(acc) {
+                        html += '<option value="' + acc.id + '" data-name="' + window.FFPWA.escapeHtml(acc.name) + '">' + window.FFPWA.escapeHtml(acc.name) + '</option>';
+                    });
+                    destSelect.innerHTML = html;
+                    if (savedDest && savedDest.id) {
+                        destSelect.value = savedDest.id;
+                    }
+                    if (destMsg) destMsg.classList.add('hidden');
+                }
+            }
+
+            // Solo mostrar loading si no había caché
+            if (!cachedAccounts || cachedAccounts.length === 0) {
+                destSelect.innerHTML = '<option value="">' + (window.__ && window.__('account.loading') || 'Cargando...') + '</option>';
+            }
+
+            // ── Fetch en background para refrescar ──
+            window.FFPWA.http({
+                url: url + '/api/v1/accounts?type=expense&limit=10000',
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                dataType: 'json',
+                success: function(data) {
+                    var accounts = (data.data || []).filter(function(a) { return a.attributes.active !== false; });
+                    if (accounts.length === 0) {
+                        destSelect.innerHTML = '<option value="">' + (window.__ && window.__('account.no_active') || 'Sin cuentas') + '</option>';
+                        if (destMsg) {
+                            destMsg.classList.remove('hidden', 'success');
+                            destMsg.classList.add('warning');
+                            destMsg.textContent = '⚠️ ' + (window.__ && window.__('config.default_dest_empty') || 'No hay cuentas expense disponibles');
+                        }
+                        return;
+                    }
+                    var html = '<option value="">' + (window.__ && window.__('account.select_hint') || 'Selecciona...') + '</option>';
+                    accounts.forEach(function(acc) {
+                        html += '<option value="' + acc.id + '" data-name="' + (window.FFPWA.escapeHtml(acc.attributes.name)) + '">' + window.FFPWA.escapeHtml(acc.attributes.name) + '</option>';
+                    });
+                    destSelect.innerHTML = html;
+
+                    // Pre-seleccionar si ya hay default dest guardado
+                    if (savedDest && savedDest.id) {
+                        destSelect.value = savedDest.id;
+                    }
+                    if (destMsg) destMsg.classList.add('hidden');
+                },
+                error: function() {
+                    // Si ya teníamos caché, no mostrar error
+                    if (cachedAccounts && cachedAccounts.length > 0) return;
+                    destSelect.innerHTML = '<option value="">' + (window.__ && window.__('account.error') || 'Error') + '</option>';
+                    if (destMsg) {
+                        destMsg.classList.remove('hidden', 'success');
+                        destMsg.classList.add('error');
+                        destMsg.textContent = '❌ ' + (window.__ && window.__('account.error') || 'Error al cargar');
+                    }
+                }
+            });
+        }
+
+        // Estado inicial
+        updateDestArea();
+
+        // Guardar al hacer click en Save (handleDefaultAccountSave ya existe, le hacemos hook)
+        var origSave = handleDefaultAccountSave;
+        // Escuchar cambios en los toggles para guardar inmediatamente
+        [toggleSource, toggleDest, toggleCategory, toggleBudget, toggleDatetime].forEach(function(t) {
+            if (t) t.addEventListener('change', function() {
+                var newVis = {
+                    source: toggleSource ? toggleSource.checked : true,
+                    dest: toggleDest ? toggleDest.checked : true,
+                    category: toggleCategory ? toggleCategory.checked : false,
+                    budget: toggleBudget ? toggleBudget.checked : false,
+                    datetime: toggleDatetime ? toggleDatetime.checked : false
+                };
+                saveFieldVisibility(newVis);
+                updateDestArea();
+            });
+        });
+
+        // Guardar cuenta destino default al cambiar el select
+        destSelect.addEventListener('change', function() {
+            var id = this.value;
+            if (!id) {
+                saveDefaultDestAccount(null);
+                if (destMsg) {
+                    destMsg.classList.remove('hidden', 'success', 'error');
+                    destMsg.classList.add('warning');
+                    destMsg.textContent = '⚠️ ' + (window.__ && window.__('config.default_dest_cleared') || 'Cuenta destino default eliminada');
+                    setTimeout(function() { destMsg.classList.add('hidden'); }, 2000);
+                }
+                return;
+            }
+            var opt = this.options[this.selectedIndex];
+            var name = opt ? (opt.getAttribute('data-name') || opt.textContent) : '';
+            saveDefaultDestAccount({ id: id, name: name });
+            if (destMsg) {
+                destMsg.classList.remove('hidden', 'warning', 'error');
+                destMsg.classList.add('success');
+                destMsg.textContent = '✅ ' + name;
+                setTimeout(function() { destMsg.classList.add('hidden'); }, 2000);
+            }
         });
     }
 
