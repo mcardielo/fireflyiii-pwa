@@ -409,6 +409,12 @@
     /**
      * Maneja el cambio de tipo de transacción.
      */
+    // Expuestos para que transactions.js pueda cargar una tx de la cola ("Editar")
+    window.FFPWA.setAccountFields = setAccountFields;
+    window.FFPWA.setTransactionType = function(type) {
+        onTransactionTypeChanged(type, window.FFPWA.accountsCache);
+    };
+
     function onTransactionTypeChanged(newType, accountsCache) {
         const hiddenInput = document.getElementById('transaction-type');
         if (hiddenInput) hiddenInput.value = newType;

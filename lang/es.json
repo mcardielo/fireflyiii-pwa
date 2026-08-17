@@ -65,6 +65,8 @@
     "transaction.submit_error_temp": "Servidor no disponible. Transacción encolada para reintento.",
     "transaction.submit_error_prefix": "Error al registrar transacción:",
     "transaction.submit_error_details": "Detalles:",
+    "transaction.discard_btn": "Descartar",
+    "transaction.discard_confirm": "¿Descartar esta transacción? Se limpiarán los campos del formulario.",
     "transaction.error.amount_required": "Por favor, ingresa un monto.",
     "transaction.error.amount_positive": "El monto debe ser un número positivo. Ej: 100.50",
     "transaction.error.accounts_required": "Por favor, selecciona o ingresa nombres de cuenta válidos para ambos campos.",
@@ -234,6 +236,9 @@
     "config.default_dest_hint": "Se usará cuando el campo destino esté oculto o vacío al registrar un gasto.",
     "config.default_dest_empty": "No hay cuentas expense disponibles",
     "config.default_dest_cleared": "Cuenta destino default eliminada",
+    "config.stuck_section": "Transacciones atoradas",
+    "config.stuck_hint": "Estas transacciones fallaron al sincronizar. Edítalas para corregirlas y reintentar el envío.",
+    "config.stuck_edit": "Editar",
 
     "calc.cancel": "Cancelar",
     "calc.use_result": "Usar resultado"

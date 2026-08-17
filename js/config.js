@@ -272,6 +272,7 @@
             initSecurityUI('-2');
             initGPSToggle();
             initQuickEntryConfig();
+            renderStuckQueue();
             if (window.i18nTranslateDOM) window.i18nTranslateDOM();
         }, 100);
     }
@@ -783,6 +784,84 @@
             });
         }
     }
+
+    /* ─── Cola de transacciones atoradas ─── */
+
+    /**
+     * Renderiza la lista de transacciones atoradas en la pantalla de Config.
+     * Solo muestra las que fallaron (tienen _lastError).
+     */
+    function renderStuckQueue() {
+        var section = document.getElementById('stuck-queue-section');
+        var list = document.getElementById('stuck-queue-list');
+        if (!section || !list) return;
+
+        var failed = window.FFPWA.getFailedQueue ? window.FFPWA.getFailedQueue() : [];
+
+        if (failed.length === 0) {
+            section.classList.add('hidden');
+            list.innerHTML = '';
+            return;
+        }
+
+        section.classList.remove('hidden');
+        var html = '';
+        failed.forEach(function(item) {
+            var amount = (item.foreign_amount !== undefined && item.foreign_amount !== null)
+                ? item.foreign_amount : (item.amount || '');
+            var desc = item.description || '';
+            var accounts = item.source_name || '';
+            if (item.destination_name) accounts += ' → ' + item.destination_name;
+            var err = item._lastError || '';
+
+            html += '<div class="field-card mb-2" style="padding:12px;">'
+                + '<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px;">'
+                +   '<div style="min-width:0;">'
+                +     '<p class="text-sm font-semibold" style="word-break:break-word;">' + window.FFPWA.escapeHtml(desc) + '</p>'
+                +     '<p class="text-xs text-ios-text-secondary" style="word-break:break-word;">' + window.FFPWA.escapeHtml(accounts) + ' · ' + window.FFPWA.escapeHtml(String(amount)) + '</p>'
+                +     '<p class="text-xs text-ios-red mt-1" style="word-break:break-word;">' + window.FFPWA.escapeHtml(err) + '</p>'
+                +   '</div>'
+                +   '<button type="button" class="ios-btn-secondary stuck-edit-btn" data-queue-id="' + window.FFPWA.escapeHtml(item._queueId) + '" style="flex:0 0 auto; padding:8px 12px;"><span data-i18n="config.stuck_edit">Editar</span></button>'
+                + '</div>'
+                + '</div>';
+        });
+        list.innerHTML = html;
+        if (window.i18nTranslateDOM) window.i18nTranslateDOM();
+    }
+
+    /**
+     * "Editar" una transacción atorada: la saca de la cola, cambia a la
+     * pantalla de registro y carga su payload en el formulario.
+     */
+    function editQueuedTransaction(queueId) {
+        var queue = window.FFPWA.getQueue ? window.FFPWA.getQueue() : [];
+        var item = null;
+        for (var i = 0; i < queue.length; i++) {
+            if (queue[i]._queueId === queueId) { item = queue[i]; break; }
+        }
+        if (!item) return;
+
+        // Sacar de la cola para evitar reintentos/duplicados mientras se edita
+        if (window.FFPWA.removeQueueItem) window.FFPWA.removeQueueItem(queueId);
+
+        // Ir a la pantalla de registro
+        if (window.switchTab) window.switchTab('record');
+
+        // Cargar el payload en el formulario
+        if (window.FFPWA.loadTransactionIntoForm) window.FFPWA.loadTransactionIntoForm(item);
+
+        renderStuckQueue();
+    }
+
+    window.FFPWA.renderStuckQueue = renderStuckQueue;
+    window.FFPWA.editQueuedTransaction = editQueuedTransaction;
+
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.stuck-edit-btn');
+        if (!btn) return;
+        var id = btn.getAttribute('data-queue-id');
+        if (id) editQueuedTransaction(id);
+    });
 
     window.initConfig = checkConfiguration;
     window.showDefaultAccountPicker = showDefaultAccountPicker;

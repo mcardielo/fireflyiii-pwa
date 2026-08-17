@@ -237,6 +237,13 @@
                     <div id="default-dest-message" class="ios-status hidden mt-2"></div>
                 </div>
 
+                <!-- Transacciones atoradas (fallaron al sincronizar) -->
+                <div id="stuck-queue-section" class="mb-6 hidden">
+                    <p class="section-label" data-i18n="config.stuck_section">Transacciones atoradas</p>
+                    <p class="text-xs text-ios-text-secondary px-1 mt-1 mb-2" data-i18n="config.stuck_hint">Estas transacciones fallaron al sincronizar. Edítalas para corregirlas y reintentar el envío.</p>
+                    <div id="stuck-queue-list"></div>
+                </div>
+
             </div>
             <footer class="sticky-footer">
                 <button id="save-default-account-btn" class="ios-btn-primary">
@@ -389,9 +396,14 @@
                 </form>
             </main>
             <footer class="sticky-footer">
-                <button type="submit" id="submit-transaction-btn" class="ios-btn-primary" form="transaction-form">
-                    <span data-i18n="transaction.submit_btn">Registrar Transacción</span>
-                </button>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button type="button" id="discard-transaction-btn" class="ios-btn-danger" style="width:auto; flex:0 0 auto; padding:16px 20px;">
+                        <span data-i18n="transaction.discard_btn">Descartar</span>
+                    </button>
+                    <button type="submit" id="submit-transaction-btn" class="ios-btn-primary" form="transaction-form" style="flex:1; width:auto;">
+                        <span data-i18n="transaction.submit_btn">Registrar Transacción</span>
+                    </button>
+                </div>
             </footer>
         </div>
     </template>

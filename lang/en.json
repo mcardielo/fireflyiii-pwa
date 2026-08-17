@@ -65,6 +65,8 @@
     "transaction.submit_error_temp": "Server unavailable. Transaction queued for retry.",
     "transaction.submit_error_prefix": "Error registering transaction:",
     "transaction.submit_error_details": "Details:",
+    "transaction.discard_btn": "Discard",
+    "transaction.discard_confirm": "Discard this transaction? The form fields will be cleared.",
     "transaction.error.amount_required": "Please enter an amount.",
     "transaction.error.amount_positive": "Amount must be a positive number. e.g. 100.50",
     "transaction.error.accounts_required": "Please select or enter valid account names for both fields.",
@@ -234,6 +236,9 @@
     "config.default_dest_hint": "Used when the destination field is hidden or empty when recording an expense.",
     "config.default_dest_empty": "No expense accounts available",
     "config.default_dest_cleared": "Default destination account cleared",
+    "config.stuck_section": "Stuck transactions",
+    "config.stuck_hint": "These transactions failed to sync. Edit them to fix and retry.",
+    "config.stuck_edit": "Edit",
     
     "calc.cancel": "Cancel",
     "calc.use_result": "Use result"

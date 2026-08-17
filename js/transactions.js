@@ -489,6 +489,104 @@
     }
 
     /**
+     * Devuelve solo las transacciones "atoradas" (fallaron al menos una vez).
+     * Una tx atorada es aquella que conserva `_lastError` del último intento fallido.
+     */
+    function getFailedQueue() {
+        return getQueue().filter(function(item) {
+            return item && item._lastError;
+        });
+    }
+
+    /**
+     * Elimina un item de la cola por su _queueId.
+     * Si la cola queda vacía, detiene el health check.
+     */
+    function removeQueueItem(queueId) {
+        var queue = getQueue();
+        var next = queue.filter(function(item) {
+            return item._queueId !== queueId;
+        });
+        localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(next));
+        if (next.length === 0 && healthCheckIntervalId) {
+            stopFireflyHealthCheck();
+        }
+        return next;
+    }
+
+    /**
+     * Carga un payload de la cola en el formulario de registro.
+     * Usado por "Editar" en Config para corregir una tx que falló al sincronizar.
+     */
+    function loadTransactionIntoForm(payload) {
+        if (!payload) return;
+
+        var type = payload.type || 'withdrawal';
+
+        // 1) Cambiar tipo (hidden input + hints + visibilidad + prefill defaults)
+        if (window.FFPWA.setTransactionType) {
+            window.FFPWA.setTransactionType(type);
+        } else {
+            var hiddenType = document.getElementById('transaction-type');
+            if (hiddenType) hiddenType.value = type;
+        }
+
+        // 2) Sincronizar segmented control visual
+        var selector = document.getElementById('type-selector');
+        if (selector) {
+            selector.querySelectorAll('.segmented-btn').forEach(function(b) {
+                var active = b.getAttribute('data-type') === type;
+                b.classList.toggle('active', active);
+                b.setAttribute('aria-checked', active ? 'true' : 'false');
+            });
+        }
+
+        // 3) Cuentas origen/destino (sobrescriben el prefill default)
+        if (window.FFPWA.setAccountFields) {
+            window.FFPWA.setAccountFields('source', payload.source_name || '', payload.source_id || '');
+            window.FFPWA.setAccountFields('destination', payload.destination_name || '', payload.destination_id || '');
+        }
+
+        // 4) Concepto
+        var desc = document.getElementById('description');
+        if (desc) desc.value = payload.description || '';
+
+        // 5) Importe (el tecleado originalmente si hay foreign_amount)
+        var amountEl = document.getElementById('amount');
+        if (amountEl) {
+            var amt = (payload.foreign_amount !== undefined && payload.foreign_amount !== null)
+                ? payload.foreign_amount : payload.amount;
+            if (amt !== undefined && amt !== null) amountEl.value = String(amt);
+        }
+
+        // 6) Moneda (foreign si existe, si no currency_code)
+        var curSelect = document.getElementById('currency-select');
+        var code = payload.foreign_currency_code || payload.currency_code;
+        if (curSelect && code) {
+            curSelect.value = code;
+            curSelect.dispatchEvent(new Event('change'));
+        }
+
+        // 7) Categoría
+        var catEl = document.getElementById('tx-category');
+        if (catEl && payload.category_name) catEl.value = payload.category_name;
+
+        // 8) Presupuesto
+        var budEl = document.getElementById('tx-budget');
+        if (budEl && payload.budget_id) budEl.value = payload.budget_id;
+
+        // 9) Fecha/hora (después de setTransactionType para no ser sobrescrita)
+        if (payload.date && typeof payload.date === 'string') {
+            var dateEl = document.getElementById('tx-date');
+            var timeEl = document.getElementById('tx-time');
+            if (dateEl) dateEl.value = payload.date.slice(0, 10);
+            if (timeEl && payload.date.indexOf('T') !== -1) {
+                timeEl.value = payload.date.slice(11, 16);
+            }
+        }
+    }
+
+    /**
      * Procesa la cola de sincronización.
      * Lock con isSyncing para prevenir ejecuciones simultáneas (race condition).
      */
@@ -549,6 +647,7 @@
                     break;
                 }
                 console.error(`[DEBUG]: Falló tx #${i + 1}:`, e.message);
+                item._lastError = e.message || __('sync.failed');
                 remaining.push(item);
                 failedSends++;
             }
@@ -585,6 +684,10 @@
         }
     }
     window.FFPWA.syncQueue = syncQueue;
+    window.FFPWA.getQueue = getQueue;
+    window.FFPWA.getFailedQueue = getFailedQueue;
+    window.FFPWA.removeQueueItem = removeQueueItem;
+    window.FFPWA.loadTransactionIntoForm = loadTransactionIntoForm;
 
     /**
      * Health check al servidor Firefly via /api/v1/about.
@@ -715,6 +818,15 @@
         document.addEventListener('submit', function(e) {
             if (e.target && e.target.id === 'transaction-form') {
                 handleTransactionSubmit(e);
+            }
+        });
+
+        // ── Descartar: limpiar formulario de registro ──
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('#discard-transaction-btn')) {
+                if (window.confirm(__('transaction.discard_confirm'))) {
+                    resetTransactionForm();
+                }
             }
         });
 
