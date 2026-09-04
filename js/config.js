@@ -33,7 +33,7 @@
      */
     function getFieldVisibility() {
         try {
-            var raw = localStorage.getItem(FIELD_VISIBILITY_KEY);
+            var raw = window.FFPWA.storage.get(FIELD_VISIBILITY_KEY);
             if (!raw) return Object.assign({}, DEFAULT_FIELD_VISIBILITY);
             var parsed = JSON.parse(raw);
             return Object.assign({}, DEFAULT_FIELD_VISIBILITY, parsed);
@@ -47,7 +47,7 @@
      */
     function saveFieldVisibility(vis) {
         try {
-            localStorage.setItem(FIELD_VISIBILITY_KEY, JSON.stringify(vis));
+            window.FFPWA.storage.set(FIELD_VISIBILITY_KEY, JSON.stringify(vis));
             window.FFPWA.config.fieldVisibility = vis;
         } catch (e) {
             console.error('Error al guardar field visibility', e);
@@ -59,7 +59,7 @@
      */
     function loadDefaultDestAccount() {
         try {
-            var raw = localStorage.getItem(DEFAULT_DEST_ACCOUNT_KEY);
+            var raw = window.FFPWA.storage.get(DEFAULT_DEST_ACCOUNT_KEY);
             if (!raw) return null;
             return JSON.parse(raw);
         } catch (e) {
@@ -72,7 +72,7 @@
      */
     function saveDefaultDestAccount(account) {
         try {
-            localStorage.setItem(DEFAULT_DEST_ACCOUNT_KEY, JSON.stringify(account));
+            window.FFPWA.storage.set(DEFAULT_DEST_ACCOUNT_KEY, JSON.stringify(account));
             window.FFPWA.config.defaultDestAccount = account;
         } catch (e) {
             console.error('Error al guardar default dest account', e);
@@ -81,8 +81,12 @@
 
     window.FFPWA.getFieldVisibility = getFieldVisibility;
     window.FFPWA.saveFieldVisibility = saveFieldVisibility;
-    window.FFPWA.config.defaultDestAccount = loadDefaultDestAccount();
-    window.FFPWA.config.fieldVisibility = getFieldVisibility();
+    // Cache de config
+    window.FFPWA._initConfigCache = function() {
+        window.FFPWA.config.defaultDestAccount = loadDefaultDestAccount();
+        window.FFPWA.config.fieldVisibility = getFieldVisibility();
+    };
+    window.FFPWA._initConfigCache();
 
     /**
      * Carga las cuentas asset desde la API y llena el dropdown
@@ -101,7 +105,7 @@
         var cachedAccounts = window.FFPWA.accountsCache;
         if (!cachedAccounts) {
             try {
-                var raw = localStorage.getItem('firefly_accounts_cache');
+                var raw = window.FFPWA.storage.get('firefly_accounts_cache');
                 cachedAccounts = raw ? JSON.parse(raw) : null;
             } catch (e) { cachedAccounts = null; }
         }
@@ -213,7 +217,7 @@
             name: (selectedOption ? selectedOption.getAttribute('data-name') : '') || selectedText
         };
 
-        localStorage.setItem(DEFAULT_ACCOUNT_KEY, JSON.stringify(defaultAccount));
+        window.FFPWA.storage.set(DEFAULT_ACCOUNT_KEY, JSON.stringify(defaultAccount));
         window.FFPWA.config.defaultSourceAccount = defaultAccount;
 
         var isConfigTab = false;
@@ -344,8 +348,8 @@
                 const cleanUrl = url.replace(/\/$/, '');
 
                 // Guardar URL y token
-                localStorage.setItem('FIREFLY_URL', cleanUrl);
-                localStorage.setItem('FIREFLY_TOKEN', _obfuscate(token));
+                window.FFPWA.storage.set('FIREFLY_URL', cleanUrl);
+                window.FFPWA.storage.set('FIREFLY_TOKEN', _obfuscate(token));
 
                 window.FFPWA.config.url = cleanUrl;
                 window.FFPWA.config.token = token;
@@ -396,9 +400,9 @@
     }
 
     function checkConfiguration() {
-        const storedUrl = localStorage.getItem('FIREFLY_URL');
-        const storedToken = _deobfuscate(localStorage.getItem('FIREFLY_TOKEN'));
-        const storedDefault = localStorage.getItem(DEFAULT_ACCOUNT_KEY);
+        const storedUrl = window.FFPWA.storage.get('FIREFLY_URL');
+        const storedToken = _deobfuscate(window.FFPWA.storage.get('FIREFLY_TOKEN'));
+        const storedDefault = window.FFPWA.storage.get(DEFAULT_ACCOUNT_KEY);
 
         if (!storedUrl || !storedToken) {
             console.log('Configuración no encontrada. Mostrando pantalla de setup.');
@@ -416,7 +420,7 @@
         window.FFPWA.config.token = storedToken;
 
         // Cargar preferencia GPS
-        var gpsEnabled = localStorage.getItem(GPS_ENABLED_KEY);
+        var gpsEnabled = window.FFPWA.storage.get(GPS_ENABLED_KEY);
         window.FFPWA.config.gpsEnabled = gpsEnabled === 'true';
         if (window.FFPWA.config.gpsEnabled) {
             console.log('📍 GPS enabled, capturando ubicación inicial...');
@@ -456,7 +460,7 @@
 
         toggle.addEventListener('change', function() {
             var on = this.checked;
-            localStorage.setItem(GPS_ENABLED_KEY, on ? 'true' : 'false');
+            window.FFPWA.storage.set(GPS_ENABLED_KEY, on ? 'true' : 'false');
             window.FFPWA.config.gpsEnabled = on;
 
             if (on) {
@@ -553,7 +557,7 @@
             var cachedAccounts = window.FFPWA.accountsCache;
             if (!cachedAccounts) {
                 try {
-                    var raw = localStorage.getItem('firefly_accounts_cache');
+                    var raw = window.FFPWA.storage.get('firefly_accounts_cache');
                     cachedAccounts = raw ? JSON.parse(raw) : null;
                 } catch (e) { cachedAccounts = null; }
             }

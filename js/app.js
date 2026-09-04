@@ -461,11 +461,24 @@
             }
 
             /* ─── Init sequence ─── */
-            window.initI18n(function(locale) {
-                document.documentElement.setAttribute('lang', locale);
-                updateLangBtn(locale);
-                window.initConfig();
-                hideLoadingScreen();
+            // 1) Inicializar storage (IDB + migración desde localStorage) ANTES de
+            //    cualquier lectura de config/tema/locale.
+            window.FFPWA.storage.init().then(function() {
+                // Re-aplicar tema y cache de config desde el storage ya migrado.
+                if (window.FFPWA.theme && window.FFPWA.theme.syncFromStorage) {
+                    window.FFPWA.theme.syncFromStorage();
+                }
+                if (window.FFPWA._initConfigCache) {
+                    window.FFPWA._initConfigCache();
+                }
+
+                // 2) i18n → config → hide loading.
+                window.initI18n(function(locale) {
+                    document.documentElement.setAttribute('lang', locale);
+                    updateLangBtn(locale);
+                    window.initConfig();
+                    hideLoadingScreen();
+                });
             });
 
             // Fallback: esconder pantalla de carga después de 3.5s si algo falla en init

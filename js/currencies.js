@@ -15,7 +15,7 @@
 
     function getCachedCurrencies() {
         try {
-            const data = localStorage.getItem(CURRENCIES_CACHE_KEY);
+            const data = window.FFPWA.storage.get(CURRENCIES_CACHE_KEY);
             return data ? JSON.parse(data) : null;
         } catch (e) {
             return null;
@@ -24,7 +24,7 @@
 
     function cacheCurrencies(currencies) {
         try {
-            localStorage.setItem(CURRENCIES_CACHE_KEY, JSON.stringify(currencies));
+            window.FFPWA.storage.set(CURRENCIES_CACHE_KEY, JSON.stringify(currencies));
         } catch (e) {
             console.warn('[CURRENCIES] Error al cachear:', e);
         }
@@ -116,7 +116,7 @@
 
     function getCachedRate(from, to) {
         try {
-            const stored = localStorage.getItem(RATES_CACHE_KEY);
+            const stored = window.FFPWA.storage.get(RATES_CACHE_KEY);
             if (!stored) return null;
             const allRates = JSON.parse(stored);
             const data = allRates[getRateCacheKey(from, to)];
@@ -129,14 +129,14 @@
 
     function cacheRate(from, to, rateInfo) {
         try {
-            const stored = localStorage.getItem(RATES_CACHE_KEY);
+            const stored = window.FFPWA.storage.get(RATES_CACHE_KEY);
             const allRates = stored ? JSON.parse(stored) : {};
             allRates[getRateCacheKey(from, to)] = {
                 rate: rateInfo.rate,
                 date: rateInfo.date,
                 fetchedAt: new Date().toISOString()
             };
-            localStorage.setItem(RATES_CACHE_KEY, JSON.stringify(allRates));
+            window.FFPWA.storage.set(RATES_CACHE_KEY, JSON.stringify(allRates));
         } catch (e) {
             console.warn('[RATES] Error cacheando tasa:', e);
         }

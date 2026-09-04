@@ -48,7 +48,7 @@
 
 
     function getCachedAccounts() {
-        const cachedData = localStorage.getItem(ACCOUNT_STORAGE_KEY);
+        const cachedData = window.FFPWA.storage.get(ACCOUNT_STORAGE_KEY);
         return cachedData ? JSON.parse(cachedData) : null;
     }
 
@@ -96,7 +96,7 @@
 
     function cacheAccounts(accounts) {
         try {
-            localStorage.setItem(ACCOUNT_STORAGE_KEY, JSON.stringify(accounts));
+            window.FFPWA.storage.set(ACCOUNT_STORAGE_KEY, JSON.stringify(accounts));
             console.log('✅ [CACHE]: ' + __('resource.accounts_cached'));
         } catch (e) {
             console.error('❌ [CACHE]: ' + __('resource.accounts_cache_error'), e);

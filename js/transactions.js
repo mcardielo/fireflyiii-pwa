@@ -465,7 +465,7 @@
         // ID único para dedupe: si el mismo payload ya está en cola, no encolar de nuevo
         payload._queueId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         queue.push(payload);
-        localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
+        window.FFPWA.storage.set(QUEUE_STORAGE_KEY, JSON.stringify(queue));
         console.log(`🟡 Transacción encolada (_queueId: ${payload._queueId}). Cola actual: ${queue.length} ítems.`);
 
         showStatusMessage('💾 ' + __('sync.queued'), 'warning');
@@ -484,7 +484,7 @@
      * Obtiene la cola de transacciones pendientes.
      */
     function getQueue() {
-        const storedQueue = localStorage.getItem(QUEUE_STORAGE_KEY);
+        const storedQueue = window.FFPWA.storage.get(QUEUE_STORAGE_KEY);
         return storedQueue ? JSON.parse(storedQueue) : [];
     }
 
@@ -507,7 +507,7 @@
         var next = queue.filter(function(item) {
             return item._queueId !== queueId;
         });
-        localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(next));
+        window.FFPWA.storage.set(QUEUE_STORAGE_KEY, JSON.stringify(next));
         if (next.length === 0 && healthCheckIntervalId) {
             stopFireflyHealthCheck();
         }
@@ -653,7 +653,7 @@
             }
         }
 
-        localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(remaining));
+        window.FFPWA.storage.set(QUEUE_STORAGE_KEY, JSON.stringify(remaining));
         isSyncing = false;
 
         let message = '';

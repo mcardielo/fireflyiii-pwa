@@ -58,7 +58,7 @@
             return Promise.resolve();
         }
         return loadLocale(locale).then(function() {
-            localStorage.setItem(STORAGE_KEY, locale);
+            window.FFPWA.storage.set(STORAGE_KEY, locale);
             currentLocale = locale;
             i18nTranslateDOM();
             window.dispatchEvent(new CustomEvent('localeChanged', { detail: { locale: locale } }));
@@ -132,7 +132,7 @@
     /* ─── Internal ─── */
 
     function detectLocale() {
-        var stored = localStorage.getItem(STORAGE_KEY);
+        var stored = window.FFPWA.storage.get(STORAGE_KEY);
         if (stored) return stored;
         var navLang = (navigator.language || navigator.userLanguage || '').substring(0, 2);
         if (navLang === 'en' || navLang === 'es') return navLang;

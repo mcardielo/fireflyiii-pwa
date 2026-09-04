@@ -9,18 +9,18 @@
         /* ─── Check if security (any method) is enabled ─── */
         isEnabled: function() {
             try {
-                return localStorage.getItem('ffpwa_security') === 'true';
+                return window.FFPWA.storage.get('ffpwa_security') === 'true';
             } catch (e) { return false; }
         },
 
         /* ─── Enable/disable security ─── */
         setEnabled: function(enabled) {
             try {
-                localStorage.setItem('ffpwa_security', enabled ? 'true' : 'false');
+                window.FFPWA.storage.set('ffpwa_security', enabled ? 'true' : 'false');
                 if (!enabled) {
                     // Clean up sensitive data
-                    localStorage.removeItem('ffpwa_pin_hash');
-                    localStorage.removeItem('ffpwa_credential_id');
+                    window.FFPWA.storage.remove('ffpwa_pin_hash');
+                    window.FFPWA.storage.remove('ffpwa_credential_id');
                     this.unlocked = false;
                 }
             } catch (e) {}
@@ -28,13 +28,13 @@
 
         /* ─── Get security method ─── */
         getMethod: function() {
-            try { return localStorage.getItem('ffpwa_auth_method') || 'webauthn'; }
+            try { return window.FFPWA.storage.get('ffpwa_auth_method') || 'webauthn'; }
             catch (e) { return 'webauthn'; }
         },
 
         /* ─── Set security method ─── */
         setMethod: function(method) {
-            try { localStorage.setItem('ffpwa_auth_method', method); } catch (e) {}
+            try { window.FFPWA.storage.set('ffpwa_auth_method', method); } catch (e) {}
         },
 
         /* ─── Check if WebAuthn platform authenticator is available ─── */
@@ -79,7 +79,7 @@
             }).then(function(credential) {
                 // Store the credential ID (base64url)
                 var credId = arrayBufferToBase64Url(credential.rawId);
-                try { localStorage.setItem('ffpwa_credential_id', credId); } catch (e) {}
+                try { window.FFPWA.storage.set('ffpwa_credential_id', credId); } catch (e) {}
                 return true;
             }).catch(function(err) {
                 console.warn('[Auth] WebAuthn registration failed:', err.message);
@@ -93,7 +93,7 @@
             crypto.getRandomValues(challenge);
 
             var credId;
-            try { credId = localStorage.getItem('ffpwa_credential_id'); } catch (e) {}
+            try { credId = window.FFPWA.storage.get('ffpwa_credential_id'); } catch (e) {}
 
             var allowCredentials = credId ? [{
                 id: base64UrlToArrayBuffer(credId),
@@ -119,14 +119,14 @@
         /* ─── Set PIN ─── */
         setPin: function(pin) {
             return hashPin(pin).then(function(hash) {
-                try { localStorage.setItem('ffpwa_pin_hash', hash); } catch (e) {}
+                try { window.FFPWA.storage.set('ffpwa_pin_hash', hash); } catch (e) {}
             });
         },
 
         /* ─── Verify PIN ─── */
         verifyPin: function(pin) {
             var storedHash;
-            try { storedHash = localStorage.getItem('ffpwa_pin_hash'); } catch (e) {}
+            try { storedHash = window.FFPWA.storage.get('ffpwa_pin_hash'); } catch (e) {}
             if (!storedHash) return Promise.resolve(false);
             return hashPin(pin).then(function(hash) {
                 return hash === storedHash;
@@ -135,12 +135,12 @@
 
         /* ─── Check if a WebAuthn credential exists ─── */
         hasCredential: function() {
-            try { return !!localStorage.getItem('ffpwa_credential_id'); } catch (e) { return false; }
+            try { return !!window.FFPWA.storage.get('ffpwa_credential_id'); } catch (e) { return false; }
         },
 
         /* ─── Check if PIN is configured ─── */
         hasPin: function() {
-            try { return !!localStorage.getItem('ffpwa_pin_hash'); } catch (e) { return false; }
+            try { return !!window.FFPWA.storage.get('ffpwa_pin_hash'); } catch (e) { return false; }
         },
 
         /* ─── Attempt unlock (tries webauthn then falls back to PIN) ─── */
@@ -204,7 +204,7 @@
 
     function getDeviceSalt() {
         var SALT_KEY = 'ffpwa_device_salt';
-        var stored = localStorage.getItem(SALT_KEY);
+        var stored = window.FFPWA.storage.get(SALT_KEY);
         if (stored) return stored;
         // Generate a random 32-char salt per device
         var salt = '';
@@ -212,7 +212,7 @@
         for (var i = 0; i < 32; i++) {
             salt += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        localStorage.setItem(SALT_KEY, salt);
+        window.FFPWA.storage.set(SALT_KEY, salt);
         return salt;
     }
 

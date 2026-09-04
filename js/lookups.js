@@ -15,7 +15,7 @@
 
     function getCachedCategories() {
         try {
-            var raw = localStorage.getItem(CATEGORIES_CACHE_KEY);
+            var raw = window.FFPWA.storage.get(CATEGORIES_CACHE_KEY);
             return raw ? JSON.parse(raw) : [];
         } catch (e) {
             return [];
@@ -24,7 +24,7 @@
 
     function cacheCategories(categories) {
         try {
-            localStorage.setItem(CATEGORIES_CACHE_KEY, JSON.stringify(categories));
+            window.FFPWA.storage.set(CATEGORIES_CACHE_KEY, JSON.stringify(categories));
             console.log('✅ [CACHE]: Categorías cacheadas (' + categories.length + ')');
         } catch (e) {
             console.error('❌ [CACHE]: Error al cachear categorías', e);
@@ -78,7 +78,7 @@
 
     function getCachedBudgets() {
         try {
-            var raw = localStorage.getItem(BUDGETS_CACHE_KEY);
+            var raw = window.FFPWA.storage.get(BUDGETS_CACHE_KEY);
             return raw ? JSON.parse(raw) : [];
         } catch (e) {
             return [];
@@ -87,7 +87,7 @@
 
     function cacheBudgets(budgets) {
         try {
-            localStorage.setItem(BUDGETS_CACHE_KEY, JSON.stringify(budgets));
+            window.FFPWA.storage.set(BUDGETS_CACHE_KEY, JSON.stringify(budgets));
             console.log('✅ [CACHE]: Budgets cacheados (' + budgets.length + ')');
         } catch (e) {
             console.error('❌ [CACHE]: Error al cachear budgets', e);

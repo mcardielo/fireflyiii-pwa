@@ -12,7 +12,7 @@
 
     function getSavedTheme() {
         try {
-            var val = localStorage.getItem(STORAGE_KEY);
+            var val = window.FFPWA.storage.get(STORAGE_KEY);
             if (val === 'light' || val === 'dark') return val;
         } catch (e) {}
         return 'light';
@@ -48,7 +48,7 @@
 
     function cycleTheme() {
         var next = currentTheme === 'light' ? 'dark' : 'light';
-        try { localStorage.setItem(STORAGE_KEY, next); } catch (e) {}
+        try { window.FFPWA.storage.set(STORAGE_KEY, next); } catch (e) {}
         currentTheme = next;
         applyTheme(next);
         updateToggleIcon(next);
@@ -59,9 +59,17 @@
     window.FFPWA.theme = {
         getCurrent: function() { return currentTheme; },
         getSaved: getSavedTheme,
+        syncFromStorage: function() {
+            var saved = getSavedTheme();
+            if (saved !== currentTheme) {
+                currentTheme = saved;
+                applyTheme(saved);
+            }
+            updateToggleIcon(currentTheme);
+        },
         setTheme: function(mode) {
             if (mode !== 'light' && mode !== 'dark') return;
-            try { localStorage.setItem(STORAGE_KEY, mode); } catch (e) {}
+            try { window.FFPWA.storage.set(STORAGE_KEY, mode); } catch (e) {}
             currentTheme = mode;
             applyTheme(mode);
             updateToggleIcon(mode);
