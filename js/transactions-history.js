@@ -50,6 +50,11 @@
 
     /* ─── Fetching ─── */
 
+    function getTodayISO() {
+        var now = new Date();
+        return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    }
+
     function fetchTransactions(page) {
         var url = window.FFPWA.config.url;
         var token = window.FFPWA.config.token;
@@ -66,6 +71,10 @@
         var endpoint = query ? '/api/v1/search/transactions' : '/api/v1/transactions';
         if (query) {
             params += '&query=' + encodeURIComponent(query);
+        } else {
+            // Excluir transacciones futuras en origen: el API pagina por journals y
+            // las futuras se comen el límite, dejando pocos grupos visibles.
+            params += '&end=' + getTodayISO();
         }
 
         return new Promise(function(resolve, reject) {
@@ -122,7 +131,6 @@
             return;
         }
 
-        var now = new Date(), today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         var html = '';
 
         data.forEach(function(group) {
@@ -133,10 +141,6 @@
             // Mostrar todas las sub-transacciones del grupo
             subTxns.forEach(function(tx, txIdx) {
                 var txDateISO = tx.date || '';
-                var txDatePart = txDateISO.split('T')[0];
-
-                // Saltar transacciones futuras
-                if (txDatePart > today) return;
 
                 var type = tx.type || 'withdrawal';
                 var description = tx.description || __('detail.no_description');
