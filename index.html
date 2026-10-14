@@ -91,6 +91,9 @@
     <template id="screen-account-picker">
         <div id="default-account-container" class="screen screen-stack hidden">
             <div class="flex-1 overflow-y-auto px-4 pt-16 pb-4 ios-scroll relative">
+                <div class="absolute top-4 left-4">
+                    <span id="app-version" class="text-xs text-ios-text-secondary">v2.42</span>
+                </div>
                 <div class="absolute top-4 right-4">
                     <button class="lang-btn text-sm font-semibold text-ios-blue">EN</button>
                 </div>
@@ -419,7 +422,7 @@
                     <span class="online-status text-xs font-semibold text-ios-green bg-ios-green-bg px-3 py-1 rounded-full">● Online</span>
                 </div>
             </header>
-            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4 ios-scroll">
+            <main id="accounts-scroll" class="flex-1 overflow-y-auto px-4 pt-3 pb-4 ios-scroll">
                 <!-- Accounts list view -->
                 <div id="accounts-loading" class="text-center py-8">
                     <div class="spinner mx-auto mb-2"></div>
@@ -516,7 +519,7 @@
                     </button>
                 </div>
             </div>
-            <main class="flex-1 overflow-y-auto px-4 pt-3 pb-4 ios-scroll">
+            <main id="history-scroll" class="flex-1 overflow-y-auto px-4 pt-3 pb-4 ios-scroll">
                 <!-- List view -->
                 <div id="history-list-view">
                     <div id="history-loading" class="text-center py-8">
@@ -731,6 +734,7 @@
     <script src="js/auth.js"></script>
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/pull-to-refresh.js"></script>
     <script src="js/accounts.js"></script>
     <script src="js/currencies.js"></script>
     <script src="js/transactions-history.js"></script>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'firefly-pwa-v2.40';
+const CACHE_NAME = 'firefly-pwa-v2.42';
 const ASSETS_TO_CACHE = [
     './',
     'index.html',
@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
     'js/lookups.js',
     'js/config.js',
     'js/utils.js',
+    'js/pull-to-refresh.js',
     'js/accounts.js',
     'js/currencies.js',
     'js/transactions.js',
@@ -102,13 +103,16 @@ self.addEventListener('install', (event) => {
             })
             .then(() => {
                 console.log('[Service Worker] Todos los assets procesados.');
+                // Solo tomar control DESPUÉS de cachear todo, para que el
+                // reload() del cliente no sirva assets viejos a medio llenar.
+                return self.skipWaiting();
             })
             .catch((error) => {
                 console.error('[Service Worker] Error en instalación:', error);
+                // Aun si falla algún asset, permitir tomar control.
+                return self.skipWaiting();
             })
     );
-
-    self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -221,5 +225,12 @@ self.addEventListener('sync', (event) => {
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
+    }
+    // Responder la versión (cache name) al cliente que la pida.
+    if (event.data && event.data.type === 'GET_VERSION') {
+        const port = event.ports && event.ports[0];
+        if (port) {
+            port.postMessage({ version: CACHE_NAME });
+        }
     }
 });

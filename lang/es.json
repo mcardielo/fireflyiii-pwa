@@ -241,5 +241,9 @@
     "config.stuck_edit": "Editar",
 
     "calc.cancel": "Cancelar",
-    "calc.use_result": "Usar resultado"
+    "calc.use_result": "Usar resultado",
+
+    "ptr.pull": "Tira para actualizar",
+    "ptr.release": "Suelta para actualizar",
+    "ptr.updating": "Actualizando..."
 }

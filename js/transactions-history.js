@@ -428,6 +428,16 @@
         if (window.i18nTranslateDOM) window.i18nTranslateDOM();
         if (window.injectIcons) window.injectIcons(document.getElementById('history-filters'));
 
+        // Pull-to-refresh sobre el scroll del historial.
+        if (window.FFPWA.enablePullToRefresh) {
+            window.FFPWA.enablePullToRefresh(document.getElementById('history-scroll'), function(done) {
+                var detailEl = document.getElementById('history-detail');
+                var inDetail = detailEl && !detailEl.classList.contains('hidden');
+                if (inDetail) { done(); return; }
+                refreshHistory().then(done, done);
+            });
+        }
+
         fetchTransactions(1).then(function(result) {
             renderTransactions(result);
         }).catch(function(err) {
@@ -437,6 +447,36 @@
             if (he) { he.classList.remove('hidden'); he.textContent = '❌ ' + err.message; }
         });
     };
+
+    /* ─── Refresh (re-fetch) de la página 1 respetando filtros ─── */
+    function refreshHistory() {
+        currentPage = 1;
+        totalPages = 1;
+        isLoading = false;
+        requestId++;
+        var thisRequest = requestId;
+
+        var historyList = document.getElementById('history-list');
+        var historyError = document.getElementById('history-error');
+        var historyLoadMore = document.getElementById('history-load-more');
+        var historyLoading = document.getElementById('history-loading');
+
+        if (historyList) historyList.innerHTML = '';
+        if (historyError) historyError.classList.add('hidden');
+        if (historyLoadMore) historyLoadMore.classList.add('hidden');
+        if (historyLoading) historyLoading.classList.remove('hidden');
+
+        return fetchTransactions(1).then(function(result) {
+            if (requestId !== thisRequest) return;
+            renderTransactions(result);
+        }).catch(function(err) {
+            if (requestId !== thisRequest) return;
+            var hl = document.getElementById('history-loading');
+            var he = document.getElementById('history-error');
+            if (hl) hl.classList.add('hidden');
+            if (he) { he.classList.remove('hidden'); he.textContent = '❌ ' + err.message; }
+        });
+    }
 
     function restoreFilterUI() {
         var f = window.FFPWA.historyFilters;

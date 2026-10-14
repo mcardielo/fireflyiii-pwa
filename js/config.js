@@ -249,6 +249,30 @@
      * Muestra el selector de cuenta default y carga las cuentas.
      * Cuando viene del tab Config, el tab-bar debe permanecer visible.
      */
+    /**
+     * Pregunta la versión del Service Worker activo y la muestra en el
+     * span #app-version (solo para verificación de despliegue).
+     */
+    function updateAppVersion() {
+        var el = document.getElementById('app-version');
+        if (!el || !('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+            return;
+        }
+        var mc = new MessageChannel();
+        mc.port1.onmessage = function(e) {
+            var v = e.data && e.data.version;
+            if (v) {
+                el.textContent = String(v).replace(/^firefly-pwa-/, '');
+                el.removeAttribute('data-i18n');
+            }
+        };
+        try {
+            navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [mc.port2]);
+        } catch (err) {
+            // Mensaje no soportado → se deja el texto por defecto.
+        }
+    }
+
     function showDefaultAccountPicker() {
         // Ocultar otras pantallas pero NO el tab-bar
         var els = {
@@ -263,6 +287,8 @@
         if (els.accounts) els.accounts.style.display = 'none';
         if (els.history) els.history.style.display = 'none';
         if (els.defaultAccount) { els.defaultAccount.style.display = 'flex'; els.defaultAccount.classList.remove('hidden'); }
+
+        updateAppVersion();
 
         var saveBtn = document.getElementById('save-default-account-btn');
         if (saveBtn) {

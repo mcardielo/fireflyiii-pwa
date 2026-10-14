@@ -447,18 +447,37 @@
 
         var accountsList = document.getElementById('accounts-list');
         var accountDetail = document.getElementById('account-detail');
-        var accountsError = document.getElementById('accounts-error');
-        var accountsLoading = document.getElementById('accounts-loading');
 
         if (accountsList) accountsList.classList.remove('hidden');
         if (accountDetail) accountDetail.classList.add('hidden');
         if (accountsList) accountsList.innerHTML = '';
-        if (accountsError) accountsError.classList.add('hidden');
-        if (accountsLoading) accountsLoading.classList.remove('hidden');
 
         if (window.i18nTranslateDOM) window.i18nTranslateDOM();
 
-        fetchAssetAccounts().then(function(assets) {
+        refreshAccountsData();
+
+        // Pull-to-refresh sobre el scroll del listado de cuentas.
+        if (window.FFPWA.enablePullToRefresh) {
+            window.FFPWA.enablePullToRefresh(document.getElementById('accounts-scroll'), function(done) {
+                var detailEl = document.getElementById('account-detail');
+                var inDetail = detailEl && !detailEl.classList.contains('hidden');
+                if (inDetail && currentAccount && currentAccount.id) {
+                    window.FFPWA.refreshCurrentAccount().then(done, done);
+                } else {
+                    refreshAccountsData().then(done, done);
+                }
+            });
+        }
+    };
+
+    /* ─── Refresh (re-fetch) de la lista de cuentas ─── */
+    function refreshAccountsData() {
+        var accountsError = document.getElementById('accounts-error');
+        var accountsLoading = document.getElementById('accounts-loading');
+        if (accountsError) accountsError.classList.add('hidden');
+        if (accountsLoading) accountsLoading.classList.remove('hidden');
+
+        return fetchAssetAccounts().then(function(assets) {
             renderAccounts(assets);
             return fetchLiabilityAccounts();
         }).then(function(liabilities) {
@@ -468,7 +487,7 @@
             if (accountsLoading) accountsLoading.classList.add('hidden');
             if (accountsError) { accountsError.classList.remove('hidden'); accountsError.textContent = '❌ ' + err.message; }
         });
-    };
+    }
 
     /* ─── Event wiring ─── */
 
@@ -574,17 +593,16 @@
 
     /* ─── Exposed: refresh current account transactions ─── */
     window.FFPWA.refreshCurrentAccount = function() {
-        if (currentAccount && currentAccount.id) {
-            var detailLoading = document.getElementById('detail-loading');
-            var detailList = document.getElementById('detail-list');
-            var detailLoadMore = document.getElementById('detail-load-more');
-            var detailError = document.getElementById('detail-error');
-            if (detailLoading) detailLoading.classList.remove('hidden');
-            if (detailList) detailList.innerHTML = '';
-            if (detailLoadMore) detailLoadMore.classList.add('hidden');
-            if (detailError) detailError.classList.add('hidden');
-            fetchTransactions(currentAccount.id, 1).then(renderTransactions).catch(handleDetailError);
-        }
+        if (!currentAccount || !currentAccount.id) return Promise.resolve();
+        var detailLoading = document.getElementById('detail-loading');
+        var detailList = document.getElementById('detail-list');
+        var detailLoadMore = document.getElementById('detail-load-more');
+        var detailError = document.getElementById('detail-error');
+        if (detailLoading) detailLoading.classList.remove('hidden');
+        if (detailList) detailList.innerHTML = '';
+        if (detailLoadMore) detailLoadMore.classList.add('hidden');
+        if (detailError) detailError.classList.add('hidden');
+        return fetchTransactions(currentAccount.id, 1).then(renderTransactions).catch(handleDetailError);
     };
 
 })();

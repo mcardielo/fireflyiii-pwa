@@ -241,5 +241,9 @@
     "config.stuck_edit": "Edit",
     
     "calc.cancel": "Cancel",
-    "calc.use_result": "Use result"
+    "calc.use_result": "Use result",
+
+    "ptr.pull": "Pull to refresh",
+    "ptr.release": "Release to refresh",
+    "ptr.updating": "Updating..."
 }
