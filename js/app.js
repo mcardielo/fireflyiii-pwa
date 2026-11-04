@@ -14,19 +14,32 @@
             return;
         }
 
-        navigator.serviceWorker.register('sw.js')
+        // Detectar si el usuario está escribiendo en el formulario de registro,
+        // para NO recargar la página en ese momento (evita perder lo tecleado).
+        function isUserTyping() {
+            var active = document.activeElement;
+            if (!active) return false;
+            var tag = (active.tagName || '').toLowerCase();
+            return (tag === 'input' || tag === 'textarea');
+        }
+
+        var reloadingForUpdate = false;
+
+        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
             .then(function(registration) {
                 console.log('✅ Service Worker registrado:', registration.scope);
+
+                // Revalidar el SW inmediatamente para detectar versiones nuevas
+                // sin depender de la caché HTTP del sw.js.
+                registration.update().catch(function() {});
 
                 // Auto-actualizar cuando haya nueva versión
                 registration.addEventListener('updatefound', function() {
                     var newWorker = registration.installing;
                     newWorker.addEventListener('statechange', function() {
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            console.log('🔄 Nueva versión disponible. Actualizando...');
+                            console.log('🔄 Nueva versión disponible. Activando...');
                             newWorker.postMessage({ type: 'SKIP_WAITING' });
-                            // Recarga suave: no forzar, el SW tomará control en próxima navegación
-                            setTimeout(function() { window.location.reload(); }, 500);
                         }
                     });
                 });
@@ -34,6 +47,32 @@
             .catch(function(error) {
                 console.error('❌ Fallo al registrar Service Worker:', error);
             });
+
+        // Cuando el SW nuevo toma control, recargar SOLO si no se está escribiendo.
+        // Si se está escribiendo, diferir la recarga hasta perder el foco.
+        var hasControllerChangeListener = false;
+        if (!hasControllerChangeListener) {
+            hasControllerChangeListener = true;
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+                if (reloadingForUpdate) return;
+                if (isUserTyping()) {
+                    // Esperar a que suelte el foco para recargar.
+                    var check = function() {
+                        if (!isUserTyping()) {
+                            document.removeEventListener('focusin', check);
+                            document.removeEventListener('focusout', check);
+                            reloadingForUpdate = true;
+                            window.location.reload();
+                        }
+                    };
+                    document.addEventListener('focusin', check);
+                    document.addEventListener('focusout', check);
+                } else {
+                    reloadingForUpdate = true;
+                    window.location.reload();
+                }
+            });
+        }
     }
 
     /**

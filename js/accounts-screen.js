@@ -602,7 +602,33 @@
         if (detailList) detailList.innerHTML = '';
         if (detailLoadMore) detailLoadMore.classList.add('hidden');
         if (detailError) detailError.classList.add('hidden');
-        return fetchTransactions(currentAccount.id, 1).then(renderTransactions).catch(handleDetailError);
+
+        var id = currentAccount.id;
+        return Promise.all([
+            fetchTransactions(id, 1).then(renderTransactions),
+            fetchAssetAccounts().then(function(assets) {
+                var acc = assets.find(function(a) { return String(a.id) === String(id); });
+                if (acc) {
+                    accountsMap[id] = acc;
+                    currentAccount = acc;
+                    updateDetailBalance(acc);
+                }
+            })
+        ]).then(function() { return undefined; }).catch(handleDetailError);
     };
+
+    function updateDetailBalance(acc) {
+        if (!acc) return;
+        var attrs = acc.attributes || {};
+        var balance = parseFloat(attrs.current_balance) || 0;
+        var symbol = attrs.currency_symbol || '$';
+        var decimals = attrs.currency_decimal_places || 2;
+        var balanceEl = document.getElementById('detail-account-balance');
+        if (balanceEl) {
+            balanceEl.textContent = window.FFPWA.formatMoney(balance, symbol, decimals);
+            balanceEl.classList.remove('text-ios-red', 'text-ios-text');
+            balanceEl.classList.add(balance < 0 ? 'text-ios-red' : 'text-ios-text');
+        }
+    }
 
 })();

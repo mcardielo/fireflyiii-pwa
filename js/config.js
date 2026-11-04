@@ -837,11 +837,13 @@
         section.classList.remove('hidden');
         var html = '';
         failed.forEach(function(item) {
-            var amount = (item.foreign_amount !== undefined && item.foreign_amount !== null)
-                ? item.foreign_amount : (item.amount || '');
-            var desc = item.description || '';
-            var accounts = item.source_name || '';
-            if (item.destination_name) accounts += ' → ' + item.destination_name;
+            // Los datos visibles viven en el primer split, no en la raíz del payload.
+            var split = item.transactions && item.transactions.length ? item.transactions[0] : item;
+            var amount = (split.foreign_amount !== undefined && split.foreign_amount !== null)
+                ? split.foreign_amount : (split.amount || '');
+            var desc = split.description || '';
+            var accounts = split.source_name || '';
+            if (split.destination_name) accounts += ' → ' + split.destination_name;
             var err = item._lastError || '';
 
             html += '<div class="field-card mb-2" style="padding:12px;">'

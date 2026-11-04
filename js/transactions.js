@@ -521,7 +521,13 @@
     function loadTransactionIntoForm(payload) {
         if (!payload) return;
 
-        var type = payload.type || 'withdrawal';
+        // El payload encolado es el objeto completo que manda al API:
+        // { error_if_duplicate_hash, apply_rules, transactions: [split, ...] }.
+        // Los datos visibles viven en el primer split, no en la raíz.
+        var split = payload.transactions && payload.transactions.length
+            ? payload.transactions[0] : payload;
+
+        var type = split.type || payload.type || 'withdrawal';
 
         // 1) Cambiar tipo (hidden input + hints + visibilidad + prefill defaults)
         if (window.FFPWA.setTransactionType) {
@@ -543,25 +549,25 @@
 
         // 3) Cuentas origen/destino (sobrescriben el prefill default)
         if (window.FFPWA.setAccountFields) {
-            window.FFPWA.setAccountFields('source', payload.source_name || '', payload.source_id || '');
-            window.FFPWA.setAccountFields('destination', payload.destination_name || '', payload.destination_id || '');
+            window.FFPWA.setAccountFields('source', split.source_name || '', split.source_id || '');
+            window.FFPWA.setAccountFields('destination', split.destination_name || '', split.destination_id || '');
         }
 
         // 4) Concepto
         var desc = document.getElementById('description');
-        if (desc) desc.value = payload.description || '';
+        if (desc) desc.value = split.description || '';
 
         // 5) Importe (el tecleado originalmente si hay foreign_amount)
         var amountEl = document.getElementById('amount');
         if (amountEl) {
-            var amt = (payload.foreign_amount !== undefined && payload.foreign_amount !== null)
-                ? payload.foreign_amount : payload.amount;
+            var amt = (split.foreign_amount !== undefined && split.foreign_amount !== null)
+                ? split.foreign_amount : split.amount;
             if (amt !== undefined && amt !== null) amountEl.value = String(amt);
         }
 
         // 6) Moneda (foreign si existe, si no currency_code)
         var curSelect = document.getElementById('currency-select');
-        var code = payload.foreign_currency_code || payload.currency_code;
+        var code = split.foreign_currency_code || split.currency_code;
         if (curSelect && code) {
             curSelect.value = code;
             curSelect.dispatchEvent(new Event('change'));
@@ -569,19 +575,19 @@
 
         // 7) Categoría
         var catEl = document.getElementById('tx-category');
-        if (catEl && payload.category_name) catEl.value = payload.category_name;
+        if (catEl && split.category_name) catEl.value = split.category_name;
 
         // 8) Presupuesto
         var budEl = document.getElementById('tx-budget');
-        if (budEl && payload.budget_id) budEl.value = payload.budget_id;
+        if (budEl && split.budget_id) budEl.value = split.budget_id;
 
         // 9) Fecha/hora (después de setTransactionType para no ser sobrescrita)
-        if (payload.date && typeof payload.date === 'string') {
+        if (split.date && typeof split.date === 'string') {
             var dateEl = document.getElementById('tx-date');
             var timeEl = document.getElementById('tx-time');
-            if (dateEl) dateEl.value = payload.date.slice(0, 10);
-            if (timeEl && payload.date.indexOf('T') !== -1) {
-                timeEl.value = payload.date.slice(11, 16);
+            if (dateEl) dateEl.value = split.date.slice(0, 10);
+            if (timeEl && split.date.indexOf('T') !== -1) {
+                timeEl.value = split.date.slice(11, 16);
             }
         }
     }
